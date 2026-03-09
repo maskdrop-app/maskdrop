@@ -1020,7 +1020,7 @@
             btn.innerHTML = `<div class="loader border-white border-t-brand-primary"></div>`;
 
             if(supabaseClient && publicTargetProfile) {
-                const { error } = await supabaseClient.from('messages').insert([{
+                const { data, error } = await supabaseClient.from('messages').insert([{
                     receiver_id: publicTargetProfile.id,
                     content: text,
                     sender_id: currentUser.id, 
@@ -1029,7 +1029,7 @@
                     is_revealed: false,
                     is_read: false,
                     replies: []
-                }]);
+                }]).select().single();
 
                 if (error) {
                     console.error("Send Error: ", error);
@@ -1077,14 +1077,35 @@
             if(!supabaseClient || !currentUser) return hideLoader();
             
             try {
+                // Modified query to fetch ALL messages related to user simply and reliably
                 const { data: msgs, error } = await supabaseClient.from('messages')
-                    .select('*, sender_profile:profiles!messages_sender_id_fkey(username, full_name, avatar_url), receiver_profile:profiles!messages_receiver_id_fkey(username, full_name, avatar_url)')
+                    .select('*')
                     .or(`receiver_id.eq.${currentUser.id},sender_id.eq.${currentUser.id}`)
                     .order('created_at', { ascending: false });
                 
                 if (error) throw error;
                 
                 if (msgs) {
+                    // Fetch profiles manually to avoid JOIN errors on Supabase
+                    const profileIds = new Set();
+                    msgs.forEach(m => { 
+                        if(m.sender_id) profileIds.add(m.sender_id); 
+                        if(m.receiver_id) profileIds.add(m.receiver_id); 
+                    });
+                    
+                    const { data: profiles } = await supabaseClient.from('profiles')
+                        .select('id, username, full_name, avatar_url')
+                        .in('id', Array.from(profileIds));
+                        
+                    const profileMap = {};
+                    if(profiles) profiles.forEach(p => profileMap[p.id] = p);
+                    
+                    msgs.forEach(m => {
+                        m.sender_profile = profileMap[m.sender_id] || null;
+                        m.receiver_profile = profileMap[m.receiver_id] || null;
+                    });
+
+                    // Strict Filtering
                     inboxMessages = msgs.filter(m => m.receiver_id === currentUser.id && !m.is_archived);
                     archivedMessages = msgs.filter(m => m.receiver_id === currentUser.id && m.is_archived);
                     sentMessages = msgs.filter(m => m.sender_id === currentUser.id);
@@ -1093,6 +1114,7 @@
                 renderInbox();
                 renderArchive();
                 
+                // Update active chat safely if opened
                 if (activeChatMsgId) {
                     const activeMsg = msgs?.find(m => m.id === activeChatMsgId);
                     if (activeMsg) updateActiveChat(activeMsg);
@@ -1157,46 +1179,8 @@
         }
 
         function updateLocalMessage(updatedData) {
-            let changed = false;
-            
-            // Update in Inbox
-            let idx = inboxMessages.findIndex(m => m.id === updatedData.id);
-            if (idx > -1) {
-                updatedData.sender_profile = inboxMessages[idx].sender_profile;
-                updatedData.receiver_profile = inboxMessages[idx].receiver_profile;
-                inboxMessages[idx] = updatedData;
-                changed = true;
-            }
-            
-            // Update in Sent
-            idx = sentMessages.findIndex(m => m.id === updatedData.id);
-            if (idx > -1) {
-                updatedData.sender_profile = sentMessages[idx].sender_profile;
-                updatedData.receiver_profile = sentMessages[idx].receiver_profile;
-                sentMessages[idx] = updatedData;
-                changed = true;
-            }
-            
-            // Update in Archived
-            idx = archivedMessages.findIndex(m => m.id === updatedData.id);
-            if (idx > -1) {
-                updatedData.sender_profile = archivedMessages[idx].sender_profile;
-                updatedData.receiver_profile = archivedMessages[idx].receiver_profile;
-                archivedMessages[idx] = updatedData;
-                changed = true;
-            }
-
-            if (changed) {
-                if (activeChatMsgId === updatedData.id) {
-                    updateActiveChat(updatedData);
-                } else {
-                    renderInbox();
-                    renderArchive();
-                }
-            } else {
-                // If we don't have it locally at all, fetch fully
-                loadInbox();
-            }
+            // Because we don't send profiles on realtime events, we must refetch the inbox to be perfectly safe
+            loadInbox();
         }
 
         function setupRealtime() {
@@ -1206,34 +1190,19 @@
                     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
                         const rec = payload.new;
                         if (rec.sender_id === currentUser.id || rec.receiver_id === currentUser.id) {
-                            loadInbox(); // fetch completely to get joined profiles
+                            loadInbox(); 
                         }
                     })
                     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, payload => {
                         const rec = payload.new;
                         if (rec.sender_id === currentUser.id || rec.receiver_id === currentUser.id) {
                             updateLocalMessage(rec);
-                            
-                            // Visual badge if receiving an update (reply)
-                            if (rec.receiver_id === currentUser.id || rec.sender_id === currentUser.id) {
-                                const replies = rec.replies || [];
-                                const lastSenderId = replies.length > 0 ? replies[replies.length - 1].sender_id : rec.sender_id;
-                                if (lastSenderId !== currentUser.id && !rec.is_read) {
-                                    if(document.getElementById('tab-inbox').classList.contains('hidden')) {
-                                        document.getElementById('inbox-count-badge').classList.remove('hidden');
-                                    }
-                                }
-                            }
                         }
                     })
                     .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, payload => {
                         const id = payload.old.id;
-                        inboxMessages = inboxMessages.filter(m => m.id !== id);
-                        sentMessages = sentMessages.filter(m => m.id !== id);
-                        archivedMessages = archivedMessages.filter(m => m.id !== id);
                         if (activeChatMsgId === id) closeChat();
-                        renderInbox();
-                        renderArchive();
+                        loadInbox();
                     }).subscribe();
             } catch (e) {
                 console.error("Realtime setup failed:", e);
@@ -1376,13 +1345,8 @@
                     return; 
                 }
                 
-                // If success, filter locally to reflect immediately
-                inboxMessages = inboxMessages.filter(m => m.id !== id);
-                sentMessages = sentMessages.filter(m => m.id !== id);
-                archivedMessages = archivedMessages.filter(m => m.id !== id);
-                
-                renderInbox();
-                renderArchive();
+                // If success, load inbox to sync
+                loadInbox(); 
             }
         }
         
@@ -1398,15 +1362,8 @@
                 return;
             }
 
-            const deletedId = activeChatMsgId;
             closeChat();
-            
-            inboxMessages = inboxMessages.filter(m => m.id !== deletedId);
-            sentMessages = sentMessages.filter(m => m.id !== deletedId);
-            archivedMessages = archivedMessages.filter(m => m.id !== deletedId);
-            
-            renderInbox();
-            renderArchive();
+            loadInbox(); 
         }
 
         function renderArchive() {
@@ -1423,7 +1380,7 @@
             archivedMessages.forEach(msg => {
                 const formattedContent = formatMessageText(msg.content);
                 html += `
-                <div class="relative bg-gray-50 dark:bg-[#1f2940] p-4 rounded-2xl border-s-4 border-gray-400 opacity-80 w-full max-w-3xl mx-auto shadow-sm flex justify-between" id="arch-${msg.id}">
+                <div class="relative bg-gray-50 dark:bg-[#1f2940] p-4 rounded-2xl border-s-4 border-gray-400 opacity-80 w-full max-w-3xl mx-auto shadow-sm flex justify-between items-center" id="arch-${msg.id}">
                     <p class="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">${formattedContent}</p>
                     <button onclick="deleteMessageUI('${msg.id}', event)" class="cursor-pointer ms-2 text-red-500 bg-red-50 dark:bg-red-900/20 w-8 h-8 rounded-full flex items-center justify-center hover:text-red-700 transition shadow-sm shrink-0" title="حذف نهائي">
                         <i class="fas fa-trash-alt text-xs pointer-events-none"></i>
@@ -1543,7 +1500,6 @@
 
             input.value = '';
             
-            // إضافة الرسالة شكلياً للسرعة
             const chatBox = document.getElementById('chat-messages');
             const tempId = `temp-${Date.now()}`;
             document.getElementById('typing-indicator')?.remove();
@@ -1558,8 +1514,7 @@
             chatBox.scrollTop = chatBox.scrollHeight;
             
             if(supabaseClient) {
-                // Fetch the latest state directly from DB to prevent overwriting
-                const { data: latestMsg, error: fetchErr } = await supabaseClient.from('messages').select('*').eq('id', activeChatMsgId).single();
+                const { data: latestMsg, error: fetchErr } = await supabaseClient.from('messages').select('replies, trust_level').eq('id', activeChatMsgId).single();
                 if (fetchErr || !latestMsg) {
                     document.getElementById(tempId)?.remove();
                     return;
@@ -1570,22 +1525,20 @@
                 const updatedReplies = [...currentReplies, newReply];
                 const newTrust = (latestMsg.trust_level || 1) + 1;
                 
-                const { data: updatedData, error } = await supabaseClient.from('messages')
+                const { error } = await supabaseClient.from('messages')
                     .update({
                         trust_level: newTrust,
                         replies: updatedReplies,
                         is_read: false 
                     })
-                    .eq('id', activeChatMsgId)
-                    .select('*, sender_profile:profiles!messages_sender_id_fkey(username, full_name, avatar_url), receiver_profile:profiles!messages_receiver_id_fkey(username, full_name, avatar_url)')
-                    .single();
+                    .eq('id', activeChatMsgId);
                     
                 if (error) {
                     document.getElementById(tempId)?.remove();
-                } else if(updatedData) {
-                    // Update successful, Realtime will handle the sync for both parties, but we manually update local
-                    document.querySelectorAll('.temp-msg').forEach(el => el.remove());
-                    updateLocalMessage(updatedData);
+                } else {
+                    document.getElementById(tempId)?.firstElementChild?.classList.remove('opacity-50');
+                    activeChatTrust = newTrust;
+                    // We let realtime handle the rest, or just rely on loadInbox calls
                 }
             }
         }
@@ -1759,7 +1712,6 @@
                 await navigator.clipboard.writeText(finalShareText);
                 alert(currentLang === 'ar' ? "تم نسخ الرابط مع الرسالة الجذابة بنجاح!" : "Link and message copied successfully!");
             } catch (err) {
-                // Fallback for older iOS devices
                 const tempTextArea = document.createElement("textarea");
                 tempTextArea.value = finalShareText;
                 tempTextArea.style.top = "0";
