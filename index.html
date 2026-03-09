@@ -38,7 +38,7 @@
         }
     </script>
     <style>
-        /* الأساسيات لمنع مشاكل الكيبورد في الجوال */
+        /* إعدادات متقدمة لمنع اهتزاز الشاشة ومشاكل الكيبورد في الجوال */
         html, body { 
             font-family: 'Cairo', sans-serif; 
             height: 100%; 
@@ -46,7 +46,8 @@
             overflow: hidden; 
             margin: 0; 
             padding: 0;
-            background-color: #f3f4f6; /* bg-gray-100 */
+            overscroll-behavior: none; /* منع السحب للتحديث في الآيفون */
+            background-color: #f3f4f6; 
         }
         .dark body {
             background-color: #1a1a2e;
@@ -112,9 +113,9 @@
 </head>
 <body class="text-gray-900 dark:text-white transition-colors duration-300">
 
-    <!-- Container uses 100dvh and flex-col to perfectly fit mobile screens and avoid scroll overlapping -->
-    <div class="h-[100dvh] w-full flex flex-col max-w-md md:max-w-2xl lg:max-w-4xl mx-auto sm:py-4">
-        <div class="bg-white dark:bg-brand-secondary w-full h-full sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col relative sm:border border-gray-200 dark:border-brand-light transition-colors duration-300">
+    <!-- Container uses fixed inset-0 to completely lock to viewport, solving keyboard issues -->
+    <div class="fixed inset-0 w-full h-full flex flex-col items-center justify-center sm:p-4">
+        <div class="bg-white dark:bg-brand-secondary w-full h-full max-w-md md:max-w-2xl lg:max-w-4xl flex flex-col relative sm:rounded-3xl sm:border border-gray-200 dark:border-brand-light shadow-2xl overflow-hidden">
             
             <!-- Loading Overlay -->
             <div id="global-loader" class="absolute inset-0 bg-white dark:bg-brand-dark z-[200] flex flex-col items-center justify-center fade-in">
@@ -331,7 +332,7 @@
                         </div>
                     </div>
 
-                    <!-- Profile Edit Section (Collapsible) -->
+                    <!-- Profile Edit Section -->
                     <div class="space-y-2">
                         <button onclick="toggleProfileEdit()" class="cursor-pointer w-full flex justify-between items-center bg-white dark:bg-[#1f2940] p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm active:scale-[0.98] transition-all">
                             <div class="flex items-center gap-3">
@@ -1217,7 +1218,10 @@
             if (chatBox.innerHTML !== chatHtml) {
                 document.getElementById('typing-indicator')?.remove();
                 chatBox.innerHTML = chatHtml;
-                if (isScrolledToBottom || !silent) { chatBox.scrollTop = chatBox.scrollHeight; }
+                
+                if (isScrolledToBottom || !silent) { 
+                    setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 50);
+                }
             }
             
             activeChatTrust = updatedMsg.trust_level || 1;
@@ -1225,52 +1229,25 @@
             updateTrustUI();
         }
 
+        function updateLocalMessage(updatedData) {
+            loadInbox(true);
+        }
+
         function setupRealtime() {
             if(!supabaseClient || !currentUser) return;
             try {
                 supabaseClient.channel('custom-all-channel')
-                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-                        const rec = payload.new;
-                        if (rec.sender_id === currentUser.id || rec.receiver_id === currentUser.id) {
-                            loadInbox(true); 
-                        }
-                    })
-                    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, payload => {
-                        const rec = payload.new;
-                        if (rec.sender_id === currentUser.id || rec.receiver_id === currentUser.id) {
-                            let oldMsg = allMessages.find(m => m.id === rec.id) || archivedMessages.find(m => m.id === rec.id);
-                            if (oldMsg) {
-                                rec.sender_profile = oldMsg.sender_profile;
-                                rec.receiver_profile = oldMsg.receiver_profile;
-                                
-                                const amIdx = allMessages.findIndex(m => m.id === rec.id);
-                                if (amIdx > -1) allMessages[amIdx] = rec;
-                                const arIdx = archivedMessages.findIndex(m => m.id === rec.id);
-                                if (arIdx > -1) archivedMessages[arIdx] = rec;
-
-                                if (activeChatMsgId === rec.id) {
-                                    const replies = rec.replies || [];
-                                    const lastSenderId = replies.length > 0 ? replies[replies.length - 1].sender_id : rec.sender_id;
-                                    if (lastSenderId !== currentUser.id && !rec.is_read) {
-                                        rec.is_read = true;
-                                        supabaseClient.from('messages').update({is_read: true}).eq('id', rec.id);
-                                    }
-                                    updateActiveChat(rec, true);
-                                }
-                                renderInbox();
-                                renderArchive();
-                            } else {
-                                loadInbox(true);
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
+                        const rec = payload.new || payload.old;
+                        if (rec && rec.id) {
+                            const isOurs = activeChatMsgId === rec.id || allMessages.some(m => m.id === rec.id) || archivedMessages.some(m => m.id === rec.id);
+                            const isNewForUs = payload.eventType === 'INSERT' && (rec.sender_id === currentUser.id || rec.receiver_id === currentUser.id);
+                            
+                            if (isOurs || isNewForUs) {
+                                if(window.rtTimeout) clearTimeout(window.rtTimeout);
+                                window.rtTimeout = setTimeout(() => { loadInbox(true); }, 500);
                             }
                         }
-                    })
-                    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, payload => {
-                        const id = payload.old.id;
-                        allMessages = allMessages.filter(m => m.id !== id);
-                        archivedMessages = archivedMessages.filter(m => m.id !== id);
-                        if (activeChatMsgId === id) closeChat();
-                        renderInbox();
-                        renderArchive();
                     }).subscribe();
             } catch (e) {
                 console.error("Realtime setup failed:", e);
@@ -1515,6 +1492,18 @@
                 updateTabBadges();
             }
             
+            let headerLabel = '';
+            if (isSenderView) {
+                const recName = msg.receiver_profile ? msg.receiver_profile.full_name : 'مستخدم';
+                headerLabel = `محادثة مع ${recName}`;
+                document.getElementById('chat-title').innerHTML = `<i class="fas fa-user ms-1"></i> <span>${headerLabel}</span>`;
+            } else {
+                const safeId = (msg.id || '0000').toString().substring(0,4);
+                headerLabel = msg.is_revealed ? (msg.sender_profile ? msg.sender_profile.full_name : 'تم كشف الهوية') : `مجهول #${safeId}`;
+                const icon = msg.is_revealed ? 'fa-user text-green-500' : 'fa-user-secret';
+                document.getElementById('chat-title').innerHTML = `<i class="fas ${icon} ms-1"></i> <span class="${msg.is_revealed ? 'text-green-500' : ''}">${headerLabel}</span>`;
+            }
+            
             updateActiveChat(msg);
             
             document.getElementById('view-chat').classList.remove('hidden');
@@ -1612,6 +1601,9 @@
                         allMessages[amIdx] = updatedMsg;
                     }
                     updateActiveChat(updatedMsg, false); 
+                    
+                    // تحديث الصندوق في الخلفية للتأكد من المزامنة
+                    loadInbox(true);
                 }
             }
         }
