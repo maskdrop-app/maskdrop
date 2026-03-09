@@ -244,7 +244,7 @@
             </div>
 
             <!-- TAB: Inbox -->
-            <div id="tab-inbox" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+            <div id="tab-inbox" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 relative">
                 <!-- Message Type Toggles -->
                 <div class="flex justify-center mb-4">
                     <div class="bg-gray-200 dark:bg-[#1f2940] rounded-xl p-1 inline-flex">
@@ -261,12 +261,17 @@
                 </div>
                 
                 <!-- رسائل الانبوكس تحت بعضها -->
-                <div id="inbox-list" class="space-y-4 flex flex-col max-w-3xl mx-auto w-full">
+                <div id="inbox-list" class="space-y-4 flex flex-col max-w-3xl mx-auto w-full pb-16">
                     <div id="empty-inbox" class="text-center text-gray-400 dark:text-gray-500 py-10 text-sm block">
                         <i class="fas fa-inbox text-4xl mb-3 opacity-50"></i>
                         <p data-ar="لا توجد رسائل جديدة" data-en="No new messages">لا توجد رسائل جديدة</p>
                     </div>
                 </div>
+
+                <!-- Floating Action Button for New Message -->
+                <button id="fab-new-msg" onclick="openSearchModal()" class="cursor-pointer absolute bottom-6 end-6 md:end-10 w-14 h-14 bg-brand-primary text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all z-20">
+                    <i class="fas fa-plus text-2xl"></i>
+                </button>
             </div>
 
             <!-- TAB: Archive -->
@@ -275,7 +280,7 @@
                     <i class="fas fa-box-archive me-2"></i> <span data-ar="الرسائل المؤرشفة" data-en="Archived Messages">الرسائل المؤرشفة</span>
                 </h2>
                 <!-- رسائل الأرشيف تحت بعضها -->
-                <div id="archive-list" class="space-y-4 flex flex-col max-w-3xl mx-auto w-full">
+                <div id="archive-list" class="space-y-4 flex flex-col max-w-3xl mx-auto w-full pb-6">
                     <div id="empty-archive" class="text-center text-gray-400 dark:text-gray-500 py-10 text-sm block">
                         <i class="fas fa-folder-open text-4xl mb-3 opacity-50"></i>
                         <p data-ar="لا توجد رسائل مؤرشفة" data-en="No archived messages">لا توجد رسائل مؤرشفة</p>
@@ -284,7 +289,7 @@
             </div>
 
             <!-- TAB: Profile & Settings -->
-            <div id="tab-profile" class="hidden flex-1 overflow-y-auto p-4 md:p-8 space-y-6 fade-in max-w-2xl mx-auto w-full">
+            <div id="tab-profile" class="hidden flex-1 overflow-y-auto p-4 md:p-8 space-y-6 fade-in max-w-2xl mx-auto w-full pb-6">
                 <!-- User Info -->
                 <div class="text-center mt-2 relative group cursor-pointer" onclick="openAvatarModal()">
                     <div class="w-24 h-24 mx-auto rounded-full border-4 border-brand-primary p-1 mb-1 relative hover:scale-105 transition-transform bg-white dark:bg-transparent">
@@ -372,7 +377,7 @@
                         </div>
                     </div>
 
-                    <!-- Language (Now RTL safe) -->
+                    <!-- Language -->
                     <div class="bg-white dark:bg-[#1f2940] p-3 rounded-2xl flex justify-between items-center border border-gray-200 dark:border-gray-700">
                         <div class="flex items-center gap-3">
                             <div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-[#2a3754] flex items-center justify-center text-gray-500">
@@ -391,11 +396,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Floating Action Button for New Message -->
-            <button id="fab-new-msg" onclick="openSearchModal()" class="cursor-pointer absolute bottom-20 end-6 md:end-10 w-14 h-14 bg-brand-primary text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all z-20">
-                <i class="fas fa-plus text-xl"></i>
-            </button>
 
             <!-- Bottom Navigation -->
             <div class="bg-white dark:bg-brand-secondary border-t border-gray-200 dark:border-brand-light flex justify-around items-center p-3 pb-safe z-10 transition-colors duration-300">
@@ -464,7 +464,7 @@
                 <button onclick="toggleEmojiPicker(event)" class="cursor-pointer w-10 h-10 rounded-full bg-gray-100 dark:bg-[#2a3754] flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white active:scale-90 transition-all duration-150">
                     <i class="fas fa-smile text-lg"></i>
                 </button>
-                <input type="text" id="reply-input" data-ar-ph="اكتب ردك هنا..." data-en-ph="Type your reply..." placeholder="اكتب ردك هنا..." class="flex-1 bg-gray-100 dark:bg-[#1f2940] text-sm text-gray-900 dark:text-white rounded-full px-4 py-3 outline-none focus:ring-1 focus:ring-brand-primary transition text-start">
+                <input type="text" id="reply-input" oninput="sendTypingEvent()" data-ar-ph="اكتب ردك هنا..." data-en-ph="Type your reply..." placeholder="اكتب ردك هنا..." class="flex-1 bg-gray-100 dark:bg-[#1f2940] text-sm text-gray-900 dark:text-white rounded-full px-4 py-3 outline-none focus:ring-1 focus:ring-brand-primary transition text-start">
                 <button onclick="sendReply()" class="cursor-pointer w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center text-white hover:brightness-110 active:scale-90 transition-all duration-150">
                     <i class="fas fa-paper-plane text-sm fa-flip-horizontal rtl-arrow-reverse"></i>
                 </button>
@@ -1026,7 +1026,6 @@
                     return;
                 }
                 
-                // إضافة الرسالة للمرسلات محلياً فوراً وتحديث الواجهة للسرعة
                 if(data) {
                     data.receiver_profile = publicTargetProfile;
                     data.sender_profile = userProfile;
@@ -1078,7 +1077,6 @@
                 if (error) throw error;
                 
                 if (msgs) {
-                    // جلب بيانات المستخدمين بطريقة يدوية وآمنة لتجنب مشاكل Foreign Keys
                     const profileIds = new Set();
                     msgs.forEach(m => { if(m.sender_id) profileIds.add(m.sender_id); if(m.receiver_id) profileIds.add(m.receiver_id); });
                     
@@ -1164,7 +1162,6 @@
         function setupRealtime() {
             if(!supabaseClient || !currentUser) return;
             try {
-                // بدلاً من التعامل المعقد مع المصفوفات، نجلب البيانات الجديدة بالكامل لضمان الدقة
                 supabaseClient.channel('custom-all-channel')
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `receiver_id=eq.${currentUser.id}` }, payload => {
                         loadInbox();
@@ -1237,52 +1234,57 @@
                         ? '<i class="fas fa-check-double text-blue-500" title="مقروء"></i>' 
                         : '<i class="fas fa-check text-gray-400" title="تم التسليم"></i>';
                 } else if (isUnreadForMe) {
-                    statusBadge = '<div class="w-2 h-2 rounded-full bg-brand-primary"></div>';
+                    statusBadge = '<div class="w-2 h-2 rounded-full bg-brand-primary shrink-0"></div>';
                     unreadClass = 'msg-unread';
                 }
 
                 if (currentInboxFilter === 'received') {
                     senderLabel = msg.is_revealed ? 'كُشف القناع' : `مجهول #${safeId}`;
-                    senderColor = msg.is_revealed ? 'text-green-500 bg-green-500/10' : 'text-brand-primary bg-brand-primary/10';
+                    senderColor = msg.is_revealed ? 'text-green-600 bg-green-100 dark:bg-green-900/30' : 'text-brand-primary bg-brand-primary/10';
                     iconClass = msg.is_revealed ? 'fa-user' : 'fa-user-secret';
                     
                     actionBtn = `
-                        <button onclick="archiveMessageUI('${msg.id}', event)" class="cursor-pointer text-gray-400 bg-gray-200 dark:bg-[#2a3754] w-7 h-7 rounded-full flex items-center justify-center hover:text-brand-primary transition" title="أرشفة">
-                            <i class="fas fa-box-archive text-xs"></i>
+                        <button onclick="archiveMessageUI('${msg.id}', event)" class="cursor-pointer text-gray-500 bg-gray-200 dark:bg-[#2a3754] w-8 h-8 rounded-full flex items-center justify-center hover:text-brand-primary transition shadow-sm" title="أرشفة">
+                            <i class="fas fa-box-archive text-xs pointer-events-none"></i>
                         </button>
-                        <button onclick="deleteMessageUI('${msg.id}', event)" class="cursor-pointer ms-1 text-red-400 bg-red-50 dark:bg-red-900/20 w-7 h-7 rounded-full flex items-center justify-center hover:text-red-600 transition" title="حذف نهائي">
-                            <i class="fas fa-trash-alt text-xs"></i>
+                        <button onclick="deleteMessageUI('${msg.id}', event)" class="cursor-pointer text-red-500 bg-red-50 dark:bg-red-900/20 w-8 h-8 rounded-full flex items-center justify-center hover:text-red-700 transition shadow-sm" title="حذف نهائي">
+                            <i class="fas fa-trash-alt text-xs pointer-events-none"></i>
                         </button>`;
                 } else {
                     const receiverName = msg.receiver_profile ? msg.receiver_profile.full_name : 'مستخدم';
                     senderLabel = `إلى: ${receiverName}`;
-                    senderColor = 'text-blue-500 bg-blue-500/10';
+                    senderColor = 'text-blue-600 bg-blue-100 dark:bg-blue-900/30';
                     iconClass = 'fa-paper-plane';
                     
                     actionBtn = `
-                        <button onclick="deleteMessageUI('${msg.id}', event)" class="cursor-pointer ms-1 text-red-400 bg-red-50 dark:bg-red-900/20 w-7 h-7 rounded-full flex items-center justify-center hover:text-red-600 transition" title="حذف نهائي">
-                            <i class="fas fa-trash-alt text-xs"></i>
+                        <button onclick="deleteMessageUI('${msg.id}', event)" class="cursor-pointer text-red-500 bg-red-50 dark:bg-red-900/20 w-8 h-8 rounded-full flex items-center justify-center hover:text-red-700 transition shadow-sm" title="حذف نهائي">
+                            <i class="fas fa-trash-alt text-xs pointer-events-none"></i>
                         </button>`;
                 }
 
+                // هيكل الكارد المرن بدون Overlap
                 html += `
-                <div class="relative group msg-card fade-in w-full max-w-3xl mx-auto" id="msg-${msg.id}">
-                    <div onclick="openChat('${msg.id}')" class="bg-gray-50 dark:bg-[#1f2940] p-4 rounded-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-[#2a3754] active:scale-[0.98] transition-all border-s-4 border-gray-300 dark:border-gray-600 ${unreadClass} relative overflow-hidden">
-                        <div class="absolute -start-4 -top-4 text-gray-400/5 text-6xl pointer-events-none"><i class="fas ${iconClass}"></i></div>
-                        <div class="flex justify-between items-start mb-2 relative z-10">
-                            <span class="text-xs ${senderColor} px-2 py-1 rounded-full font-bold flex items-center gap-1">
-                                <i class="fas ${iconClass}"></i> <span>${senderLabel}</span>
-                            </span>
-                            <span class="flex items-center gap-2">
-                                ${statusBadge}
-                                <span class="text-xs text-gray-400 pe-8">${time}</span>
-                            </span>
+                <div class="group msg-card fade-in w-full max-w-3xl mx-auto bg-gray-50 dark:bg-[#1f2940] p-4 rounded-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-[#2a3754] active:scale-[0.98] transition-all border-s-4 border-gray-300 dark:border-gray-600 ${unreadClass} shadow-sm flex flex-col gap-3" id="msg-${msg.id}" onclick="openChat('${msg.id}')">
+                    <div class="flex justify-between items-start gap-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full ${senderColor.split(' ')[1]} ${senderColor.split(' ')[0]} flex items-center justify-center shrink-0">
+                                <i class="fas ${iconClass}"></i>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-sm font-bold ${senderColor.split(' ')[0]} line-clamp-1">${senderLabel}</span>
+                                <span class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">${time}</span>
+                            </div>
                         </div>
-                        <p class="text-sm text-gray-800 dark:text-gray-200 mt-2 relative z-10 line-clamp-2">${formattedContent}</p>
+                        <div class="flex flex-col items-end gap-2 shrink-0">
+                            <div class="flex items-center gap-1.5 h-6">
+                                ${statusBadge}
+                            </div>
+                            <div class="flex gap-2">
+                                ${actionBtn}
+                            </div>
+                        </div>
                     </div>
-                    <div class="absolute top-4 end-4 flex gap-2 z-20">
-                        ${actionBtn}
-                    </div>
+                    <p class="text-sm text-gray-800 dark:text-gray-200 line-clamp-2 leading-relaxed">${formattedContent}</p>
                 </div>`;
             });
             list.innerHTML = html;
@@ -1302,12 +1304,20 @@
             if(!confirm(confirmMsg)) return;
 
             if(supabaseClient) {
-                const {error} = await supabaseClient.from('messages').delete().eq('id', id);
-                if(error) {
-                    alert(currentLang === 'ar' ? 'فشل الحذف، يرجى تفعيل صلاحيات الحذف (RLS) في الخادم: ' + error.message : 'Delete failed (Check RLS): ' + error.message);
-                    return;
+                // استخدام select للتأكد من أن الحذف قد تم فعلياً من السيرفر
+                const { data, error } = await supabaseClient.from('messages').delete().eq('id', id).select();
+                if(error || !data || data.length === 0) {
+                    alert(currentLang === 'ar' ? 'فشل الحذف، يرجى تفعيل صلاحيات الحذف (RLS) في الخادم' : 'Delete failed (Check RLS policy)');
+                    return; // إيقاف العملية وعدم الحذف محلياً
                 }
-                loadInbox(); 
+                
+                // تم الحذف فعلياً
+                inboxMessages = inboxMessages.filter(m => m.id !== id);
+                sentMessages = sentMessages.filter(m => m.id !== id);
+                archivedMessages = archivedMessages.filter(m => m.id !== id);
+                
+                renderInbox();
+                renderArchive();
             }
         }
         
@@ -1316,15 +1326,21 @@
             const confirmMsg = currentLang === 'ar' ? 'هل أنت متأكد من حذف هذه المحادثة نهائياً؟' : 'Are you sure you want to permanently delete this chat?';
             if(!confirm(confirmMsg)) return;
 
-            const { error } = await supabaseClient.from('messages').delete().eq('id', activeChatMsgId);
-            
-            if(error) {
-                alert(currentLang === 'ar' ? 'فشل الحذف، يرجى تفعيل صلاحيات الحذف (RLS) في الخادم: ' + error.message : 'Delete failed (Check RLS): ' + error.message);
+            const { data, error } = await supabaseClient.from('messages').delete().eq('id', activeChatMsgId).select();
+            if(error || !data || data.length === 0) {
+                alert(currentLang === 'ar' ? 'فشل الحذف، يرجى تفعيل صلاحيات الحذف (RLS) في الخادم' : 'Delete failed (Check RLS policy)');
                 return;
             }
 
+            const deletedId = activeChatMsgId;
             closeChat();
-            loadInbox(); 
+            
+            inboxMessages = inboxMessages.filter(m => m.id !== deletedId);
+            sentMessages = sentMessages.filter(m => m.id !== deletedId);
+            archivedMessages = archivedMessages.filter(m => m.id !== deletedId);
+            
+            renderInbox();
+            renderArchive();
         }
 
         function renderArchive() {
@@ -1341,7 +1357,7 @@
             archivedMessages.forEach(msg => {
                 const formattedContent = formatMessageText(msg.content);
                 html += `
-                <div class="relative bg-gray-50 dark:bg-[#1f2940] p-4 rounded-2xl border-s-4 border-gray-400 opacity-80 w-full max-w-3xl mx-auto" id="arch-${msg.id}">
+                <div class="relative bg-gray-50 dark:bg-[#1f2940] p-4 rounded-2xl border-s-4 border-gray-400 opacity-80 w-full max-w-3xl mx-auto shadow-sm" id="arch-${msg.id}">
                     <p class="text-sm text-gray-700 dark:text-gray-300">${formattedContent}</p>
                 </div>`;
             });
@@ -1351,6 +1367,42 @@
         /* =========================================================
            8. CHAT & TRUST LOGIC 
            ========================================================= */
+           
+        // Typing indicator logic
+        let typingTimer;
+        let removeTypingTimer;
+        
+        function sendTypingEvent() {
+            if (window.currentChatChannel && activeChatMsgId && currentUser) {
+                window.currentChatChannel.send({
+                    type: 'broadcast',
+                    event: 'typing',
+                    payload: { user: currentUser.id }
+                });
+            }
+        }
+
+        function showTypingIndicator() {
+            let chatBox = document.getElementById('chat-messages');
+            let indicator = document.getElementById('typing-indicator');
+            if (!indicator) {
+                chatBox.insertAdjacentHTML('beforeend', `
+                    <div id="typing-indicator" class="flex justify-start fade-in relative z-10 mt-2">
+                        <div class="bg-white dark:bg-[#2a3754] px-4 py-3 rounded-2xl rounded-se-none flex items-center gap-2 shadow-sm">
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                        </div>
+                    </div>
+                `);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+            clearTimeout(removeTypingTimer);
+            removeTypingTimer = setTimeout(() => {
+                document.getElementById('typing-indicator')?.remove();
+            }, 3000);
+        }
+
         async function openChat(msgId) {
             let msg = inboxMessages.find(m => m.id === msgId) || sentMessages.find(m => m.id === msgId) || archivedMessages.find(m => m.id === msgId);
             let isSenderView = msg && msg.sender_id === currentUser.id;
@@ -1365,7 +1417,6 @@
             
             if (lastSenderId !== currentUser.id && !msg.is_read) {
                 msg.is_read = true;
-                document.getElementById(`msg-${msgId}`)?.firstElementChild?.classList.remove('msg-unread');
                 if(supabaseClient) supabaseClient.from('messages').update({is_read: true}).eq('id', msgId);
             }
             
@@ -1388,6 +1439,17 @@
             setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 50);
             
             updateTrustUI();
+            
+            // Setup Realtime Typing Broadcast for this specific chat
+            if (supabaseClient) {
+                window.currentChatChannel = supabaseClient.channel('chat-' + msgId);
+                window.currentChatChannel
+                    .on('broadcast', { event: 'typing' }, payload => {
+                        if (payload.payload.user !== currentUser.id) {
+                            showTypingIndicator();
+                        }
+                    }).subscribe();
+            }
         }
 
         function closeChat() {
@@ -1396,8 +1458,14 @@
             document.getElementById('mask-drop-action').classList.add('hidden');
             document.getElementById('chat-input-area').classList.remove('hidden');
             document.getElementById('chat-input-area').classList.add('flex');
+            
+            if (window.currentChatChannel) {
+                supabaseClient.removeChannel(window.currentChatChannel);
+                window.currentChatChannel = null;
+            }
+            
             activeChatMsgId = null;
-            renderInbox();
+            renderInbox(); // للتأكد من إزالة نقاط الرسائل المقروءة للتو
         }
 
         async function sendReply() {
@@ -1417,6 +1485,7 @@
             `);
             input.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
+            document.getElementById('typing-indicator')?.remove();
             
             if(supabaseClient) {
                 const { data: latestMsg, error: fetchErr } = await supabaseClient.from('messages').select('replies, trust_level').eq('id', activeChatMsgId).single();
@@ -1443,12 +1512,11 @@
                 } else {
                     document.getElementById(tempId)?.firstElementChild?.classList.remove('opacity-50');
                     activeChatTrust = newTrust;
-                    // تحديث محلي سريع
                     let msg = inboxMessages.find(m => m.id === activeChatMsgId) || sentMessages.find(m => m.id === activeChatMsgId);
                     if(msg) {
                         msg.replies = updatedReplies;
                         msg.trust_level = newTrust;
-                        msg.is_read = false; // غير مقروءة للطرف الآخر
+                        msg.is_read = false; 
                     }
                 }
             }
