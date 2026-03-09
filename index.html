@@ -1008,7 +1008,8 @@
 
                 if (error) {
                     console.error("Send Error: ", error);
-                    alert(currentLang === 'ar' ? "لم يتم إرسال الرسالة، يرجى التأكد من صلاحيات قاعدة البيانات (RLS) لجداول Supabase." : "Message sending failed, please check Supabase RLS policies.");
+                    // التعديل هنا: طباعة الخطأ الفعلي من قاعدة البيانات للمستخدم لسهولة حله
+                    alert(currentLang === 'ar' ? "فشل الإرسال: " + error.message : "Message sending failed: " + error.message);
                     btn.innerHTML = `<span data-ar="إرسال" data-en="Send">إرسال</span>`;
                     applyTranslations();
                     return;
@@ -1085,6 +1086,23 @@
                             
                             if(document.getElementById('tab-inbox').classList.contains('hidden')) {
                                 document.getElementById('inbox-count-badge').classList.remove('hidden');
+                            }
+                        }
+                    })
+                    .on('postgres_changes', { 
+                        event: 'UPDATE', 
+                        schema: 'public', 
+                        table: 'messages'
+                    }, payload => {
+                        // تحديث الرسالة إذا تم إضافة رد لها
+                        const updatedMsg = payload.new;
+                        const idx = inboxMessages.findIndex(m => m.id === updatedMsg.id);
+                        if (idx !== -1) {
+                            inboxMessages[idx] = updatedMsg;
+                            
+                            // تحديث واجهة الدردشة فوراً إذا كانت مفتوحة
+                            if (activeChatMsgId === updatedMsg.id) {
+                                openChat(updatedMsg.id);
                             }
                         }
                     }).subscribe();
@@ -1170,7 +1188,7 @@
         }
 
         /* =========================================================
-           8. CHAT & TRUST LOGIC
+           8. CHAT & TRUST LOGIC (Now using database replies)
            ========================================================= */
         function openChat(msgId) {
             const msg = inboxMessages.find(m => m.id === msgId);
@@ -1184,13 +1202,39 @@
             document.getElementById('chat-title').innerHTML = `<i class="fas fa-user-secret ms-1"></i> <span>${senderLabel}</span>`;
             
             const chatBox = document.getElementById('chat-messages');
-            chatBox.innerHTML = `
+            
+            // أولاً عرض الرسالة الأساسية
+            let chatHtml = `
                 <div class="flex justify-start relative z-10">
                     <div class="bg-white dark:bg-[#2a3754] text-gray-800 dark:text-white border border-gray-200 dark:border-transparent max-w-[80%] p-3 rounded-2xl rounded-se-none text-sm leading-relaxed">
                         ${formatMessageText(msg.content)}
                     </div>
                 </div>
             `;
+
+            // ثم عرض الردود (إن وجدت)
+            const replies = msg.replies || [];
+            replies.forEach(reply => {
+                const isMyReply = reply.sender_id === currentUser.id;
+                if (isMyReply) {
+                    chatHtml += `
+                    <div class="flex justify-end fade-in relative z-10 mt-2">
+                        <div class="bg-brand-primary text-white max-w-[80%] p-3 rounded-2xl rounded-ss-none text-sm">
+                            ${formatMessageText(reply.text)}
+                        </div>
+                    </div>`;
+                } else {
+                    chatHtml += `
+                    <div class="flex justify-start fade-in relative z-10 mt-2">
+                        <div class="bg-white dark:bg-[#2a3754] text-gray-800 dark:text-white max-w-[80%] p-3 rounded-2xl rounded-se-none text-sm">
+                            ${formatMessageText(reply.text)}
+                        </div>
+                    </div>`;
+                }
+            });
+            
+            chatBox.innerHTML = chatHtml;
+            chatBox.scrollTop = chatBox.scrollHeight;
             
             document.getElementById('view-chat').classList.remove('hidden');
             document.getElementById('view-chat').classList.add('flex');
@@ -1206,15 +1250,16 @@
             activeChatMsgId = null;
         }
 
-        function sendReply() {
+        async function sendReply() {
             const input = document.getElementById('reply-input');
             const txt = input.value.trim();
-            if(!txt) return;
+            if(!txt || !activeChatMsgId) return;
 
+            // تحديث الواجهة فوراً
             const chatBox = document.getElementById('chat-messages');
             chatBox.insertAdjacentHTML('beforeend', `
                 <div class="flex justify-end fade-in relative z-10 mt-2">
-                    <div class="bg-brand-primary text-white max-w-[80%] p-3 rounded-2xl rounded-ss-none text-sm">
+                    <div class="bg-brand-primary text-white max-w-[80%] p-3 rounded-2xl rounded-ss-none text-sm opacity-50" id="temp-reply">
                         ${formatMessageText(txt)}
                     </div>
                 </div>
@@ -1223,25 +1268,35 @@
             chatBox.scrollTop = chatBox.scrollHeight;
             
             activeChatTrust++;
-            if(supabaseClient && activeChatMsgId) {
-                supabaseClient.from('messages').update({trust_level: activeChatTrust}).eq('id', activeChatMsgId);
+            
+            // حفظ الرد في قاعدة البيانات
+            if(supabaseClient) {
+                const msg = inboxMessages.find(m => m.id === activeChatMsgId);
+                const currentReplies = msg.replies || [];
+                const newReply = { text: txt, sender_id: currentUser.id, timestamp: new Date().toISOString() };
+                
+                const updatedReplies = [...currentReplies, newReply];
+                
+                const { error } = await supabaseClient.from('messages')
+                    .update({
+                        trust_level: activeChatTrust,
+                        replies: updatedReplies
+                    })
+                    .eq('id', activeChatMsgId);
+                    
+                if (error) {
+                    console.error("Error saving reply:", error);
+                } else {
+                    // إزالة الشفافية بعد نجاح الحفظ
+                    const tempRep = document.getElementById('temp-reply');
+                    if(tempRep) tempRep.classList.remove('opacity-50');
+                    
+                    // تحديث المصفوفة المحلية
+                    msg.replies = updatedReplies;
+                    msg.trust_level = activeChatTrust;
+                }
             }
             updateTrustUI();
-
-            if(activeChatTrust < maxTrust) {
-                setTimeout(() => {
-                    chatBox.insertAdjacentHTML('beforeend', `
-                        <div class="flex justify-start fade-in relative z-10 mt-2">
-                            <div class="bg-white dark:bg-[#2a3754] text-gray-800 dark:text-white max-w-[80%] p-3 rounded-2xl rounded-se-none text-sm">
-                                ${formatMessageText("رد تلقائي للتجربة 👽")}
-                            </div>
-                        </div>
-                    `);
-                    chatBox.scrollTop = chatBox.scrollHeight;
-                    activeChatTrust++;
-                    updateTrustUI();
-                }, 1500);
-            }
         }
 
         function updateTrustUI() {
@@ -1258,7 +1313,7 @@
                     <div class="bg-white dark:bg-[#2a3754] p-4 rounded-2xl border border-brand-primary/50">
                         <i class="fas fa-flag-checkered text-brand-primary text-xl mb-2"></i>
                         <p class="text-xs font-bold mb-3" data-ar="اكتمل عداد الثقة! يمكنك طلب كشف القناع." data-en="Trust level reached! Request mask drop.">اكتمل عداد الثقة! يمكنك طلب كشف القناع.</p>
-                        <button onclick="extendTrust()" class="bg-brand-primary text-white px-4 py-2 rounded-xl text-xs font-bold w-full" data-ar="تمد المحادثة" data-en="Extend Chat">تمديد المحادثة</button>
+                        <button onclick="extendTrust()" class="bg-brand-primary text-white px-4 py-2 rounded-xl text-xs font-bold w-full" data-ar="تمديد المحادثة" data-en="Extend Chat">تمديد المحادثة</button>
                     </div>
                 `;
                 applyTranslations();
@@ -1271,6 +1326,12 @@
             document.getElementById('mask-drop-action').classList.add('hidden');
             document.getElementById('chat-input-area').classList.remove('hidden');
             document.getElementById('chat-input-area').classList.add('flex');
+            
+            // تحديث الثقة في القاعدة عند التمديد
+            if(supabaseClient && activeChatMsgId) {
+                supabaseClient.from('messages').update({trust_level: activeChatTrust}).eq('id', activeChatMsgId);
+            }
+            
             updateTrustUI();
         }
 
