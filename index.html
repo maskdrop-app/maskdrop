@@ -97,10 +97,10 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-0 sm:p-4 bg-gray-100 dark:bg-[#1a1a2e] text-gray-900 dark:text-white transition-colors duration-300 overflow-hidden">
+<body class="min-h-screen flex items-center justify-center p-4 sm:p-0 bg-gray-100 dark:bg-[#1a1a2e] text-gray-900 dark:text-white transition-colors duration-300">
 
-    <!-- Container uses 100dvh to fix mobile browser address bar overlap issues -->
-    <div class="bg-white dark:bg-brand-secondary w-full max-w-md md:max-w-2xl lg:max-w-4xl mx-auto sm:rounded-3xl shadow-xl overflow-hidden relative h-[100dvh] sm:h-[800px] sm:max-h-[90vh] flex flex-col sm:border border-gray-200 dark:border-brand-light transition-colors duration-300">
+    <!-- Container layout fixed for mobile screens -->
+    <div class="bg-white dark:bg-brand-secondary w-full max-w-md md:max-w-2xl lg:max-w-4xl mx-auto sm:rounded-3xl shadow-xl overflow-hidden relative h-[100vh] sm:h-[800px] sm:max-h-[90vh] flex flex-col sm:border border-gray-200 dark:border-brand-light transition-colors duration-300">
         
         <!-- Loading Overlay -->
         <div id="global-loader" class="absolute inset-0 bg-white dark:bg-brand-dark z-[200] flex flex-col items-center justify-center fade-in">
@@ -639,12 +639,11 @@
         let userProfile = null;
         let currentLang = 'ar';
         let currentTheme = 'dark';
-        let allMessages = []; // المدمجة
+        let allMessages = []; 
         let archivedMessages = [];
         let activeChatMsgId = null;
         let activeChatTrust = 0;
         let activeChatMaxTrust = 10;
-        let currentInboxFilter = 'received'; // no longer technically needed for UI toggle, but kept for state
         
         let publicTargetProfile = null; 
 
@@ -760,7 +759,6 @@
             errDiv.classList.add('hidden');
             successDiv.classList.add('hidden');
 
-            // 1. Check if username exists
             const { data: existing } = await supabaseClient.from('profiles').select('id').eq('username', username).single();
             if(existing) {
                 errDiv.innerText = currentLang === 'ar' ? "اسم المستخدم محجوز" : "Username taken";
@@ -769,7 +767,6 @@
                 return;
             }
 
-            // 2. Sign Up Auth
             const { data, error } = await supabaseClient.auth.signUp({ email, password: pass });
             
             if (error) {
@@ -778,7 +775,6 @@
                 return;
             }
 
-            // 3. Create Profile Entry
             if(data.user) {
                 const rndAvatar = allAvatars[Math.floor(Math.random() * allAvatars.length)];
                 const { error: profileError } = await supabaseClient.from('profiles').insert([
@@ -1112,7 +1108,6 @@
 
                     const getLatestTime = (m) => m.replies && m.replies.length > 0 ? new Date(m.replies[m.replies.length - 1].timestamp).getTime() : new Date(m.created_at).getTime();
 
-                    // دمج الرسائل في قائمة واحدة
                     allMessages = msgs.filter(m => !m.is_archived);
                     allMessages.sort((a, b) => getLatestTime(b) - getLatestTime(a));
 
@@ -1135,10 +1130,10 @@
 
         function updateActiveChat(updatedMsg) {
             const chatBox = document.getElementById('chat-messages');
-            let isSenderView = updatedMsg.sender_id === currentUser.id;
+            let isMyMessage = updatedMsg.sender_id === currentUser.id;
             let chatHtml = '';
             
-            if (isSenderView) {
+            if (isMyMessage) {
                  chatHtml += `
                 <div class="flex justify-end relative z-10 mb-4">
                     <div class="bg-brand-primary text-white max-w-[80%] p-3 rounded-2xl rounded-ss-none text-sm leading-relaxed shadow-sm">
@@ -1204,7 +1199,6 @@
                         const rec = payload.new;
                         if (rec.sender_id === currentUser.id || rec.receiver_id === currentUser.id) {
                             
-                            // Handling reading status if chat is currently open
                             if (activeChatMsgId === rec.id) {
                                 const replies = rec.replies || [];
                                 const lastSenderId = replies.length > 0 ? replies[replies.length - 1].sender_id : rec.sender_id;
@@ -1227,25 +1221,6 @@
             }
         }
 
-        function filterInbox(type) {
-            currentInboxFilter = type;
-            const btnRec = document.getElementById('btn-filter-received');
-            const btnSnt = document.getElementById('btn-filter-sent');
-            const title = document.getElementById('inbox-title');
-            
-            if(type === 'received') {
-                btnRec.className = 'cursor-pointer px-4 py-2 rounded-lg text-sm font-bold bg-white dark:bg-brand-primary text-gray-900 dark:text-white shadow-sm transition-all relative';
-                btnSnt.className = 'cursor-pointer px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-all relative';
-                title.setAttribute('data-ar', 'الرسائل المستلمة'); title.setAttribute('data-en', 'Received Messages');
-            } else {
-                btnSnt.className = 'cursor-pointer px-4 py-2 rounded-lg text-sm font-bold bg-white dark:bg-brand-primary text-gray-900 dark:text-white shadow-sm transition-all relative';
-                btnRec.className = 'cursor-pointer px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-all relative';
-                title.setAttribute('data-ar', 'الرسائل المرسلة'); title.setAttribute('data-en', 'Sent Messages');
-            }
-            applyTranslations();
-            renderInbox();
-        }
-
         function renderInbox() {
             updateTabBadges();
             
@@ -1254,11 +1229,6 @@
             
             if(allMessages.length === 0) {
                 list.innerHTML = ''; list.appendChild(empty); empty.classList.remove('hidden'); empty.classList.add('block');
-                const emptyTextAr = 'لا توجد رسائل';
-                const emptyTextEn = 'No messages';
-                empty.querySelector('p').setAttribute('data-ar', emptyTextAr);
-                empty.querySelector('p').setAttribute('data-en', emptyTextEn);
-                applyTranslations();
                 return;
             }
             
@@ -1278,7 +1248,6 @@
                 let unreadClass = '';
                 let iconClass = '';
                 let statusBadge = '';
-                let borderClass = '';
                 let typeLabel = '';
 
                 const replies = msg.replies || [];
@@ -1299,18 +1268,8 @@
                     senderLabel = msg.is_revealed ? 'كُشف القناع' : `مجهول #${safeId}`;
                     senderColor = msg.is_revealed ? 'text-green-600 bg-green-100 dark:bg-green-900/30' : 'text-brand-primary bg-brand-primary/10';
                     iconClass = msg.is_revealed ? 'fa-user' : 'fa-user-secret';
-                    borderClass = 'border-s-4 border-brand-primary';
-                    typeLabel = `<span class="text-[10px] bg-brand-primary/10 text-brand-primary border border-brand-primary/20 px-2 py-0.5 rounded-md font-bold flex items-center gap-1 shadow-sm">${currentLang === 'ar' ? 'واردة <i class="fas fa-arrow-down"></i>' : 'Received <i class="fas fa-arrow-down"></i>'}</span>`;
-                    
-                    if (isUnreadForMe) unreadClass = 'msg-unread border-brand-primary';
-
-                    actionBtn = `
-                        <button onclick="archiveMessageUI('${msg.id}', event)" class="cursor-pointer text-gray-500 bg-gray-200 dark:bg-[#2a3754] w-8 h-8 rounded-full flex items-center justify-center hover:text-brand-primary transition shadow-sm" title="أرشفة">
-                            <i class="fas fa-box-archive text-xs pointer-events-none"></i>
-                        </button>
-                        <button onclick="deleteMessageUI('${msg.id}', event)" class="cursor-pointer text-red-500 bg-red-50 dark:bg-red-900/20 w-8 h-8 rounded-full flex items-center justify-center hover:text-red-700 transition shadow-sm" title="حذف نهائي">
-                            <i class="fas fa-trash-alt text-xs pointer-events-none"></i>
-                        </button>`;
+                    typeLabel = `<span class="text-[9px] bg-brand-primary/10 text-brand-primary border border-brand-primary/20 px-1.5 py-0.5 rounded font-bold whitespace-nowrap">${currentLang === 'ar' ? 'واردة <i class="fas fa-arrow-down ms-0.5"></i>' : 'Received <i class="fas fa-arrow-down ms-0.5"></i>'}</span>`;
+                    if (isUnreadForMe) unreadClass = 'msg-unread border-s-4 border-brand-primary';
                 } 
                 // مرسلة (Sender) 
                 else {
@@ -1318,19 +1277,20 @@
                     senderLabel = `إلى: ${receiverName}`;
                     senderColor = 'text-blue-600 bg-blue-100 dark:bg-blue-900/30';
                     iconClass = 'fa-paper-plane';
-                    borderClass = 'border-s-4 border-blue-500';
-                    typeLabel = `<span class="text-[10px] bg-blue-500/10 text-blue-500 border border-blue-500/20 px-2 py-0.5 rounded-md font-bold flex items-center gap-1 shadow-sm">${currentLang === 'ar' ? 'مرسلة <i class="fas fa-arrow-up"></i>' : 'Sent <i class="fas fa-arrow-up"></i>'}</span>`;
-                    
-                    if (isUnreadForMe) unreadClass = 'msg-unread-sent border-blue-500';
-                    
-                    actionBtn = `
-                        <button onclick="deleteMessageUI('${msg.id}', event)" class="cursor-pointer text-red-500 bg-red-50 dark:bg-red-900/20 w-8 h-8 rounded-full flex items-center justify-center hover:text-red-700 transition shadow-sm" title="حذف نهائي">
-                            <i class="fas fa-trash-alt text-xs pointer-events-none"></i>
-                        </button>`;
+                    typeLabel = `<span class="text-[9px] bg-blue-500/10 text-blue-500 border border-blue-500/20 px-1.5 py-0.5 rounded font-bold whitespace-nowrap">${currentLang === 'ar' ? 'مرسلة <i class="fas fa-arrow-up ms-0.5"></i>' : 'Sent <i class="fas fa-arrow-up ms-0.5"></i>'}</span>`;
+                    if (isUnreadForMe) unreadClass = 'msg-unread-sent border-s-4 border-blue-500';
                 }
+                
+                actionBtn = `
+                    <button onclick="archiveMessageUI('${msg.id}', event)" class="cursor-pointer text-gray-500 bg-gray-200 dark:bg-[#2a3754] w-8 h-8 rounded-full flex items-center justify-center hover:text-brand-primary transition shadow-sm shrink-0" title="أرشفة">
+                        <i class="fas fa-box-archive text-xs pointer-events-none"></i>
+                    </button>
+                    <button onclick="deleteMessageUI('${msg.id}', event)" class="cursor-pointer text-red-500 bg-red-50 dark:bg-red-900/20 w-8 h-8 rounded-full flex items-center justify-center hover:text-red-700 transition shadow-sm shrink-0" title="حذف نهائي">
+                        <i class="fas fa-trash-alt text-xs pointer-events-none"></i>
+                    </button>`;
 
                 html += `
-                <div class="group msg-card fade-in w-full bg-gray-50 dark:bg-[#1f2940] p-4 rounded-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-[#2a3754] active:scale-[0.98] transition-all ${borderClass} ${unreadClass} shadow-sm flex flex-col gap-3" id="msg-${msg.id}" onclick="openChat('${msg.id}')">
+                <div class="group msg-card fade-in w-full max-w-3xl mx-auto bg-gray-50 dark:bg-[#1f2940] p-4 rounded-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-[#2a3754] active:scale-[0.98] transition-all border border-transparent hover:border-gray-200 dark:hover:border-gray-700 ${unreadClass} shadow-sm flex flex-col gap-3" id="msg-${msg.id}" onclick="openChat('${msg.id}')">
                     <div class="flex justify-between items-start gap-2">
                         <div class="flex items-center gap-2 shrink-0 max-w-[65%]">
                             <div class="w-8 h-8 rounded-full ${senderColor.split(' ')[1]} ${senderColor.split(' ')[0]} flex items-center justify-center shrink-0">
@@ -1377,7 +1337,6 @@
                     alert(currentLang === 'ar' ? 'فشل الحذف، يرجى تفعيل صلاحيات الحذف (RLS) في الخادم' : 'Delete failed (Check RLS policy)');
                     return; 
                 }
-                
                 loadInbox(); 
             }
         }
@@ -1412,7 +1371,7 @@
             archivedMessages.forEach(msg => {
                 const formattedContent = formatMessageText(msg.content);
                 html += `
-                <div class="relative bg-gray-50 dark:bg-[#1f2940] p-4 rounded-2xl border-s-4 border-gray-400 opacity-80 w-full max-w-3xl mx-auto shadow-sm flex justify-between items-center cursor-pointer" onclick="openChat('${msg.id}')" id="arch-${msg.id}">
+                <div class="relative bg-gray-50 dark:bg-[#1f2940] p-4 rounded-2xl border border-gray-200 dark:border-gray-700 opacity-80 w-full max-w-3xl mx-auto shadow-sm flex justify-between items-center cursor-pointer" onclick="openChat('${msg.id}')" id="arch-${msg.id}">
                     <p class="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">${formattedContent}</p>
                     <button onclick="deleteMessageUI('${msg.id}', event)" class="cursor-pointer ms-2 text-red-500 bg-red-50 dark:bg-red-900/20 w-8 h-8 rounded-full flex items-center justify-center hover:text-red-700 transition shadow-sm shrink-0" title="حذف نهائي">
                         <i class="fas fa-trash-alt text-xs pointer-events-none"></i>
@@ -1586,12 +1545,10 @@
                     .eq('id', activeChatMsgId);
                     
                 if (error) {
-                    // إظهار الخطأ وعدم إخفائه بصمت
                     console.error("Update Error: ", error);
                     document.getElementById(tempId)?.remove();
-                    alert((currentLang === 'ar' ? 'فشل الإرسال (مشكلة في الصلاحيات RLS): ' : 'Send failed (RLS issue): ') + error.message);
+                    alert('فشل الإرسال (مشكلة في الصلاحيات RLS): ' + error.message);
                 } else {
-                    // نجاح الإرسال، إزالة الشفافية لتأكيد الوصول
                     const tempMsgElement = document.getElementById(tempId);
                     if (tempMsgElement && tempMsgElement.firstElementChild) {
                         tempMsgElement.firstElementChild.classList.remove('opacity-50');
