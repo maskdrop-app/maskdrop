@@ -1,5 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/:user", "destination": "/index.html?u=:user" }
-  ]
-}
