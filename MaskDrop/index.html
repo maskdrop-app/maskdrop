@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="html-root" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <!-- Facebook Instant Games SDK -->
+    <script src="https://connect.facebook.net/en_US/fbinstant.7.1.js"></script>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>قناع - رسائل مجهولة مع تحدي</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Supabase SDK V2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Cairo', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            dark: '#1a1a2e',
+                            primary: '#e94560',
+                            secondary: '#16213e',
+                            light: '#0f3460'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #0f3460; }
+        
+        .fade-in { animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .scale-in { animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.9) rotate(-2deg); }
+            to { opacity: 1; transform: scale(1) rotate(0); }
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        
+        .emoji-scroll::-webkit-scrollbar { width: 4px; }
+        .emoji-scroll::-webkit-scrollbar-thumb { background: #e94560; border-radius: 4px; }
+        
+        .settings-btn-active {
+            background-color: #e94560 !important;
+            color: white !important;
+            border-color: #e94560 !important;
+        }
+        
+        .chat-bg {
+            background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23e94560' fill-opacity='1' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='3'/%3E%3Ccircle cx='13' cy='13' r='3'/%3E%3C/g%3E%3C/svg%3E");
+            background-attachment: fixed;
+        }
+        
+        /* Spinner */
+        .loader {
+            border: 3px solid #f3f3f3; border-top: 3px solid #e94560; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 sm:p-0 bg-gray-100 dark:bg-[#1a1a2e] text-gray-900 dark:text-white transition-colors duration-300">
+
+    <div class="bg-white dark:bg-brand-secondary w-full max-w-md sm:rounded-3xl shadow-xl overflow-hidden relative h-[100vh] sm:h-[800px] sm:max-h-[90vh] flex flex-col sm:border border-gray-200 dark:border-brand-light transition-colors duration-300">
+        
+        <!-- Loading Overlay -->
+        <div id="global-loader" class="absolute inset-0 bg-white dark:bg-brand-dark z-[200] flex flex-col items-center justify-center fade-in">
+            <div class="w-16 h-16 rounded-full bg-brand-primary/10 flex items-center justify-center mb-4 text-brand-primary animate-pulse">
+                <i class="fas fa-mask text-3xl"></i>
+            </div>
+            <div class="loader"></div>
+            <p class="mt-4 text-gray-500 text-sm font-bold" data-ar="جاري التحميل..." data-en="Loading...">جاري التحميل...</p>
+        </div>
+
+        <!-- ==================== 1. LOGIN VIEW ==================== -->
+        <div id="view-login" class="hidden flex-1 overflow-y-auto flex-col justify-center p-8 fade-in h-full bg-gray-50 dark:bg-brand-dark z-50 absolute inset-0 transition-colors duration-300">
+            <div class="text-center mb-8 mt-4">
+                <div class="w-20 h-20 mx-auto rounded-full bg-brand-primary flex items-center justify-center mb-4 text-white">
+                    <i class="fas fa-mask text-4xl"></i>
+                </div>
+                <h1 class="font-bold text-3xl tracking-wide" data-ar="قِـنـاع" data-en="Mask">قِـنـاع</h1>
+                <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm" data-ar="تجرأ، واكتشف من خلف القناع!" data-en="Dare to discover who's behind the mask!">تجرأ، واكتشف من خلف القناع!</p>
+            </div>
+
+            <div class="space-y-4">
+                <div id="login-error" class="hidden bg-red-100 text-red-600 p-3 rounded-xl text-sm text-center font-bold"></div>
+                <div>
+                    <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1" data-ar="البريد الإلكتروني" data-en="Email Address">البريد الإلكتروني</label>
+                    <div class="relative">
+                        <i class="fas fa-envelope absolute start-4 top-3.5 text-gray-400"></i>
+                        <input type="email" id="login-email" data-ar-ph="example@email.com" data-en-ph="example@email.com" placeholder="example@email.com" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-900 dark:text-white rounded-xl ps-10 pe-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary transition text-start" dir="ltr">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1" data-ar="كلمة المرور" data-en="Password">كلمة المرور</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute start-4 top-3.5 text-gray-400"></i>
+                        <input type="password" id="login-pass" data-ar-ph="••••••••" data-en-ph="••••••••" placeholder="••••••••" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-900 dark:text-white rounded-xl ps-10 pe-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary transition text-start" dir="ltr">
+                    </div>
+                </div>
+                <button onclick="login()" id="btn-login" class="w-full bg-brand-primary text-white font-bold py-3 rounded-xl hover:brightness-110 active:scale-95 transition-all duration-150 mt-4 flex justify-center items-center gap-2">
+                    <span data-ar="تسجيل الدخول" data-en="Login">تسجيل الدخول</span>
+                </button>
+                <div class="text-center mt-4">
+                    <button onclick="showForgotPassword()" class="text-sm text-gray-500 dark:text-gray-400 hover:text-brand-primary dark:hover:text-white transition" data-ar="نسيت كلمة المرور؟" data-en="Forgot Password?">نسيت كلمة المرور؟</button>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center pt-6 border-t border-gray-200 dark:border-brand-light pb-4">
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    <span data-ar="ليس لديك حساب؟" data-en="Don't have an account?">ليس لديك حساب؟</span> 
+                    <button onclick="showRegister()" class="text-brand-primary font-bold hover:underline ml-1 mr-1" data-ar="سجل الآن" data-en="Register Now">سجل الآن</button>
+                </p>
+            </div>
+        </div>
+
+        <!-- ==================== 1.1 REGISTER VIEW ==================== -->
+        <div id="view-register" class="hidden flex-1 overflow-y-auto flex-col justify-center p-8 fade-in h-full bg-gray-50 dark:bg-brand-dark z-50 absolute inset-0 transition-colors duration-300">
+            <div class="text-center mb-6 mt-4">
+                <h1 class="font-bold text-2xl tracking-wide text-brand-primary" data-ar="إنشاء حساب جديد" data-en="Create Account">إنشاء حساب جديد</h1>
+                <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm" data-ar="انضم إلينا وابدأ بتلقي رسائلك المجهولة!" data-en="Join us and start receiving anonymous messages!">انضم إلينا وابدأ بتلقي رسائلك المجهولة!</p>
+            </div>
+
+            <div class="space-y-4">
+                <div id="reg-error" class="hidden bg-red-100 text-red-600 p-3 rounded-xl text-sm text-center font-bold"></div>
+                <div>
+                    <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1" data-ar="الاسم الشخصي" data-en="Full Name">الاسم الشخصي</label>
+                    <div class="relative">
+                        <i class="fas fa-user absolute start-4 top-3.5 text-gray-400"></i>
+                        <input type="text" id="reg-name" data-ar-ph="سارة أحمد" data-en-ph="Sarah Ahmed" placeholder="سارة أحمد" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-900 dark:text-white rounded-xl ps-10 pe-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary transition text-start">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1" data-ar="اسم المستخدم" data-en="Username">اسم المستخدم</label>
+                    <div class="relative">
+                        <i class="fas fa-at absolute start-4 top-3.5 text-gray-400"></i>
+                        <input type="text" id="reg-username" data-ar-ph="username" data-en-ph="username" placeholder="username" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-900 dark:text-white rounded-xl ps-10 pe-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary transition text-start" dir="ltr">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1" data-ar="البريد الإلكتروني" data-en="Email Address">البريد الإلكتروني</label>
+                    <div class="relative">
+                        <i class="fas fa-envelope absolute start-4 top-3.5 text-gray-400"></i>
+                        <input type="email" id="reg-email" data-ar-ph="example@email.com" data-en-ph="example@email.com" placeholder="example@email.com" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-900 dark:text-white rounded-xl ps-10 pe-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary transition text-start" dir="ltr">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1" data-ar="كلمة المرور" data-en="Password">كلمة المرور</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute start-4 top-3.5 text-gray-400"></i>
+                        <input type="password" id="reg-pass" data-ar-ph="••••••••" data-en-ph="••••••••" placeholder="••••••••" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-900 dark:text-white rounded-xl ps-10 pe-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary transition text-start" dir="ltr">
+                    </div>
+                </div>
+                <button onclick="register()" id="btn-reg" class="w-full bg-brand-primary text-white font-bold py-3 rounded-xl hover:brightness-110 active:scale-95 transition-all duration-150 mt-4 flex justify-center items-center gap-2">
+                    <span data-ar="سجل الآن" data-en="Register">سجل الآن</span>
+                </button>
+            </div>
+
+            <div class="mt-8 text-center pt-6 border-t border-gray-200 dark:border-brand-light pb-4">
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    <span data-ar="لديك حساب بالفعل؟" data-en="Already have an account?">لديك حساب بالفعل؟</span> 
+                    <button onclick="showLogin()" class="text-brand-primary font-bold hover:underline ml-1 mr-1" data-ar="تسجيل الدخول" data-en="Login Here">تسجيل الدخول</button>
+                </p>
+            </div>
+        </div>
+
+        <!-- ==================== 1.2 FORGOT PASSWORD VIEW ==================== -->
+        <div id="view-forgot" class="hidden flex-1 overflow-y-auto flex-col justify-center p-8 fade-in h-full bg-gray-50 dark:bg-brand-dark z-50 absolute inset-0 transition-colors duration-300">
+            <button onclick="showLogin()" class="absolute top-6 start-6 text-gray-500 hover:text-gray-800 dark:hover:text-white transition">
+                <i class="fas fa-arrow-right text-xl rtl-arrow"></i>
+            </button>
+            <div class="text-center mb-10">
+                <div class="w-16 h-16 mx-auto rounded-full bg-gray-200 dark:bg-[#1f2940] flex items-center justify-center mb-4 text-brand-primary">
+                    <i class="fas fa-key text-2xl"></i>
+                </div>
+                <h1 class="font-bold text-2xl tracking-wide" data-ar="استعادة كلمة المرور" data-en="Reset Password">استعادة كلمة المرور</h1>
+                <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm" data-ar="أدخل بريدك الإلكتروني وسنرسل لك رابطاً لاستعادة حسابك." data-en="Enter your email and we'll send you a link to reset your password.">أدخل بريدك الإلكتروني وسنرسل لك رابطاً لاستعادة حسابك.</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1" data-ar="البريد الإلكتروني" data-en="Email Address">البريد الإلكتروني</label>
+                    <div class="relative">
+                        <i class="fas fa-envelope absolute start-4 top-3.5 text-gray-400"></i>
+                        <input type="email" id="forgot-email" data-ar-ph="example@email.com" data-en-ph="example@email.com" placeholder="example@email.com" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-900 dark:text-white rounded-xl ps-10 pe-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary transition text-start" dir="ltr">
+                    </div>
+                </div>
+                <button onclick="simulateReset()" class="w-full bg-brand-primary text-white font-bold py-3 rounded-xl hover:brightness-110 active:scale-95 transition-all duration-150 mt-4">
+                    <span data-ar="إرسال رابط الاستعادة" data-en="Send Reset Link">إرسال رابط الاستعادة</span>
+                </button>
+            </div>
+        </div>
+
+
+        <!-- ==================== 2. MAIN APP VIEW ==================== -->
+        <div id="view-main" class="hidden flex-1 flex-col h-full fade-in">
+            <!-- App Header -->
+            <div class="bg-gray-100 dark:bg-brand-light p-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-700 z-10 transition-colors duration-300">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center text-white">
+                        <i class="fas fa-mask text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-xl tracking-wide text-gray-800 dark:text-white" data-ar="قِـنـاع" data-en="Mask">قِـنـاع</h1>
+                        <p class="text-xs text-gray-500 dark:text-gray-300" id="header-welcome-msg">أهلاً بك 👋</p>
+                    </div>
+                </div>
+                <button onclick="logout()" class="text-gray-400 hover:text-brand-primary active:scale-90 transition-transform" title="تسجيل الخروج">
+                    <i class="fas fa-sign-out-alt text-xl"></i>
+                </button>
+            </div>
+
+            <!-- TAB: Inbox -->
+            <div id="tab-inbox" class="flex-1 overflow-y-auto p-4 space-y-4">
+                <!-- Send to specific user globally -->
+                <div class="bg-white dark:bg-[#1f2940] p-2 rounded-2xl border border-gray-200 dark:border-gray-700 flex gap-2 items-center shadow-sm">
+                    <i class="fas fa-search text-gray-400 ms-3"></i>
+                    <input type="text" id="direct-send-username" data-ar-ph="أدخل اسم المستخدم لإرسال رسالة..." data-en-ph="Enter username to send message..." placeholder="أدخل اسم المستخدم لإرسال رسالة..." class="flex-1 bg-transparent text-sm text-gray-900 dark:text-white outline-none" dir="ltr">
+                    <button onclick="sendToSpecificUser()" class="bg-brand-primary text-white w-10 h-10 rounded-xl hover:brightness-110 active:scale-95 transition-all flex items-center justify-center">
+                        <i class="fas fa-paper-plane text-sm fa-flip-horizontal rtl-arrow-reverse"></i>
+                    </button>
+                </div>
+
+                <div id="inbox-header" class="flex justify-between items-center mb-2 border-b border-gray-200 dark:border-gray-700 pb-2">
+                    <h2 class="text-gray-500 dark:text-gray-400 text-sm font-semibold flex items-center gap-2">
+                        <span data-ar="صندوق الوارد" data-en="Inbox">صندوق الوارد</span>
+                        <span id="inbox-count-badge" class="bg-brand-primary text-white text-[10px] px-2 py-1 rounded-full hidden">جديد</span>
+                    </h2>
+                </div>
+                <div id="inbox-list" class="space-y-4">
+                    <div id="empty-inbox" class="text-center text-gray-400 dark:text-gray-500 py-10 text-sm block">
+                        <i class="fas fa-inbox text-4xl mb-3 opacity-50"></i>
+                        <p data-ar="لا توجد رسائل جديدة" data-en="No new messages">لا توجد رسائل جديدة</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Archive -->
+            <div id="tab-archive" class="hidden flex-1 overflow-y-auto p-4 space-y-4 fade-in">
+                <h2 class="text-gray-500 dark:text-gray-400 text-sm font-semibold mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
+                    <i class="fas fa-box-archive me-2"></i> <span data-ar="الرسائل المؤرشفة" data-en="Archived Messages">الرسائل المؤرشفة</span>
+                </h2>
+                <div id="archive-list" class="space-y-4">
+                    <div id="empty-archive" class="text-center text-gray-400 dark:text-gray-500 py-10 text-sm block">
+                        <i class="fas fa-folder-open text-4xl mb-3 opacity-50"></i>
+                        <p data-ar="لا توجد رسائل مؤرشفة" data-en="No archived messages">لا توجد رسائل مؤرشفة</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Profile & Settings -->
+            <div id="tab-profile" class="hidden flex-1 overflow-y-auto p-4 space-y-6 fade-in">
+                <!-- User Info -->
+                <div class="text-center mt-2 relative group cursor-pointer" onclick="openAvatarModal()">
+                    <div class="w-24 h-24 mx-auto rounded-full border-4 border-brand-primary p-1 mb-1 relative hover:scale-105 transition-transform bg-white dark:bg-transparent">
+                        <img id="avatar-profile" src="https://api.dicebear.com/7.x/avataaars/svg?seed=MaskUser&backgroundColor=e94560" alt="Avatar" class="w-full h-full rounded-full bg-gray-200 dark:bg-brand-light object-cover">
+                        <div class="absolute bottom-0 end-0 bg-brand-primary text-white w-7 h-7 rounded-full flex items-center justify-center border-2 border-white dark:border-[#1f2940]">
+                            <i class="fas fa-camera text-xs"></i>
+                        </div>
+                    </div>
+                    <span class="text-[10px] text-brand-primary font-bold mb-2 block" data-ar="اضغط لتغيير الشخصية" data-en="Tap to change avatar">اضغط لتغيير الشخصية</span>
+                    <h2 id="profile-display-name" class="text-xl font-bold text-gray-900 dark:text-white">...</h2>
+                    <p id="profile-display-username" class="text-sm text-gray-500 dark:text-gray-400">@...</p>
+                </div>
+
+                <!-- Link Share Card -->
+                <div class="bg-gradient-to-r from-brand-primary to-purple-600 rounded-2xl p-5 text-center relative overflow-hidden border border-transparent">
+                    <div class="absolute -end-4 -bottom-4 text-white/10 text-8xl"><i class="fas fa-link"></i></div>
+                    <h3 class="font-bold text-white mb-2 relative z-10" data-ar="احصل على رسائل مجهولة!" data-en="Get anonymous messages!">احصل على رسائل مجهولة!</h3>
+                    <p class="text-xs text-white/80 mb-4 relative z-10" data-ar="انسخ الرابط وشاركه في انستجرام أو سناب شات" data-en="Copy your link and share it on Instagram or Snapchat">انسخ الرابط وشاركه في انستجرام أو سناب شات</p>
+                    
+                    <div class="flex items-center gap-2 bg-brand-dark/50 p-2 rounded-xl relative z-10 border border-white/20">
+                        <input type="text" id="share-link-input" readonly value="" class="bg-transparent text-sm text-white flex-1 outline-none text-start" dir="ltr">
+                        <button onclick="copyLink()" class="bg-white text-brand-primary hover:bg-gray-100 active:scale-95 px-3 py-1.5 rounded-lg text-sm font-bold transition-all duration-150">
+                            <i class="fas fa-copy"></i> <span data-ar="نسخ" data-en="Copy">نسخ</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Profile Edit Section (Collapsible) -->
+                <div class="space-y-2">
+                    <button onclick="toggleProfileEdit()" class="w-full flex justify-between items-center bg-white dark:bg-[#1f2940] p-4 rounded-2xl border border-gray-200 dark:border-gray-700 active:scale-[0.98] transition-all">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-[#2a3754] flex items-center justify-center text-gray-500">
+                                <i class="fas fa-user-edit"></i>
+                            </div>
+                            <span class="text-sm font-bold text-gray-800 dark:text-white" data-ar="تعديل الملف الشخصي" data-en="Edit Profile">تعديل الملف الشخصي</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-gray-500 transition-transform duration-300" id="edit-profile-icon"></i>
+                    </button>
+                    <div id="edit-profile-form" class="hidden bg-white dark:bg-[#1f2940] p-4 rounded-2xl border border-gray-200 dark:border-gray-700 space-y-4">
+                        <div>
+                            <label class="text-xs text-gray-500 block mb-1" data-ar="الاسم الشخصي" data-en="Full Name">الاسم الشخصي</label>
+                            <input type="text" id="edit-fullname" class="w-full bg-gray-100 dark:bg-brand-dark text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm outline-none border border-transparent focus:border-brand-primary">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-500 block mb-1" data-ar="اسم المستخدم (يمكن تغييره مرة كل 30 يوم)" data-en="Username (Changeable every 30 days)">اسم المستخدم (يمكن تغييره مرة كل 30 يوم)</label>
+                            <input type="text" id="edit-username" dir="ltr" class="w-full bg-gray-100 dark:bg-brand-dark text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm outline-none text-start border border-transparent focus:border-brand-primary">
+                        </div>
+                        <button onclick="saveProfileEdit()" id="btn-save-profile" class="w-full bg-brand-primary text-white text-sm font-bold py-2.5 rounded-xl hover:brightness-110 active:scale-95 transition-all flex justify-center items-center gap-2">
+                            <span data-ar="حفظ التعديلات" data-en="Save Changes">حفظ التعديلات</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Actions (Tutorial & Privacy) -->
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="openTutorial()" class="bg-white dark:bg-[#1f2940] border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 py-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-[#2a3754] active:scale-95 transition-all duration-150 text-xs font-bold flex flex-col items-center justify-center gap-2">
+                        <i class="fas fa-magic text-brand-primary text-xl"></i>
+                        <span data-ar="كيف يعمل التطبيق؟" data-en="How it works?">كيف يعمل التطبيق؟</span>
+                    </button>
+                    <button onclick="openPrivacy()" class="bg-white dark:bg-[#1f2940] border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 py-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-[#2a3754] active:scale-95 transition-all duration-150 text-xs font-bold flex flex-col items-center justify-center gap-2">
+                        <i class="fas fa-shield-alt text-brand-primary text-xl"></i>
+                        <span data-ar="سياسة الخصوصية" data-en="Privacy Policy">سياسة الخصوصية</span>
+                    </button>
+                </div>
+
+                <!-- App Settings Section -->
+                <div class="space-y-3">
+                    <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 px-2" data-ar="الإعدادات" data-en="Settings">الإعدادات</h3>
+                    
+                    <!-- Appearance -->
+                    <div class="bg-white dark:bg-[#1f2940] p-3 rounded-2xl flex justify-between items-center border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-[#2a3754] flex items-center justify-center text-gray-500">
+                                <i class="fas fa-palette"></i>
+                            </div>
+                            <span class="text-sm font-bold text-gray-800 dark:text-white" data-ar="المظهر" data-en="Appearance">المظهر</span>
+                        </div>
+                        <div class="flex gap-1 bg-gray-100 dark:bg-[#2a3754] p-1 rounded-xl border border-gray-200 dark:border-gray-600">
+                            <button id="theme-btn-light" onclick="setTheme('light')" class="w-8 h-8 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-[#1f2940] transition-all flex items-center justify-center" title="فاتح / Light">
+                                <i class="fas fa-sun text-sm"></i>
+                            </button>
+                            <button id="theme-btn-dark" onclick="setTheme('dark')" class="w-8 h-8 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-[#1f2940] transition-all flex items-center justify-center" title="داكن / Dark">
+                                <i class="fas fa-moon text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Language (Now RTL safe) -->
+                    <div class="bg-white dark:bg-[#1f2940] p-3 rounded-2xl flex justify-between items-center border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-[#2a3754] flex items-center justify-center text-gray-500">
+                                <i class="fas fa-globe"></i>
+                            </div>
+                            <span class="text-sm font-bold text-gray-800 dark:text-white" data-ar="اللغة" data-en="Language">اللغة</span>
+                        </div>
+                        <div class="flex gap-1 bg-gray-100 dark:bg-[#2a3754] p-1 rounded-xl border border-gray-200 dark:border-gray-600">
+                            <button id="lang-btn-ar" onclick="setLang('ar')" class="w-8 h-8 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-[#1f2940] transition-all flex items-center justify-center font-bold text-sm" title="العربية">
+                                ع
+                            </button>
+                            <button id="lang-btn-en" onclick="setLang('en')" class="w-8 h-8 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-[#1f2940] transition-all flex items-center justify-center font-black text-xs" title="English">
+                                EN
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Navigation -->
+            <div class="bg-white dark:bg-brand-secondary border-t border-gray-200 dark:border-brand-light flex justify-around items-center p-3 pb-safe z-10 transition-colors duration-300">
+                <button onclick="switchTab('inbox')" id="nav-inbox" class="flex flex-col items-center p-2 text-brand-primary active:scale-90 transition-transform relative">
+                    <i class="fas fa-envelope text-xl mb-1 relative"></i>
+                    <span class="text-[10px] font-bold" data-ar="الوارد" data-en="Inbox">الوارد</span>
+                </button>
+                <button onclick="switchTab('archive')" id="nav-archive" class="flex flex-col items-center p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 active:scale-90 transition-transform">
+                    <i class="fas fa-box-archive text-xl mb-1"></i>
+                    <span class="text-[10px] font-bold" data-ar="الأرشيف" data-en="Archive">الأرشيف</span>
+                </button>
+                <button onclick="switchTab('profile')" id="nav-profile" class="flex flex-col items-center p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 active:scale-90 transition-transform">
+                    <i class="fas fa-user text-xl mb-1"></i>
+                    <span class="text-[10px] font-bold" data-ar="حسابي" data-en="Profile">حسابي</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== 3. CHAT VIEW ==================== -->
+        <div id="view-chat" class="hidden flex-1 flex-col h-full z-30 absolute inset-0 fade-in transition-colors duration-300 overflow-hidden bg-gray-50 dark:bg-brand-dark">
+            <div class="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none z-0 chat-bg"></div>
+            
+            <!-- Chat Header -->
+            <div class="bg-white dark:bg-brand-light p-4 flex items-center z-30 border-b border-gray-200 dark:border-gray-700 relative">
+                <button onclick="closeChat()" class="text-gray-600 dark:text-white ms-2 hover:text-brand-primary active:scale-90 transition-transform">
+                    <i class="fas fa-arrow-right text-xl rtl-arrow"></i>
+                </button>
+                <div class="flex-1 ms-4">
+                    <h2 id="chat-title" class="font-bold text-md text-gray-900 dark:text-white"><i class="fas fa-user-secret ms-1"></i> <span data-ar="مجهول" data-en="Anonymous">مجهول</span></h2>
+                    <div class="mt-1">
+                        <div class="flex justify-between text-[10px] text-gray-500 dark:text-gray-400 mb-1">
+                            <span data-ar="مستوى الثقة لكسر القناع" data-en="Trust level for mask drop">مستوى الثقة لكسر القناع</span>
+                            <span id="trust-level">0/10</span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 relative overflow-hidden">
+                            <div id="trust-bar" class="bg-brand-primary h-1.5 rounded-full transition-all duration-500 relative" style="width: 0%">
+                                <div class="absolute top-0 left-0 bottom-0 right-0 bg-white/30 animate-pulse"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-4 relative z-10" id="chat-messages">
+                <!-- Messages injected here -->
+            </div>
+
+            <!-- MASK DROP ACTION BAR -->
+            <div id="mask-drop-action" class="hidden p-4 bg-gray-50 dark:bg-brand-dark border-t border-gray-200 dark:border-gray-700 text-center relative z-20">
+                <!-- Injected by JS -->
+            </div>
+
+            <!-- Chat Input -->
+            <div id="chat-input-area" class="p-3 bg-white dark:bg-brand-secondary border-t border-gray-200 dark:border-brand-light flex gap-2 items-center z-20 relative">
+                <!-- Emoji Picker -->
+                <div id="emoji-picker" class="hidden absolute bottom-[100%] start-2 mb-2 bg-white dark:bg-[#1f2940] border border-gray-200 dark:border-gray-700 p-4 rounded-3xl z-50 w-72 h-64 flex flex-col scale-in origin-bottom-left">
+                    <h4 class="text-xs font-bold text-gray-500 mb-3" data-ar="اختر إيموجي متحرك" data-en="Choose animated emoji">اختر إيموجي متحرك</h4>
+                    <div class="grid grid-cols-5 gap-3 overflow-y-auto emoji-scroll flex-1 pe-2" id="emoji-grid"></div>
+                </div>
+
+                <button onclick="toggleEmojiPicker(event)" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-[#2a3754] flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white active:scale-90 transition-all duration-150">
+                    <i class="fas fa-smile text-lg"></i>
+                </button>
+                <input type="text" id="reply-input" data-ar-ph="اكتب ردك هنا..." data-en-ph="Type your reply..." placeholder="اكتب ردك هنا..." class="flex-1 bg-gray-100 dark:bg-[#1f2940] text-sm text-gray-900 dark:text-white rounded-full px-4 py-3 outline-none focus:ring-1 focus:ring-brand-primary transition text-start">
+                <button onclick="sendReply()" class="w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center text-white hover:brightness-110 active:scale-90 transition-all duration-150">
+                    <i class="fas fa-paper-plane text-sm fa-flip-horizontal rtl-arrow-reverse"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== 4. PUBLIC SEND VIEW (Dynamic) ==================== -->
+        <div id="view-public" class="hidden flex-1 flex-col h-full bg-gray-50 dark:bg-brand-dark z-40 absolute inset-0 fade-in overflow-y-auto transition-colors duration-300">
+            <div class="p-4 flex justify-between items-center border-b border-gray-200 dark:border-brand-light bg-white dark:bg-transparent">
+                <div class="text-brand-primary font-bold"><i class="fas fa-mask text-lg me-1"></i> <span data-ar="قِـنـاع" data-en="Mask">قِـنـاع</span></div>
+                <button onclick="closePublicView()" class="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 px-3 py-1.5 rounded-full font-semibold active:scale-95 transition-all duration-150">
+                    <span data-ar="العودة" data-en="Go Back">العودة</span>
+                </button>
+            </div>
+
+            <div class="flex-1 p-6 flex flex-col items-center pt-10 relative">
+                <div class="w-24 h-24 mx-auto rounded-full border-4 border-brand-primary p-1 mb-4 z-10 relative">
+                    <img id="public-target-avatar" src="" class="w-full h-full rounded-full bg-gray-200 dark:bg-brand-light object-cover">
+                </div>
+                <h2 id="public-target-name" class="text-xl font-bold mb-1 text-gray-900 dark:text-white z-10 relative">...</h2>
+                <p id="public-target-username" class="text-sm text-gray-500 mb-8 font-mono z-10 relative">@...</p>
+
+                <!-- Send Message Form -->
+                <div id="public-msg-form" class="w-full bg-white dark:bg-[#1f2940] rounded-2xl p-4 border border-gray-200 dark:border-brand-light relative z-10">
+                    <textarea id="public-msg-input" rows="4" class="w-full bg-transparent text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none resize-none text-sm" data-ar-ph="اكتب رسالتك الصريحة هنا بكل سرية..." data-en-ph="Write your honest message secretly..." placeholder="اكتب رسالتك الصريحة هنا بكل سرية..."></textarea>
+                    
+                    <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                        <div class="text-xs text-gray-500 flex items-center gap-1 font-semibold">
+                            <i class="fas fa-lock text-brand-primary"></i> <span data-ar="هوية مخفية 100%" data-en="100% Anonymous">هوية مخفية 100%</span>
+                        </div>
+                        <button onclick="sendPublicMessage()" id="btn-send-public" class="bg-brand-primary hover:brightness-110 active:scale-95 text-white font-bold py-2 px-6 rounded-xl transition-all duration-150 flex items-center gap-2">
+                            <span data-ar="إرسال" data-en="Send">إرسال</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Professional Success Message Frame -->
+                <div id="public-success" class="hidden mt-4 w-full fade-in flex flex-col items-center justify-center p-8 bg-gradient-to-br from-green-50 to-green-100 dark:from-[#1a2538] dark:to-[#22354a] border border-green-200 dark:border-green-800/40 rounded-[2rem] shadow-sm relative overflow-hidden z-10">
+                    <div class="absolute -top-10 -end-10 text-green-500/10 dark:text-green-500/5 text-9xl"><i class="fas fa-check-circle"></i></div>
+                    
+                    <div class="w-16 h-16 bg-gradient-to-tr from-green-500 to-green-400 text-white rounded-full flex items-center justify-center text-3xl mb-5 shadow-lg shadow-green-500/30 relative z-10 scale-in">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    
+                    <h3 class="font-black text-xl text-green-800 dark:text-green-400 mb-2 relative z-10" data-ar="تم الإرسال بنجاح!" data-en="Sent Successfully!">تم الإرسال بنجاح!</h3>
+                    <p class="text-sm text-green-700/80 dark:text-green-300/80 font-semibold relative z-10 text-center leading-relaxed" data-ar="تم تسليم رسالتك بسرية تامة، لن يتمكن أحد من معرفة هويتك." data-en="Your message was delivered securely, your identity is 100% safe.">تم تسليم رسالتك بسرية تامة، لن يتمكن أحد من معرفة هويتك.</p>
+                    
+                    <button onclick="resetPublicView()" class="mt-8 bg-white dark:bg-brand-dark text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800/50 px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-green-50 dark:hover:bg-[#1a2538] active:scale-95 transition-all duration-200 relative z-10 flex items-center gap-2 shadow-sm">
+                        <i class="fas fa-redo text-xs"></i> <span data-ar="إرسال رسالة أخرى" data-en="Send another message">إرسال رسالة أخرى</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-4 text-center pb-8 border-t border-gray-200 dark:border-gray-700 mt-auto">
+                <p class="text-xs text-gray-500 mb-2" data-ar="هل تريد أن تتلقى رسائل مجهولة أيضاً؟" data-en="Want to receive anonymous messages too?">هل تريد أن تتلقى رسائل مجهولة أيضاً؟</p>
+                <button onclick="showRegister()" class="text-sm text-brand-primary font-bold hover:underline" data-ar="أنشئ حسابك الخاص مجاناً" data-en="Create your free account">أنشئ حسابك الخاص مجاناً</button>
+            </div>
+        </div>
+
+        <!-- ==================== AVATAR MODAL ==================== -->
+        <div id="avatar-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 fade-in">
+            <div class="bg-white dark:bg-brand-secondary w-full max-w-sm rounded-3xl p-6 border border-gray-200 dark:border-brand-light scale-in">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-lg text-gray-900 dark:text-white" data-ar="اختر شخصيتك" data-en="Choose your Avatar">اختر شخصيتك</h3>
+                    <button onclick="closeAvatarModal()" class="text-gray-500 hover:text-red-500 transition">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-5 gap-3" id="avatar-all-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PRIVACY POLICY MODAL ==================== -->
+        <div id="privacy-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 fade-in">
+            <div class="bg-white dark:bg-brand-secondary w-full max-w-md rounded-3xl p-6 border border-gray-200 dark:border-brand-light scale-in max-h-[80vh] flex flex-col">
+                <div class="flex justify-between items-center mb-4 border-b border-gray-200 dark:border-gray-700 pb-3">
+                    <h3 class="font-bold text-lg text-brand-primary flex items-center gap-2">
+                        <i class="fas fa-shield-alt"></i> <span data-ar="سياسة الخصوصية" data-en="Privacy Policy">سياسة الخصوصية</span>
+                    </h3>
+                    <button onclick="closePrivacy()" class="text-gray-500 hover:text-red-500 transition">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="flex-1 overflow-y-auto pe-2 text-sm text-gray-700 dark:text-gray-300 space-y-4">
+                    <p data-ar="مرحباً بك في تطبيقنا. خصوصيتك وحماية بياناتك هي أولويتنا القصوى." data-en="Welcome to our app. Your privacy and data protection are our top priorities.">مرحباً بك في تطبيقنا. خصوصيتك وحماية بياناتك هي أولويتنا القصوى.</p>
+                    
+                    <h4 class="font-bold text-gray-900 dark:text-white mt-4" data-ar="1. سرية الرسائل المجهولة" data-en="1. Anonymous Messages Confidentiality">1. سرية الرسائل المجهولة</h4>
+                    <p data-ar="التطبيق مبني على فكرة الرسائل المجهولة. نحن نضمن عدم كشف هوية المرسل للمتلقي بأي شكل من الأشكال إلا في حال قام المرسل نفسه باختيار كشف هويته طواعية من خلال ميزة 'كشف القناع' داخل المحادثة." data-en="The app is built on the concept of anonymous messaging. We guarantee that the sender's identity is not revealed to the recipient under any circumstances, unless the sender voluntarily chooses to reveal their identity through the 'Drop the Mask' feature within the chat.">التطبيق مبني على فكرة الرسائل المجهولة. نحن نضمن عدم كشف هوية المرسل للمتلقي بأي شكل من الأشكال إلا في حال قام المرسل نفسه باختيار كشف هويته طواعية من خلال ميزة 'كشف القناع' داخل المحادثة.</p>
+                    
+                    <h4 class="font-bold text-gray-900 dark:text-white mt-4" data-ar="2. جمع واستخدام البيانات" data-en="2. Data Collection and Use">2. جمع واستخدام البيانات</h4>
+                    <p data-ar="نحن نجمع فقط المعلومات الأساسية اللازمة لعمل التطبيق (مثل الاسم، البريد الإلكتروني، واسم المستخدم). لا نقوم ببيع أو مشاركة بياناتك الشخصية مع أي جهات خارجية لأغراض تسويقية. نستخدم البيانات فقط لتحسين تجربة المستخدم وإدارة الحسابات." data-en="We only collect essential information necessary for the app to function (such as name, email, and username). We do not sell or share your personal data with any third parties for marketing purposes. We use the data solely to improve user experience and manage accounts.">نحن نجمع فقط المعلومات الأساسية اللازمة لعمل التطبيق (مثل الاسم، البريد الإلكتروني، واسم المستخدم). لا نقوم ببيع أو مشاركة بياناتك الشخصية مع أي جهات خارجية لأغراض تسويقية. نستخدم البيانات فقط لتحسين تجربة المستخدم وإدارة الحسابات.</p>
+
+                    <h4 class="font-bold text-gray-900 dark:text-white mt-4" data-ar="3. الأمان والتشفير" data-en="3. Security and Encryption">3. الأمان والتشفير</h4>
+                    <p data-ar="جميع الرسائل والمحادثات التي تتم عبر منصتنا مشفرة ومحفوظة في قواعد بيانات آمنة ومحمية بأحدث تقنيات التشفير لضمان عدم وصول أي طرف غير مصرح له إليها." data-en="All messages and chats conducted on our platform are encrypted and stored in secure databases, protected by the latest encryption technologies to ensure no unauthorized access.">جميع الرسائل والمحادثات التي تتم عبر منصتنا مشفرة ومحفوظة في قواعد بيانات آمنة ومحمية بأحدث تقنيات التشفير لضمان عدم وصول أي طرف غير مصرح له إليها.</p>
+                    
+                    <h4 class="font-bold text-gray-900 dark:text-white mt-4" data-ar="4. مكافحة التنمر والمحتوى المسيء" data-en="4. Anti-Bullying and Inappropriate Content">4. مكافحة التنمر والمحتوى المسيء</h4>
+                    <p data-ar="نحن لا نتسامح مع أي شكل من أشكال التنمر أو التحرش أو إرسال محتوى مسيء. يوفر التطبيق أدوات تتيح لك حظر المستخدمين المزعجين فوراً. نحتفظ بالحق في تعليق أو حذف حساب أي مستخدم ينتهك هذه الشروط." data-en="We do not tolerate any form of bullying, harassment, or sending inappropriate content. The app provides tools that allow you to immediately block annoying users. We reserve the right to suspend or delete the account of any user who violates these terms.">نحن لا نتسامح مع أي شكل من أشكال التنمر أو التحرش أو إرسال محتوى مسيء. يوفر التطبيق أدوات تتيح لك حظر المستخدمين المزعجين فوراً. نحتفظ بالحق في تعليق أو حذف حساب أي مستخدم ينتهك هذه الشروط.</p>
+
+                    <h4 class="font-bold text-gray-900 dark:text-white mt-4" data-ar="5. التعديلات على السياسة" data-en="5. Changes to the Policy">5. التعديلات على السياسة</h4>
+                    <p data-ar="قد نقوم بتحديث سياسة الخصوصية هذه من وقت لآخر. استمرارك في استخدام التطبيق يعتبر موافقة منك على أي تعديلات تطرأ عليها." data-en="We may update this privacy policy from time to time. Your continued use of the app is considered an acceptance of any changes made to it.">قد نقوم بتحديث سياسة الخصوصية هذه من وقت لآخر. استمرارك في استخدام التطبيق يعتبر موافقة منك على أي تعديلات تطرأ عليها.</p>
+                </div>
+                <button onclick="closePrivacy()" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-800 dark:text-white font-bold py-3 rounded-xl mt-4 hover:brightness-95 active:scale-95 transition-all">
+                    <span data-ar="فهمت ذلك" data-en="I Understand">فهمت ذلك</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== TUTORIAL MODAL ==================== -->
+        <div id="tutorial-modal" class="hidden fixed inset-0 bg-brand-dark/90 backdrop-blur-md z-[100] flex items-center justify-center p-4 fade-in">
+            <div class="w-full max-w-sm text-center">
+                <div class="mb-8 relative h-32 flex justify-center items-center">
+                    <i id="tut-icon-1" class="fas fa-link text-6xl text-brand-primary absolute animate-float"></i>
+                    <i id="tut-icon-2" class="fas fa-envelope-open-text text-6xl text-blue-500 absolute opacity-0"></i>
+                    <i id="tut-icon-3" class="fas fa-theater-masks text-6xl text-green-500 absolute opacity-0"></i>
+                </div>
+                <div class="bg-white dark:bg-brand-secondary p-6 rounded-3xl border border-gray-200 dark:border-brand-light relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gray-200 dark:bg-gray-700">
+                        <div id="tut-progress" class="h-full bg-brand-primary transition-all duration-300" style="width: 33%;"></div>
+                    </div>
+                    <h3 id="tut-title" class="font-black text-xl text-gray-900 dark:text-white mb-2 mt-2">1. شارك رابطك</h3>
+                    <p id="tut-desc" class="text-sm text-gray-600 dark:text-gray-400 mb-6 min-h-[60px]">انسخ رابطك وانشره لتبدأ بتلقي الرسائل.</p>
+                    <div class="flex justify-between items-center mt-4">
+                        <button onclick="closeTutorial()" class="text-gray-400 hover:text-white text-sm font-bold">تخطي</button>
+                        <button onclick="nextTutorialStep()" class="bg-brand-primary text-white px-6 py-2 rounded-xl font-bold">التالي</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Logic and Supabase Integration -->
+    <script>
+        /* =========================================================
+           1. SUPABASE CONFIGURATION (REPLACE WITH YOUR KEYS)
+           ========================================================= */
+        const SUPABASE_URL = 'https://uxmhzxlufxbsykdndvei.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'sb_publishable_OYiwkiKHHVb4LuJrYU-NNA_svj8nlzx'; 
+        
+        let supabaseClient;
+        try {
+            if (SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            } else {
+                console.warn("Supabase keys not configured. App will run in degraded/mock mode.");
+            }
+        } catch (e) {
+            console.error("Failed to init Supabase", e);
+        }
+
+        /* =========================================================
+           2. GLOBAL STATE
+           ========================================================= */
+        let currentUser = null;
+        let userProfile = null;
+        let currentLang = 'ar';
+        let currentTheme = 'dark';
+        let inboxMessages = [];
+        let archivedMessages = [];
+        let activeChatMsgId = null;
+        let activeChatTrust = 0;
+        let maxTrust = 10;
+        
+        let publicTargetProfile = null; // Used when accessing via ?u=username
+
+        /* =========================================================
+           3. UI SYSTEM & CONSTANTS
+           ========================================================= */
+        const allAvatars = [
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&backgroundColor=e94560", 
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Leila&backgroundColor=43a047", 
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Nora&backgroundColor=8e24aa",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Mia&backgroundColor=00acc1",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Zoe&backgroundColor=d81b60",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=1e88e5", 
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Omar&backgroundColor=fb8c00",  
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Jasper&backgroundColor=5e35b1",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Jack&backgroundColor=3949ab",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Leo&backgroundColor=e53935",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex&backgroundColor=8d6e63",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Sam&backgroundColor=26a69a",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan&backgroundColor=7e57c2",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Taylor&backgroundColor=ef5350",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Casey&backgroundColor=ab47bc"
+        ];
+        
+        const animatedEmojis = {
+            '😀': '1f600', '😂': '1f602', '🥲': '1f972', '🥰': '1f970', '🥺': '1f97a',
+            '😎': '1f60e', '😭': '1f62d', '😡': '1f621', '🤯': '1f92f', '🤡': '1f921',
+            '👽': '1f47d', '👻': '1f47b', '✨': '2728', '🔥': '1f525', '💔': '1f494'
+        };
+
+        function hideLoader() { document.getElementById('global-loader').classList.add('hidden'); }
+        function showLoader() { document.getElementById('global-loader').classList.remove('hidden'); }
+
+        /* =========================================================
+           4. INIT & ROUTING
+           ========================================================= */
+        window.onload = async () => {
+            initAvatars();
+            initEmojis();
+            setTheme('dark'); 
+            setLang('ar');
+            
+            // Check dynamic URL for public profile sharing (?u=username)
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetUsername = urlParams.get('u');
+
+            if (targetUsername) {
+                await loadPublicProfile(targetUsername);
+            } else {
+                await checkSession();
+            }
+        };
+
+        async function checkSession() {
+            if(!supabaseClient) { hideLoader(); showLogin(); return; }
+            
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                currentUser = session.user;
+                await fetchProfile();
+                await loadInbox();
+                setupRealtime();
+                showMainApp();
+            } else {
+                hideLoader();
+                showLogin();
+            }
+        }
+
+        /* =========================================================
+           5. AUTHENTICATION & PROFILES
+           ========================================================= */
+        async function login() {
+            if(!supabaseClient) return alert("Supabase not configured");
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+            const errDiv = document.getElementById('login-error');
+            const btn = document.getElementById('btn-login');
+            
+            if(!email || !pass) { errDiv.innerText = "أدخل البيانات"; errDiv.classList.remove('hidden'); return; }
+            
+            btn.innerHTML = `<div class="loader mr-2 border-white border-t-brand-primary"></div>`;
+            errDiv.classList.add('hidden');
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+            if (error) {
+                errDiv.innerText = currentLang === 'ar' ? 'خطأ في بيانات الدخول' : 'Invalid credentials';
+                errDiv.classList.remove('hidden');
+                btn.innerHTML = `<span data-ar="تسجيل الدخول" data-en="Login">تسجيل الدخول</span>`;
+                applyTranslations();
+            } else {
+                window.location.reload(); // Reload to initialize session cleanly
+            }
+        }
+
+        async function register() {
+            if(!supabaseClient) return alert("Supabase not configured");
+            const name = document.getElementById('reg-name').value;
+            const username = document.getElementById('reg-username').value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+            const email = document.getElementById('reg-email').value;
+            const pass = document.getElementById('reg-pass').value;
+            const errDiv = document.getElementById('reg-error');
+            const btn = document.getElementById('btn-reg');
+
+            if(!name || !username || !email || !pass) {
+                errDiv.innerText = currentLang === 'ar' ? "أكمل جميع الحقول" : "Fill all fields";
+                errDiv.classList.remove('hidden'); return;
+            }
+
+            btn.innerHTML = `<div class="loader mr-2 border-white border-t-brand-primary"></div>`;
+            errDiv.classList.add('hidden');
+
+            // 1. Check if username exists
+            const { data: existing } = await supabaseClient.from('profiles').select('id').eq('username', username).single();
+            if(existing) {
+                errDiv.innerText = currentLang === 'ar' ? "اسم المستخدم محجوز" : "Username taken";
+                errDiv.classList.remove('hidden');
+                btn.innerHTML = `<span data-ar="سجل الآن" data-en="Register">سجل الآن</span>`; applyTranslations();
+                return;
+            }
+
+            // 2. Sign Up Auth
+            const { data, error } = await supabaseClient.auth.signUp({ email, password: pass });
+            
+            if (error) {
+                errDiv.innerText = error.message; errDiv.classList.remove('hidden');
+                btn.innerHTML = `<span data-ar="سجل الآن" data-en="Register">سجل الآن</span>`; applyTranslations();
+                return;
+            }
+
+            // 3. Create Profile Entry
+            if(data.user) {
+                const rndAvatar = allAvatars[Math.floor(Math.random() * allAvatars.length)];
+                await supabaseClient.from('profiles').insert([
+                    { id: data.user.id, username: username, full_name: name, avatar_url: rndAvatar }
+                ]);
+                window.location.reload();
+            }
+        }
+
+        async function logout() {
+            if(supabaseClient) await supabaseClient.auth.signOut();
+            window.location.reload();
+        }
+
+        async function fetchProfile() {
+            const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', currentUser.id).single();
+            if(data) {
+                userProfile = data;
+                updateProfileUI();
+            }
+        }
+
+        function updateProfileUI() {
+            document.getElementById('profile-display-name').innerText = userProfile.full_name || '';
+            document.getElementById('profile-display-username').innerText = '@' + userProfile.username;
+            if(userProfile.avatar_url) document.getElementById('avatar-profile').src = userProfile.avatar_url;
+            
+            document.getElementById('header-welcome-msg').innerText = (currentLang === 'ar' ? 'أهلاً بك، ' : 'Welcome, ') + (userProfile.full_name || '').split(' ')[0] + ' 👋';
+            
+            // Generate Dynamic Link
+            const link = window.location.origin + window.location.pathname + '?u=' + userProfile.username;
+            document.getElementById('share-link-input').value = link;
+
+            // Pre-fill Edit form
+            document.getElementById('edit-fullname').value = userProfile.full_name || '';
+            document.getElementById('edit-username').value = userProfile.username || '';
+        }
+
+        function toggleProfileEdit() {
+            const form = document.getElementById('edit-profile-form');
+            const icon = document.getElementById('edit-profile-icon');
+            if(form.classList.contains('hidden')) {
+                form.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+            } else {
+                form.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+            }
+        }
+
+        /* Profile Editing (Constraint: 30 Days Username change) */
+        async function saveProfileEdit() {
+            if(!supabaseClient) return;
+            const newName = document.getElementById('edit-fullname').value.trim();
+            const newUsername = document.getElementById('edit-username').value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+            const btn = document.getElementById('btn-save-profile');
+
+            if(!newName || !newUsername) return alert("Fill all fields");
+
+            let updates = { full_name: newName };
+
+            // Check Username logic
+            if(newUsername !== userProfile.username) {
+                const lastUpdate = userProfile.last_username_update ? new Date(userProfile.last_username_update) : null;
+                const now = new Date();
+                
+                if(lastUpdate) {
+                    const diffDays = Math.floor((now - lastUpdate) / (1000 * 60 * 60 * 24));
+                    if(diffDays < 30) {
+                        const daysLeft = 30 - diffDays;
+                        alert(currentLang === 'ar' ? `لا يمكنك تغيير اسم المستخدم الآن. متبقي ${daysLeft} يوم.` : `Cannot change username yet. ${daysLeft} days remaining.`);
+                        // Revert input visually
+                        document.getElementById('edit-username').value = userProfile.username;
+                        return;
+                    }
+                }
+
+                // Check availability
+                const { data: exist } = await supabaseClient.from('profiles').select('id').eq('username', newUsername).single();
+                if(exist) {
+                    alert(currentLang === 'ar' ? "اسم المستخدم مأخوذ" : "Username already taken");
+                    return;
+                }
+
+                updates.username = newUsername;
+                updates.last_username_update = now.toISOString();
+            }
+
+            btn.innerHTML = `<div class="loader border-white border-t-brand-primary"></div>`;
+            
+            const { error } = await supabaseClient.from('profiles').update(updates).eq('id', currentUser.id);
+            
+            btn.innerHTML = `<span data-ar="حفظ التعديلات" data-en="Save Changes">حفظ التعديلات</span>`;
+            applyTranslations();
+
+            if(!error) {
+                alert(currentLang === 'ar' ? "تم الحفظ بنجاح" : "Saved successfully");
+                await fetchProfile(); // Refresh UI
+            } else {
+                alert("Error updating profile");
+            }
+        }
+
+        async function updateAvatarInDB(url) {
+            if(!supabaseClient || !currentUser) return;
+            await supabaseClient.from('profiles').update({ avatar_url: url }).eq('id', currentUser.id);
+            userProfile.avatar_url = url;
+            updateProfileUI();
+        }
+
+        /* =========================================================
+           6. PUBLIC PROFILE / SEND MESSAGE
+           ========================================================= */
+        async function sendToSpecificUser() {
+            const input = document.getElementById('direct-send-username');
+            const username = input.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+            
+            if(!username) {
+                alert(currentLang === 'ar' ? 'الرجاء إدخال اسم المستخدم' : 'Please enter a username');
+                return;
+            }
+            
+            showLoader();
+            await loadPublicProfile(username);
+        }
+
+        async function loadPublicProfile(username) {
+            if(!supabaseClient) { hideLoader(); return; } 
+            
+            const { data, error } = await supabaseClient.from('profiles').select('id, full_name, username, avatar_url').eq('username', username).single();
+            
+            hideLoader();
+            hideAllAuthViews();
+            document.getElementById('view-main').classList.add('hidden');
+
+            if(data) {
+                publicTargetProfile = data;
+                document.getElementById('public-target-name').innerText = data.full_name;
+                document.getElementById('public-target-username').innerText = '@' + data.username;
+                if(data.avatar_url) document.getElementById('public-target-avatar').src = data.avatar_url;
+                
+                resetPublicView(); // Ensure form is visible
+                document.getElementById('view-public').classList.remove('hidden');
+                document.getElementById('view-public').classList.add('flex');
+            } else {
+                alert(currentLang === 'ar' ? "المستخدم غير موجود" : "User not found");
+                if (currentUser) showMainApp(); else showLogin();
+            }
+        }
+
+        async function sendPublicMessage() {
+            const input = document.getElementById('public-msg-input');
+            const text = input.value.trim();
+            if(!text) return;
+
+            const btn = document.getElementById('btn-send-public');
+            btn.innerHTML = `<div class="loader border-white border-t-brand-primary"></div>`;
+
+            if(supabaseClient && publicTargetProfile) {
+                await supabaseClient.from('messages').insert([{
+                    receiver_id: publicTargetProfile.id,
+                    content: text,
+                    sender_id: currentUser ? currentUser.id : null, 
+                    is_archived: false
+                }]);
+            }
+
+            // Professional UI Update
+            document.getElementById('public-msg-form').classList.add('hidden');
+            document.getElementById('public-success').classList.remove('hidden');
+            btn.innerHTML = `<span data-ar="إرسال" data-en="Send">إرسال</span>`;
+            applyTranslations();
+        }
+
+        function resetPublicView() {
+            document.getElementById('public-msg-input').value = '';
+            document.getElementById('public-msg-form').classList.remove('hidden');
+            document.getElementById('public-success').classList.add('hidden');
+        }
+
+        function closePublicView() {
+            if (currentUser) {
+                document.getElementById('view-public').classList.add('hidden');
+                document.getElementById('view-public').classList.remove('flex');
+                showMainApp();
+            } else {
+                window.location.href = window.location.pathname;
+            }
+        }
+
+        /* =========================================================
+           7. MESSAGING & REALTIME INBOX
+           ========================================================= */
+        async function loadInbox() {
+            if(!supabaseClient || !currentUser) return hideLoader();
+            
+            const { data: msgs } = await supabaseClient.from('messages')
+                .select('*')
+                .eq('receiver_id', currentUser.id)
+                .order('created_at', { ascending: false });
+            
+            inboxMessages = msgs ? msgs.filter(m => !m.is_archived) : [];
+            archivedMessages = msgs ? msgs.filter(m => m.is_archived) : [];
+            
+            renderInbox();
+            renderArchive();
+            hideLoader();
+        }
+
+        function setupRealtime() {
+            if(!supabaseClient || !currentUser) return;
+            supabaseClient.channel('public:messages')
+                .on('postgres_changes', { 
+                    event: 'INSERT', 
+                    schema: 'public', 
+                    table: 'messages', 
+                    filter: `receiver_id=eq.${currentUser.id}` 
+                }, payload => {
+                    const newMsg = payload.new;
+                    inboxMessages.unshift(newMsg);
+                    renderInbox();
+                    
+                    if(document.getElementById('tab-inbox').classList.contains('hidden')) {
+                        document.getElementById('inbox-count-badge').classList.remove('hidden');
+                    }
+                }).subscribe();
+        }
+
+        function renderInbox() {
+            const list = document.getElementById('inbox-list');
+            const empty = document.getElementById('empty-inbox');
+            
+            if(inboxMessages.length === 0) {
+                list.innerHTML = ''; list.appendChild(empty); empty.classList.remove('hidden'); empty.classList.add('block');
+                return;
+            }
+            
+            empty.classList.add('hidden'); empty.classList.remove('block');
+            
+            let html = '';
+            inboxMessages.forEach((msg, index) => {
+                const time = new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const formattedContent = formatMessageText(msg.content);
+                const senderLabel = msg.is_revealed ? 'كُشف القناع' : `مجهول #${msg.id.substring(0,4)}`;
+                const senderColor = msg.is_revealed ? 'text-green-500 bg-green-500/10' : 'text-brand-primary bg-brand-primary/10';
+
+                html += `
+                <div class="relative group msg-card fade-in" id="msg-${msg.id}">
+                    <div onclick="openChat('${msg.id}')" class="bg-gray-50 dark:bg-[#1f2940] p-4 rounded-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-[#2a3754] active:scale-[0.98] transition-all border-s-4 border-brand-primary relative overflow-hidden">
+                        <div class="absolute -start-4 -top-4 text-brand-primary/5 text-6xl"><i class="fas fa-mask"></i></div>
+                        <div class="flex justify-between items-start mb-2 relative z-10">
+                            <span class="text-xs ${senderColor} px-2 py-1 rounded-full font-bold">
+                                <i class="fas ${msg.is_revealed ? 'fa-user' : 'fa-user-secret'} ms-1"></i> <span>${senderLabel}</span>
+                            </span>
+                            <span class="text-xs text-gray-400 pe-8">${time}</span>
+                        </div>
+                        <p class="text-sm text-gray-800 dark:text-gray-200 mt-2 relative z-10 line-clamp-2">${formattedContent}</p>
+                    </div>
+                    <div class="absolute top-4 end-4 flex gap-2 z-20">
+                        <button onclick="archiveMessageUI('${msg.id}', event)" class="text-gray-400 bg-gray-200 dark:bg-[#2a3754] w-7 h-7 rounded-full flex items-center justify-center hover:text-brand-primary transition">
+                            <i class="fas fa-box-archive text-xs"></i>
+                        </button>
+                    </div>
+                </div>`;
+            });
+            list.innerHTML = html;
+        }
+
+        async function archiveMessageUI(id, e) {
+            e.stopPropagation();
+            if(supabaseClient) await supabaseClient.from('messages').update({is_archived: true}).eq('id', id);
+            
+            const msg = inboxMessages.find(m => m.id === id);
+            if(msg) {
+                msg.is_archived = true;
+                inboxMessages = inboxMessages.filter(m => m.id !== id);
+                archivedMessages.unshift(msg);
+                renderInbox();
+                renderArchive();
+            }
+        }
+
+        function renderArchive() {
+            const list = document.getElementById('archive-list');
+            const empty = document.getElementById('empty-archive');
+            
+            if(archivedMessages.length === 0) {
+                list.innerHTML = ''; list.appendChild(empty); empty.classList.remove('hidden'); empty.classList.add('block');
+                return;
+            }
+            empty.classList.add('hidden'); empty.classList.remove('block');
+            
+            let html = '';
+            archivedMessages.forEach(msg => {
+                const formattedContent = formatMessageText(msg.content);
+                html += `
+                <div class="relative bg-gray-50 dark:bg-[#1f2940] p-4 rounded-2xl border-s-4 border-gray-400 opacity-80" id="arch-${msg.id}">
+                    <p class="text-sm text-gray-700 dark:text-gray-300">${formattedContent}</p>
+                </div>`;
+            });
+            list.innerHTML = html;
+        }
+
+        /* =========================================================
+           8. CHAT & TRUST LOGIC
+           ========================================================= */
+        function openChat(msgId) {
+            const msg = inboxMessages.find(m => m.id === msgId);
+            if(!msg) return;
+            
+            activeChatMsgId = msgId;
+            activeChatTrust = msg.trust_level || 1; 
+            
+            const senderLabel = msg.is_revealed ? 'تم كشف الهوية' : `مجهول #${msg.id.substring(0,4)}`;
+            document.getElementById('chat-title').innerHTML = `<i class="fas fa-user-secret ms-1"></i> <span>${senderLabel}</span>`;
+            
+            const chatBox = document.getElementById('chat-messages');
+            chatBox.innerHTML = `
+                <div class="flex justify-start relative z-10">
+                    <div class="bg-white dark:bg-[#2a3754] text-gray-800 dark:text-white border border-gray-200 dark:border-transparent max-w-[80%] p-3 rounded-2xl rounded-se-none text-sm leading-relaxed">
+                        ${formatMessageText(msg.content)}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('view-chat').classList.remove('hidden');
+            document.getElementById('view-chat').classList.add('flex');
+            updateTrustUI();
+        }
+
+        function closeChat() {
+            document.getElementById('view-chat').classList.add('hidden');
+            document.getElementById('view-chat').classList.remove('flex');
+            document.getElementById('mask-drop-action').classList.add('hidden');
+            document.getElementById('chat-input-area').classList.remove('hidden');
+            document.getElementById('chat-input-area').classList.add('flex');
+            activeChatMsgId = null;
+        }
+
+        function sendReply() {
+            const input = document.getElementById('reply-input');
+            const txt = input.value.trim();
+            if(!txt) return;
+
+            const chatBox = document.getElementById('chat-messages');
+            chatBox.insertAdjacentHTML('beforeend', `
+                <div class="flex justify-end fade-in relative z-10 mt-2">
+                    <div class="bg-brand-primary text-white max-w-[80%] p-3 rounded-2xl rounded-ss-none text-sm">
+                        ${formatMessageText(txt)}
+                    </div>
+                </div>
+            `);
+            input.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+            
+            activeChatTrust++;
+            if(supabaseClient && activeChatMsgId) {
+                supabaseClient.from('messages').update({trust_level: activeChatTrust}).eq('id', activeChatMsgId);
+            }
+            updateTrustUI();
+
+            if(activeChatTrust < maxTrust) {
+                setTimeout(() => {
+                    chatBox.insertAdjacentHTML('beforeend', `
+                        <div class="flex justify-start fade-in relative z-10 mt-2">
+                            <div class="bg-white dark:bg-[#2a3754] text-gray-800 dark:text-white max-w-[80%] p-3 rounded-2xl rounded-se-none text-sm">
+                                ${formatMessageText("رد تلقائي للتجربة 👽")}
+                            </div>
+                        </div>
+                    `);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    activeChatTrust++;
+                    updateTrustUI();
+                }, 1500);
+            }
+        }
+
+        function updateTrustUI() {
+            const pct = (activeChatTrust / maxTrust) * 100;
+            document.getElementById('trust-bar').style.width = `${Math.min(pct, 100)}%`;
+            document.getElementById('trust-level').innerText = `${activeChatTrust}/${maxTrust}`;
+
+            if(activeChatTrust >= maxTrust) {
+                document.getElementById('chat-input-area').classList.add('hidden');
+                document.getElementById('chat-input-area').classList.remove('flex');
+                
+                const actionBox = document.getElementById('mask-drop-action');
+                actionBox.innerHTML = `
+                    <div class="bg-white dark:bg-[#2a3754] p-4 rounded-2xl border border-brand-primary/50">
+                        <i class="fas fa-flag-checkered text-brand-primary text-xl mb-2"></i>
+                        <p class="text-xs font-bold mb-3" data-ar="اكتمل عداد الثقة! يمكنك طلب كشف القناع." data-en="Trust level reached! Request mask drop.">اكتمل عداد الثقة! يمكنك طلب كشف القناع.</p>
+                        <button onclick="extendTrust()" class="bg-brand-primary text-white px-4 py-2 rounded-xl text-xs font-bold w-full" data-ar="تمديد المحادثة" data-en="Extend Chat">تمديد المحادثة</button>
+                    </div>
+                `;
+                applyTranslations();
+                actionBox.classList.remove('hidden');
+            }
+        }
+
+        function extendTrust() {
+            maxTrust += 5;
+            document.getElementById('mask-drop-action').classList.add('hidden');
+            document.getElementById('chat-input-area').classList.remove('hidden');
+            document.getElementById('chat-input-area').classList.add('flex');
+            updateTrustUI();
+        }
+
+        /* =========================================================
+           9. UI UTILITIES
+           ========================================================= */
+        function formatMessageText(text) {
+            let formatted = text || '';
+            for (const [emoji, hex] of Object.entries(animatedEmojis)) {
+                formatted = formatted.split(emoji).join(`<img src="https://fonts.gstatic.com/s/e/notoemoji/latest/${hex}/512.gif" class="w-6 h-6 inline-block align-text-bottom mx-0.5" alt="${emoji}">`);
+            }
+            return formatted;
+        }
+
+        function setLang(lang) {
+            currentLang = lang;
+            const html = document.getElementById('html-root');
+            html.lang = currentLang;
+            
+            if (document.getElementById('lang-btn-ar')) {
+                document.getElementById('lang-btn-ar').classList.remove('settings-btn-active');
+                document.getElementById('lang-btn-en').classList.remove('settings-btn-active');
+                document.getElementById('lang-btn-' + lang).classList.add('settings-btn-active');
+            }
+            applyTranslations();
+        }
+
+        function applyTranslations() {
+            const isEn = currentLang === 'en';
+            document.querySelectorAll('[data-ar]').forEach(el => {
+                if(el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') return; 
+                el.innerHTML = isEn ? el.getAttribute('data-en') : el.getAttribute('data-ar');
+            });
+            document.querySelectorAll('[data-ar-ph]').forEach(el => {
+                el.placeholder = isEn ? el.getAttribute('data-en-ph') : el.getAttribute('data-ar-ph');
+            });
+        }
+
+        function setTheme(theme) {
+            currentTheme = theme;
+            const html = document.getElementById('html-root');
+            if (document.getElementById('theme-btn-light')) {
+                document.getElementById('theme-btn-light').classList.remove('settings-btn-active');
+                document.getElementById('theme-btn-dark').classList.remove('settings-btn-active');
+                if(theme === 'light' || theme === 'dark') document.getElementById('theme-btn-' + theme).classList.add('settings-btn-active');
+            }
+            if (theme === 'dark') html.classList.add('dark');
+            else html.classList.remove('dark');
+        }
+
+        /* Modals and Navigation */
+        function hideAllAuthViews() {
+            ['view-login', 'view-register', 'view-forgot'].forEach(id => {
+                document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex');
+            });
+        }
+        function showLogin() { hideAllAuthViews(); document.getElementById('view-login').classList.remove('hidden'); document.getElementById('view-login').classList.add('flex'); }
+        function showRegister() { hideAllAuthViews(); document.getElementById('view-register').classList.remove('hidden'); document.getElementById('view-register').classList.add('flex'); }
+        function showForgotPassword() { hideAllAuthViews(); document.getElementById('view-forgot').classList.remove('hidden'); document.getElementById('view-forgot').classList.add('flex'); }
+        function showMainApp() { hideAllAuthViews(); document.getElementById('view-main').classList.remove('hidden'); document.getElementById('view-main').classList.add('flex'); switchTab('inbox'); }
+        
+        function switchTab(tabName) {
+            ['tab-inbox', 'tab-archive', 'tab-profile'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            const inactiveClass = "flex flex-col items-center p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 active:scale-90 transition-transform relative";
+            ['nav-inbox', 'nav-archive', 'nav-profile'].forEach(id => document.getElementById(id).className = inactiveClass);
+            
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+            document.getElementById('nav-' + tabName).className = "flex flex-col items-center p-2 text-brand-primary active:scale-90 transition-transform relative";
+            
+            if(tabName === 'inbox') document.getElementById('inbox-count-badge').classList.add('hidden');
+        }
+
+        /* Avatar & Emoji Pickers */
+        function initAvatars() {
+            document.getElementById('avatar-all-grid').innerHTML = allAvatars.map(url => `<img src="${url}" onclick="selectAvatar('${url}')" class="w-full aspect-square rounded-full bg-gray-200 dark:bg-gray-800 cursor-pointer hover:scale-110 object-cover border-2 border-transparent hover:border-brand-primary transition-all">`).join('');
+        }
+        function openAvatarModal() { document.getElementById('avatar-modal').classList.remove('hidden'); }
+        function closeAvatarModal() { document.getElementById('avatar-modal').classList.add('hidden'); }
+        function selectAvatar(url) { updateAvatarInDB(url); closeAvatarModal(); }
+
+        function initEmojis() {
+            document.getElementById('emoji-grid').innerHTML = Object.entries(animatedEmojis).map(([emoji, hex]) => `<button onclick="addEmoji('${emoji}')" class="hover:scale-125 transition-transform flex justify-center items-center w-10 h-10 bg-gray-50 dark:bg-[#2a3754] rounded-xl"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/${hex}/512.gif" class="w-7 h-7" alt="${emoji}"></button>`).join('');
+        }
+        function toggleEmojiPicker(e) { e?.stopPropagation(); document.getElementById('emoji-picker').classList.toggle('hidden'); }
+        function addEmoji(emoji) { const input = document.getElementById('reply-input'); input.value += emoji; toggleEmojiPicker(); input.focus(); }
+
+        document.addEventListener('click', e => {
+            const picker = document.getElementById('emoji-picker');
+            if (picker && !picker.classList.contains('hidden') && !picker.contains(e.target) && !e.target.closest('button[onclick="toggleEmojiPicker(event)"]')) {
+                picker.classList.add('hidden');
+            }
+        });
+
+        /* Privacy & Tutorial Modals */
+        function openPrivacy() { document.getElementById('privacy-modal').classList.remove('hidden'); }
+        function closePrivacy() { document.getElementById('privacy-modal').classList.add('hidden'); }
+        function openTutorial() { document.getElementById('tutorial-modal').classList.remove('hidden'); }
+        function closeTutorial() { document.getElementById('tutorial-modal').classList.add('hidden'); }
+        
+        let tutStep = 1;
+        function nextTutorialStep() {
+            tutStep++;
+            if(tutStep > 3) { closeTutorial(); return; }
+            document.getElementById('tut-progress').style.width = (tutStep*33.3) + '%';
+            document.getElementById('tut-title').innerText = tutStep === 2 ? (currentLang === 'ar'?'2. دردش بسرية':'2. Chat Secretly') : (currentLang === 'ar'?'3. اكشف القناع!':'3. Drop the Mask!');
+            document.getElementById('tut-desc').innerText = tutStep === 2 ? (currentLang === 'ar'?'رد على الرسائل لفتح محادثة مجهولة.':'Reply to messages anonymously.') : (currentLang === 'ar'?'اطلب كشف هوية المرسل عند اكتمال الثقة.':'Request identity reveal when trust builds.');
+            ['tut-icon-1', 'tut-icon-2', 'tut-icon-3'].forEach((id, idx) => {
+                document.getElementById(id).style.opacity = (idx+1) === tutStep ? '1' : '0';
+            });
+        }
+
+        function copyLink() {
+            const copyText = document.getElementById("share-link-input");
+            copyText.select();
+            document.execCommand("copy");
+            alert(currentLang === 'ar' ? "تم النسخ!" : "Copied!");
+        }
+    </script>
+</body>
+</html>
