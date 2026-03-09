@@ -658,6 +658,7 @@
            3. UI SYSTEM & CONSTANTS
            ========================================================= */
         const allAvatars = [
+            // Females
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&backgroundColor=e94560", 
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Leila&backgroundColor=43a047", 
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Nora&backgroundColor=8e24aa",
@@ -666,6 +667,7 @@
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Mona&backgroundColor=1e88e5",
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Emma&backgroundColor=e53935",
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Lily&backgroundColor=8d6e63",
+            // Males
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=1e88e5", 
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Omar&backgroundColor=fb8c00",  
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Jasper&backgroundColor=5e35b1",
@@ -766,6 +768,7 @@
             errDiv.classList.add('hidden');
             successDiv.classList.add('hidden');
 
+            // 1. Check if username exists
             const { data: existing } = await supabaseClient.from('profiles').select('id').eq('username', username).single();
             if(existing) {
                 errDiv.innerText = currentLang === 'ar' ? "اسم المستخدم محجوز" : "Username taken";
@@ -774,6 +777,7 @@
                 return;
             }
 
+            // 2. Sign Up Auth
             const { data, error } = await supabaseClient.auth.signUp({ email, password: pass });
             
             if (error) {
@@ -782,6 +786,7 @@
                 return;
             }
 
+            // 3. Create Profile Entry
             if(data.user) {
                 const rndAvatar = allAvatars[Math.floor(Math.random() * allAvatars.length)];
                 const { error: profileError } = await supabaseClient.from('profiles').insert([
@@ -1017,7 +1022,7 @@
             btn.innerHTML = `<div class="loader border-white border-t-brand-primary"></div>`;
 
             if(supabaseClient && publicTargetProfile) {
-                const { error } = await supabaseClient.from('messages').insert([{
+                const { data, error } = await supabaseClient.from('messages').insert([{
                     receiver_id: publicTargetProfile.id,
                     content: text,
                     sender_id: currentUser.id, 
@@ -1027,7 +1032,7 @@
                     is_revealed: false,
                     is_read: false,
                     replies: []
-                }]);
+                }]).select().single();
 
                 if (error) {
                     console.error("Send Error: ", error);
@@ -1308,8 +1313,9 @@
                         ? '<i class="fas fa-check-double text-blue-500" title="مقروء"></i>' 
                         : '<i class="fas fa-check text-gray-400" title="تم التسليم"></i>';
                 } else if (isUnreadForMe) {
-                    statusBadge = '<div class="w-2 h-2 rounded-full bg-brand-primary shrink-0"></div>';
-                    unreadClass = 'msg-unread';
+                    const badgeText = currentLang === 'ar' ? 'جديد' : 'New';
+                    statusBadge = `<span class="bg-brand-primary text-white text-[9px] px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap">${badgeText}</span>`;
+                    unreadClass = 'msg-unread border-brand-primary';
                 }
 
                 if (currentInboxFilter === 'received') {
@@ -1338,22 +1344,20 @@
 
                 html += `
                 <div class="group msg-card fade-in w-full max-w-3xl mx-auto bg-gray-50 dark:bg-[#1f2940] p-4 rounded-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-[#2a3754] active:scale-[0.98] transition-all border-s-4 border-gray-300 dark:border-gray-600 ${unreadClass} shadow-sm flex flex-col gap-3" id="msg-${msg.id}" onclick="openChat('${msg.id}')">
-                    <div class="flex justify-between gap-3">
-                        <!-- القسم الأيمن: الأيقونة والاسم -->
-                        <div class="flex items-center gap-3 overflow-hidden">
+                    <div class="flex justify-between items-start gap-2">
+                        <div class="flex items-center gap-2 shrink-0 max-w-[60%]">
                             <div class="w-8 h-8 rounded-full ${senderColor.split(' ')[1]} ${senderColor.split(' ')[0]} flex items-center justify-center shrink-0">
                                 <i class="fas ${iconClass}"></i>
                             </div>
-                            <div class="flex flex-col truncate">
+                            <div class="flex flex-col overflow-hidden">
                                 <span class="text-sm font-bold ${senderColor.split(' ')[0]} truncate w-full">${senderLabel}</span>
                             </div>
                         </div>
-                        <!-- القسم الأيسر: التاريخ والأزرار -->
                         <div class="flex flex-col items-end justify-between shrink-0 gap-2">
                             <div class="flex items-center gap-2 text-xs text-gray-400 font-mono">
-                                ${statusBadge} ${time}
+                                ${statusBadge} <span class="whitespace-nowrap">${time}</span>
                             </div>
-                            <div class="flex gap-2">
+                            <div class="flex items-center gap-2">
                                 ${actionBtn}
                             </div>
                         </div>
@@ -1378,12 +1382,20 @@
             if(!confirm(confirmMsg)) return;
 
             if(supabaseClient) {
+                // Remove .select() so RLS doesn't block the return, just execute delete.
                 const { error } = await supabaseClient.from('messages').delete().eq('id', id);
                 if(error) {
                     alert(currentLang === 'ar' ? 'فشل الحذف، يرجى تفعيل صلاحيات الحذف (RLS) في الخادم' : 'Delete failed (Check RLS policy)');
                     return; 
                 }
-                loadInbox(); 
+                
+                // If success, filter locally to reflect immediately
+                inboxMessages = inboxMessages.filter(m => m.id !== id);
+                sentMessages = sentMessages.filter(m => m.id !== id);
+                archivedMessages = archivedMessages.filter(m => m.id !== id);
+                
+                renderInbox();
+                renderArchive();
             }
         }
         
@@ -1399,8 +1411,15 @@
                 return;
             }
 
+            const deletedId = activeChatMsgId;
             closeChat();
-            loadInbox(); 
+            
+            inboxMessages = inboxMessages.filter(m => m.id !== deletedId);
+            sentMessages = sentMessages.filter(m => m.id !== deletedId);
+            archivedMessages = archivedMessages.filter(m => m.id !== deletedId);
+            
+            renderInbox();
+            renderArchive();
         }
 
         function renderArchive() {
@@ -1542,6 +1561,7 @@
             const tempId = `temp-${Date.now()}`;
             document.getElementById('typing-indicator')?.remove();
             
+            // إضافة الرسالة بشكل مؤقت للشاشة
             chatBox.insertAdjacentHTML('beforeend', `
                 <div class="flex justify-end fade-in relative z-10 mt-2 temp-msg" id="${tempId}">
                     <div class="bg-brand-primary text-white max-w-[80%] p-3 rounded-2xl rounded-ss-none text-sm opacity-50 shadow-sm">
@@ -1552,9 +1572,16 @@
             chatBox.scrollTop = chatBox.scrollHeight;
             
             if(supabaseClient) {
-                const { data: latestMsg, error: fetchErr } = await supabaseClient.from('messages').select('replies, trust_level, max_trust').eq('id', activeChatMsgId).single();
+                // 1. جلب المحادثة الحالية
+                const { data: latestMsg, error: fetchErr } = await supabaseClient.from('messages')
+                    .select('replies, trust_level, max_trust')
+                    .eq('id', activeChatMsgId)
+                    .single();
+
                 if (fetchErr || !latestMsg) {
+                    console.error("Fetch Error: ", fetchErr);
                     document.getElementById(tempId)?.remove();
+                    alert(currentLang === 'ar' ? 'فشل جلب بيانات المحادثة، الرجاء المحاولة مرة أخرى.' : 'Failed to fetch conversation data, please try again.');
                     return;
                 }
 
@@ -1564,6 +1591,7 @@
                 const newTrust = (latestMsg.trust_level || 1) + 1;
                 activeChatMaxTrust = latestMsg.max_trust || 10;
                 
+                // 2. تحديث قاعدة البيانات بالرد الجديد
                 const { error } = await supabaseClient.from('messages')
                     .update({
                         trust_level: newTrust,
@@ -1573,9 +1601,16 @@
                     .eq('id', activeChatMsgId);
                     
                 if (error) {
+                    // إظهار الخطأ وعدم إخفائه بصمت
+                    console.error("Update Error: ", error);
                     document.getElementById(tempId)?.remove();
+                    alert((currentLang === 'ar' ? 'فشل الإرسال (مشكلة في الصلاحيات RLS): ' : 'Send failed (RLS issue): ') + error.message);
                 } else {
-                    document.getElementById(tempId)?.firstElementChild?.classList.remove('opacity-50');
+                    // نجاح الإرسال، إزالة الشفافية لتأكيد الوصول
+                    const tempMsgElement = document.getElementById(tempId);
+                    if (tempMsgElement && tempMsgElement.firstElementChild) {
+                        tempMsgElement.firstElementChild.classList.remove('opacity-50');
+                    }
                     activeChatTrust = newTrust;
                 }
             }
