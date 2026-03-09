@@ -980,6 +980,19 @@
             const text = input.value.trim();
             if(!text) return;
 
+            // التحقق من تسجيل الدخول قبل الإرسال
+            if (!currentUser) {
+                alert(currentLang === 'ar' ? 'يجب عليك تسجيل الدخول أو إنشاء حساب لتتمكن من إرسال الرسائل.' : 'You must login or create an account to send messages.');
+                document.getElementById('view-public').classList.add('hidden');
+                document.getElementById('view-public').classList.remove('flex');
+                
+                // تنظيف الرابط لكي لا يعود لصفحة الإرسال بشكل مستمر
+                window.history.pushState({}, document.title, window.location.pathname);
+                
+                showLogin();
+                return;
+            }
+
             const btn = document.getElementById('btn-send-public');
             btn.innerHTML = `<div class="loader border-white border-t-brand-primary"></div>`;
 
@@ -1040,7 +1053,7 @@
                 
                 if (error) {
                     console.error("Load inbox error:", error);
-                    alert(currentLang === 'ar' ? "فشل في تحميل الرسائل: " + error.message : "Failed to load messages: " + error.message);
+                    // alert(currentLang === 'ar' ? "فشل في تحميل الرسائل: " + error.message : "Failed to load messages: " + error.message);
                 }
                 
                 inboxMessages = msgs ? msgs.filter(m => !m.is_archived) : [];
