@@ -247,9 +247,12 @@
             <div id="tab-inbox" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 relative">
                 <!-- Message Type Toggles -->
                 <div class="flex justify-center mb-4">
-                    <div class="bg-gray-200 dark:bg-[#1f2940] rounded-xl p-1 inline-flex">
-                        <button onclick="filterInbox('received')" id="btn-filter-received" class="cursor-pointer px-4 py-2 rounded-lg text-sm font-bold bg-white dark:bg-brand-primary text-gray-900 dark:text-white shadow-sm transition-all" data-ar="المستلمة" data-en="Received">المستلمة</button>
-                        <button onclick="filterInbox('sent')" id="btn-filter-sent" class="cursor-pointer px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-all" data-ar="المرسلة" data-en="Sent">المرسلة</button>
+                    <div class="bg-gray-200 dark:bg-[#1f2940] rounded-xl p-1 inline-flex relative">
+                        <button onclick="filterInbox('received')" id="btn-filter-received" class="cursor-pointer px-4 py-2 rounded-lg text-sm font-bold bg-white dark:bg-brand-primary text-gray-900 dark:text-white shadow-sm transition-all relative" data-ar="المستلمة" data-en="Received">المستلمة</button>
+                        <button onclick="filterInbox('sent')" id="btn-filter-sent" class="cursor-pointer px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-all relative">
+                            <span data-ar="المرسلة" data-en="Sent">المرسلة</span>
+                            <span id="sent-unread-badge" class="absolute top-1 right-1 w-2 h-2 bg-brand-primary rounded-full hidden"></span>
+                        </button>
                     </div>
                 </div>
 
@@ -646,7 +649,7 @@
         let archivedMessages = [];
         let activeChatMsgId = null;
         let activeChatTrust = 0;
-        let maxTrust = 10;
+        let activeChatMaxTrust = 10;
         let currentInboxFilter = 'received'; 
         
         let publicTargetProfile = null; 
@@ -655,7 +658,6 @@
            3. UI SYSTEM & CONSTANTS
            ========================================================= */
         const allAvatars = [
-            // Females
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&backgroundColor=e94560", 
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Leila&backgroundColor=43a047", 
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Nora&backgroundColor=8e24aa",
@@ -664,7 +666,6 @@
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Mona&backgroundColor=1e88e5",
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Emma&backgroundColor=e53935",
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Lily&backgroundColor=8d6e63",
-            // Males
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=1e88e5", 
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Omar&backgroundColor=fb8c00",  
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Jasper&backgroundColor=5e35b1",
@@ -695,7 +696,7 @@
             
             if(!supabaseClient) { hideLoader(); showLogin(); return; }
             
-            const urlParams = new URLSearchParams(window.location.search);
+            const urlParams = newSearchParams = new URLSearchParams(window.location.search);
             const targetUsername = urlParams.get('u');
 
             const { data: { session } } = await supabaseClient.auth.getSession();
@@ -765,7 +766,6 @@
             errDiv.classList.add('hidden');
             successDiv.classList.add('hidden');
 
-            // 1. Check if username exists
             const { data: existing } = await supabaseClient.from('profiles').select('id').eq('username', username).single();
             if(existing) {
                 errDiv.innerText = currentLang === 'ar' ? "اسم المستخدم محجوز" : "Username taken";
@@ -774,7 +774,6 @@
                 return;
             }
 
-            // 2. Sign Up Auth
             const { data, error } = await supabaseClient.auth.signUp({ email, password: pass });
             
             if (error) {
@@ -783,7 +782,6 @@
                 return;
             }
 
-            // 3. Create Profile Entry
             if(data.user) {
                 const rndAvatar = allAvatars[Math.floor(Math.random() * allAvatars.length)];
                 const { error: profileError } = await supabaseClient.from('profiles').insert([
@@ -955,7 +953,6 @@
                 return;
             }
             
-            // Prevent sending message to oneself
             if (userProfile && username === userProfile.username) {
                 alert(currentLang === 'ar' ? 'لا يمكنك إرسال رسالة لنفسك!' : 'You cannot send a message to yourself!');
                 return;
@@ -1020,16 +1017,17 @@
             btn.innerHTML = `<div class="loader border-white border-t-brand-primary"></div>`;
 
             if(supabaseClient && publicTargetProfile) {
-                const { data, error } = await supabaseClient.from('messages').insert([{
+                const { error } = await supabaseClient.from('messages').insert([{
                     receiver_id: publicTargetProfile.id,
                     content: text,
                     sender_id: currentUser.id, 
                     is_archived: false,
                     trust_level: 1,
+                    max_trust: 10,
                     is_revealed: false,
                     is_read: false,
                     replies: []
-                }]).select().single();
+                }]);
 
                 if (error) {
                     console.error("Send Error: ", error);
@@ -1039,7 +1037,6 @@
                     return;
                 }
                 
-                // Refresh local inbox so sent messages show up properly
                 loadInbox();
             }
 
@@ -1073,20 +1070,43 @@
         /* =========================================================
            7. MESSAGING & REALTIME INBOX
            ========================================================= */
+        function updateTabBadges() {
+            const hasUnreadInbox = inboxMessages.some(m => {
+                const replies = m.replies || [];
+                const lastSenderId = replies.length > 0 ? replies[replies.length - 1].sender_id : m.sender_id;
+                return lastSenderId !== currentUser.id && !m.is_read;
+            });
+            
+            const hasUnreadSent = sentMessages.some(m => {
+                const replies = m.replies || [];
+                const lastSenderId = replies.length > 0 ? replies[replies.length - 1].sender_id : m.sender_id;
+                return lastSenderId !== currentUser.id && !m.is_read;
+            });
+
+            if (hasUnreadInbox && currentInboxFilter !== 'received') {
+                document.getElementById('inbox-count-badge').classList.remove('hidden');
+            } else if (!hasUnreadInbox) {
+                document.getElementById('inbox-count-badge').classList.add('hidden');
+            }
+
+            if (hasUnreadSent && currentInboxFilter !== 'sent') {
+                document.getElementById('sent-unread-badge').classList.remove('hidden');
+            } else {
+                document.getElementById('sent-unread-badge').classList.add('hidden');
+            }
+        }
+
         async function loadInbox() {
             if(!supabaseClient || !currentUser) return hideLoader();
             
             try {
-                // Modified query to fetch ALL messages related to user simply and reliably
                 const { data: msgs, error } = await supabaseClient.from('messages')
                     .select('*')
-                    .or(`receiver_id.eq.${currentUser.id},sender_id.eq.${currentUser.id}`)
-                    .order('created_at', { ascending: false });
+                    .or(`receiver_id.eq.${currentUser.id},sender_id.eq.${currentUser.id}`);
                 
                 if (error) throw error;
                 
                 if (msgs) {
-                    // Fetch profiles manually to avoid JOIN errors on Supabase
                     const profileIds = new Set();
                     msgs.forEach(m => { 
                         if(m.sender_id) profileIds.add(m.sender_id); 
@@ -1105,16 +1125,22 @@
                         m.receiver_profile = profileMap[m.receiver_id] || null;
                     });
 
-                    // Strict Filtering
+                    // Sorting dynamically based on newest reply or creation date
+                    const getLatestTime = (m) => m.replies && m.replies.length > 0 ? new Date(m.replies[m.replies.length - 1].timestamp).getTime() : new Date(m.created_at).getTime();
+
                     inboxMessages = msgs.filter(m => m.receiver_id === currentUser.id && !m.is_archived);
+                    inboxMessages.sort((a, b) => getLatestTime(b) - getLatestTime(a));
+
                     archivedMessages = msgs.filter(m => m.receiver_id === currentUser.id && m.is_archived);
+                    archivedMessages.sort((a, b) => getLatestTime(b) - getLatestTime(a));
+
                     sentMessages = msgs.filter(m => m.sender_id === currentUser.id);
+                    sentMessages.sort((a, b) => getLatestTime(b) - getLatestTime(a));
                 }
                 
                 renderInbox();
                 renderArchive();
                 
-                // Update active chat safely if opened
                 if (activeChatMsgId) {
                     const activeMsg = msgs?.find(m => m.id === activeChatMsgId);
                     if (activeMsg) updateActiveChat(activeMsg);
@@ -1168,18 +1194,17 @@
             
             const isScrolledToBottom = chatBox.scrollHeight - chatBox.clientHeight <= chatBox.scrollTop + 50;
             
-            // Remove typing indicator if exists to redraw cleanly
             document.getElementById('typing-indicator')?.remove();
             
             chatBox.innerHTML = chatHtml;
             if (isScrolledToBottom) { chatBox.scrollTop = chatBox.scrollHeight; }
             
             activeChatTrust = updatedMsg.trust_level || 1;
+            activeChatMaxTrust = updatedMsg.max_trust || 10;
             updateTrustUI();
         }
 
         function updateLocalMessage(updatedData) {
-            // Because we don't send profiles on realtime events, we must refetch the inbox to be perfectly safe
             loadInbox();
         }
 
@@ -1196,6 +1221,17 @@
                     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, payload => {
                         const rec = payload.new;
                         if (rec.sender_id === currentUser.id || rec.receiver_id === currentUser.id) {
+                            
+                            // Handling reading status if chat is currently open
+                            if (activeChatMsgId === rec.id) {
+                                const replies = rec.replies || [];
+                                const lastSenderId = replies.length > 0 ? replies[replies.length - 1].sender_id : rec.sender_id;
+                                if (lastSenderId !== currentUser.id && !rec.is_read) {
+                                    supabaseClient.from('messages').update({is_read: true}).eq('id', rec.id);
+                                    rec.is_read = true;
+                                }
+                            }
+                            
                             updateLocalMessage(rec);
                         }
                     })
@@ -1216,13 +1252,12 @@
             const title = document.getElementById('inbox-title');
             
             if(type === 'received') {
-                btnRec.className = 'cursor-pointer px-4 py-2 rounded-lg text-sm font-bold bg-white dark:bg-brand-primary text-gray-900 dark:text-white shadow-sm transition-all';
-                btnSnt.className = 'cursor-pointer px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-all';
+                btnRec.className = 'cursor-pointer px-4 py-2 rounded-lg text-sm font-bold bg-white dark:bg-brand-primary text-gray-900 dark:text-white shadow-sm transition-all relative';
+                btnSnt.className = 'cursor-pointer px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-all relative';
                 title.setAttribute('data-ar', 'الرسائل المستلمة'); title.setAttribute('data-en', 'Received Messages');
-                document.getElementById('inbox-count-badge').classList.add('hidden'); 
             } else {
-                btnSnt.className = 'cursor-pointer px-4 py-2 rounded-lg text-sm font-bold bg-white dark:bg-brand-primary text-gray-900 dark:text-white shadow-sm transition-all';
-                btnRec.className = 'cursor-pointer px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-all';
+                btnSnt.className = 'cursor-pointer px-4 py-2 rounded-lg text-sm font-bold bg-white dark:bg-brand-primary text-gray-900 dark:text-white shadow-sm transition-all relative';
+                btnRec.className = 'cursor-pointer px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-all relative';
                 title.setAttribute('data-ar', 'الرسائل المرسلة'); title.setAttribute('data-en', 'Sent Messages');
             }
             applyTranslations();
@@ -1230,6 +1265,8 @@
         }
 
         function renderInbox() {
+            updateTabBadges();
+            
             const list = document.getElementById('inbox-list');
             const empty = document.getElementById('empty-inbox');
             
@@ -1249,7 +1286,9 @@
             
             let html = '';
             messagesToRender.forEach((msg) => {
-                const time = msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'الآن';
+                const getLatestTimeStr = (m) => m.replies && m.replies.length > 0 ? new Date(m.replies[m.replies.length - 1].timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const time = getLatestTimeStr(msg);
+                
                 const formattedContent = formatMessageText(msg.content);
                 const safeId = (msg.id || '0000').toString().substring(0,4);
                 
@@ -1299,21 +1338,22 @@
 
                 html += `
                 <div class="group msg-card fade-in w-full max-w-3xl mx-auto bg-gray-50 dark:bg-[#1f2940] p-4 rounded-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-[#2a3754] active:scale-[0.98] transition-all border-s-4 border-gray-300 dark:border-gray-600 ${unreadClass} shadow-sm flex flex-col gap-3" id="msg-${msg.id}" onclick="openChat('${msg.id}')">
-                    <div class="flex justify-between items-start gap-2">
-                        <div class="flex items-center gap-2 shrink-0 max-w-[60%]">
+                    <div class="flex justify-between gap-3">
+                        <!-- القسم الأيمن: الأيقونة والاسم -->
+                        <div class="flex items-center gap-3 overflow-hidden">
                             <div class="w-8 h-8 rounded-full ${senderColor.split(' ')[1]} ${senderColor.split(' ')[0]} flex items-center justify-center shrink-0">
                                 <i class="fas ${iconClass}"></i>
                             </div>
-                            <div class="flex flex-col overflow-hidden">
+                            <div class="flex flex-col truncate">
                                 <span class="text-sm font-bold ${senderColor.split(' ')[0]} truncate w-full">${senderLabel}</span>
                             </div>
                         </div>
-                        <div class="flex flex-col items-end gap-2 shrink-0">
-                            <div class="flex items-center gap-1.5 h-6">
-                                ${statusBadge}
-                                <span class="text-xs text-gray-400 font-mono">${time}</span>
+                        <!-- القسم الأيسر: التاريخ والأزرار -->
+                        <div class="flex flex-col items-end justify-between shrink-0 gap-2">
+                            <div class="flex items-center gap-2 text-xs text-gray-400 font-mono">
+                                ${statusBadge} ${time}
                             </div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex gap-2">
                                 ${actionBtn}
                             </div>
                         </div>
@@ -1338,14 +1378,11 @@
             if(!confirm(confirmMsg)) return;
 
             if(supabaseClient) {
-                // Remove .select() so RLS doesn't block the return, just execute delete.
                 const { error } = await supabaseClient.from('messages').delete().eq('id', id);
                 if(error) {
                     alert(currentLang === 'ar' ? 'فشل الحذف، يرجى تفعيل صلاحيات الحذف (RLS) في الخادم' : 'Delete failed (Check RLS policy)');
                     return; 
                 }
-                
-                // If success, load inbox to sync
                 loadInbox(); 
             }
         }
@@ -1380,7 +1417,7 @@
             archivedMessages.forEach(msg => {
                 const formattedContent = formatMessageText(msg.content);
                 html += `
-                <div class="relative bg-gray-50 dark:bg-[#1f2940] p-4 rounded-2xl border-s-4 border-gray-400 opacity-80 w-full max-w-3xl mx-auto shadow-sm flex justify-between items-center" id="arch-${msg.id}">
+                <div class="relative bg-gray-50 dark:bg-[#1f2940] p-4 rounded-2xl border-s-4 border-gray-400 opacity-80 w-full max-w-3xl mx-auto shadow-sm flex justify-between items-center cursor-pointer" onclick="openChat('${msg.id}')" id="arch-${msg.id}">
                     <p class="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">${formattedContent}</p>
                     <button onclick="deleteMessageUI('${msg.id}', event)" class="cursor-pointer ms-2 text-red-500 bg-red-50 dark:bg-red-900/20 w-8 h-8 rounded-full flex items-center justify-center hover:text-red-700 transition shadow-sm shrink-0" title="حذف نهائي">
                         <i class="fas fa-trash-alt text-xs pointer-events-none"></i>
@@ -1435,7 +1472,8 @@
             if(!msg) return;
             
             activeChatMsgId = msgId;
-            activeChatTrust = msg.trust_level || 1; 
+            activeChatTrust = msg.trust_level || 1;
+            activeChatMaxTrust = msg.max_trust || 10;
             
             const replies = msg.replies || [];
             const lastSenderId = replies.length > 0 ? replies[replies.length - 1].sender_id : msg.sender_id;
@@ -1514,7 +1552,7 @@
             chatBox.scrollTop = chatBox.scrollHeight;
             
             if(supabaseClient) {
-                const { data: latestMsg, error: fetchErr } = await supabaseClient.from('messages').select('replies, trust_level').eq('id', activeChatMsgId).single();
+                const { data: latestMsg, error: fetchErr } = await supabaseClient.from('messages').select('replies, trust_level, max_trust').eq('id', activeChatMsgId).single();
                 if (fetchErr || !latestMsg) {
                     document.getElementById(tempId)?.remove();
                     return;
@@ -1524,6 +1562,7 @@
                 const newReply = { text: txt, sender_id: currentUser.id, timestamp: new Date().toISOString() };
                 const updatedReplies = [...currentReplies, newReply];
                 const newTrust = (latestMsg.trust_level || 1) + 1;
+                activeChatMaxTrust = latestMsg.max_trust || 10;
                 
                 const { error } = await supabaseClient.from('messages')
                     .update({
@@ -1538,17 +1577,17 @@
                 } else {
                     document.getElementById(tempId)?.firstElementChild?.classList.remove('opacity-50');
                     activeChatTrust = newTrust;
-                    // We let realtime handle the rest, or just rely on loadInbox calls
                 }
             }
+            updateTrustUI();
         }
 
         function updateTrustUI() {
-            const pct = (activeChatTrust / maxTrust) * 100;
+            const pct = (activeChatTrust / activeChatMaxTrust) * 100;
             document.getElementById('trust-bar').style.width = `${Math.min(pct, 100)}%`;
-            document.getElementById('trust-level').innerText = `${activeChatTrust}/${maxTrust}`;
+            document.getElementById('trust-level').innerText = `${activeChatTrust}/${activeChatMaxTrust}`;
 
-            if(activeChatTrust >= maxTrust) {
+            if(activeChatTrust >= activeChatMaxTrust) {
                 document.getElementById('chat-input-area').classList.add('hidden');
                 document.getElementById('chat-input-area').classList.remove('flex');
                 
@@ -1565,14 +1604,17 @@
             }
         }
 
-        function extendTrust() {
-            maxTrust += 5;
+        async function extendTrust() {
+            activeChatMaxTrust += 5;
             document.getElementById('mask-drop-action').classList.add('hidden');
             document.getElementById('chat-input-area').classList.remove('hidden');
             document.getElementById('chat-input-area').classList.add('flex');
             
             if(supabaseClient && activeChatMsgId) {
-                supabaseClient.from('messages').update({trust_level: activeChatTrust}).eq('id', activeChatMsgId);
+                await supabaseClient.from('messages').update({
+                    trust_level: activeChatTrust,
+                    max_trust: activeChatMaxTrust
+                }).eq('id', activeChatMsgId);
             }
             updateTrustUI();
         }
