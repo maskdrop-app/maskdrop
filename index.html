@@ -95,7 +95,7 @@
 </head>
 <body class="min-h-screen flex items-center justify-center p-4 sm:p-0 bg-gray-100 dark:bg-[#1a1a2e] text-gray-900 dark:text-white transition-colors duration-300">
 
-    <!-- حاوية التطبيق الرئيسية: تم تعديل الأحجام (md:max-w-2xl lg:max-w-4xl) لتتمدد وتملا شاشة التابلت بشكل مناسب -->
+    <!-- حاوية التطبيق الرئيسية -->
     <div class="bg-white dark:bg-brand-secondary w-full max-w-md md:max-w-2xl lg:max-w-4xl sm:rounded-3xl shadow-xl overflow-hidden relative h-[100vh] sm:h-[800px] sm:max-h-[90vh] flex flex-col sm:border border-gray-200 dark:border-brand-light transition-colors duration-300">
         
         <!-- Loading Overlay -->
@@ -435,6 +435,10 @@
                         </div>
                     </div>
                 </div>
+                <!-- زر الحذف النهائي للمحادثة -->
+                <button onclick="deleteCurrentChat()" class="cursor-pointer text-red-500 hover:text-red-600 active:scale-90 transition-transform px-3" title="حذف المحادثة">
+                    <i class="fas fa-trash-alt text-lg"></i>
+                </button>
             </div>
 
             <!-- Chat Messages -->
@@ -1097,6 +1101,61 @@
             hideLoader();
         }
 
+        function updateActiveChat(updatedMsg) {
+            const chatBox = document.getElementById('chat-messages');
+            
+            let isSenderView = updatedMsg.sender_id === currentUser.id;
+            let chatHtml = '';
+            
+            if (isSenderView) {
+                 chatHtml += `
+                <div class="flex justify-end relative z-10 mb-4">
+                    <div class="bg-brand-primary text-white max-w-[80%] p-3 rounded-2xl rounded-ss-none text-sm leading-relaxed shadow-sm">
+                        ${formatMessageText(updatedMsg.content)}
+                    </div>
+                </div>`;
+            } else {
+                 chatHtml += `
+                <div class="flex justify-start relative z-10 mb-4">
+                    <div class="bg-white dark:bg-[#2a3754] text-gray-800 dark:text-white border border-gray-200 dark:border-transparent max-w-[80%] p-3 rounded-2xl rounded-se-none text-sm leading-relaxed shadow-sm">
+                        ${formatMessageText(updatedMsg.content)}
+                    </div>
+                </div>`;
+            }
+
+            const replies = updatedMsg.replies || [];
+            replies.forEach(reply => {
+                const isMyReply = reply.sender_id === currentUser.id;
+                if (isMyReply) {
+                    chatHtml += `
+                    <div class="flex justify-end fade-in relative z-10 mt-2">
+                        <div class="bg-brand-primary text-white max-w-[80%] p-3 rounded-2xl rounded-ss-none text-sm shadow-sm">
+                            ${formatMessageText(reply.text)}
+                        </div>
+                    </div>`;
+                } else {
+                    chatHtml += `
+                    <div class="flex justify-start fade-in relative z-10 mt-2">
+                        <div class="bg-white dark:bg-[#2a3754] text-gray-800 dark:text-white border border-gray-200 dark:border-transparent max-w-[80%] p-3 rounded-2xl rounded-se-none text-sm shadow-sm">
+                            ${formatMessageText(reply.text)}
+                        </div>
+                    </div>`;
+                }
+            });
+            
+            // تحقق إذا كان المستخدم يتصفح المحادثة في الأسفل (للحفاظ على التمرير التلقائي)
+            const isScrolledToBottom = chatBox.scrollHeight - chatBox.clientHeight <= chatBox.scrollTop + 50;
+            
+            chatBox.innerHTML = chatHtml;
+            
+            if (isScrolledToBottom) {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+            
+            activeChatTrust = updatedMsg.trust_level || 1;
+            updateTrustUI();
+        }
+
         function setupRealtime() {
             if(!supabaseClient || !currentUser) return;
             try {
@@ -1133,9 +1192,9 @@
                             inboxMessages[idx] = updatedMsg;
                             
                             if (activeChatMsgId === updatedMsg.id) {
-                                openChat(updatedMsg.id); // Refresh open chat
+                                updateActiveChat(updatedMsg);
                             } else if (currentInboxFilter === 'received') {
-                                renderInbox(); // Refresh list if not in chat
+                                renderInbox(); 
                             }
                         }
                     })
@@ -1153,7 +1212,7 @@
                             sentMessages[idx] = updatedMsg;
                             
                             if (activeChatMsgId === updatedMsg.id) {
-                                openChat(updatedMsg.id); 
+                                updateActiveChat(updatedMsg);
                             } else if (currentInboxFilter === 'sent') {
                                 renderInbox(); 
                             }
@@ -1215,14 +1274,16 @@
                 let iconClass = '';
 
                 // Determine unread status based on replies length change or explicit is_read flag
-                // For simplicity, if we are viewing received messages and it's not marked read, highlight it.
                 if (currentInboxFilter === 'received') {
                     senderLabel = msg.is_revealed ? 'كُشف القناع' : `مجهول #${safeId}`;
                     senderColor = msg.is_revealed ? 'text-green-500 bg-green-500/10' : 'text-brand-primary bg-brand-primary/10';
                     iconClass = msg.is_revealed ? 'fa-user' : 'fa-user-secret';
                     actionBtn = `
-                        <button onclick="archiveMessageUI('${msg.id}', event)" class="cursor-pointer text-gray-400 bg-gray-200 dark:bg-[#2a3754] w-7 h-7 rounded-full flex items-center justify-center hover:text-brand-primary transition">
+                        <button onclick="archiveMessageUI('${msg.id}', event)" class="cursor-pointer text-gray-400 bg-gray-200 dark:bg-[#2a3754] w-7 h-7 rounded-full flex items-center justify-center hover:text-brand-primary transition" title="أرشفة">
                             <i class="fas fa-box-archive text-xs"></i>
+                        </button>
+                        <button onclick="deleteMessageUI('${msg.id}', event)" class="cursor-pointer text-red-400 bg-red-50 dark:bg-red-900/20 w-7 h-7 rounded-full flex items-center justify-center hover:text-red-600 transition" title="حذف نهائي">
+                            <i class="fas fa-trash-alt text-xs"></i>
                         </button>`;
                     if (!msg.is_read) unreadClass = 'msg-unread';
                 } else {
@@ -1238,7 +1299,10 @@
                     actionBtn = `
                         <div class="text-[10px] text-gray-400 bg-gray-200 dark:bg-[#2a3754] px-2 py-1 rounded-full flex items-center justify-center font-bold">
                             ${hasReplies ? '<i class="fas fa-reply text-brand-primary me-1"></i> رد' : '<i class="fas fa-check"></i>'}
-                        </div>`;
+                        </div>
+                        <button onclick="deleteMessageUI('${msg.id}', event)" class="cursor-pointer ms-1 text-red-400 bg-red-50 dark:bg-red-900/20 w-7 h-7 rounded-full flex items-center justify-center hover:text-red-600 transition" title="حذف نهائي">
+                            <i class="fas fa-trash-alt text-xs"></i>
+                        </button>`;
                 }
 
                 html += `
@@ -1273,6 +1337,48 @@
                 renderInbox();
                 renderArchive();
             }
+        }
+        
+        async function deleteMessageUI(id, e) {
+            e.stopPropagation();
+            const confirmMsg = currentLang === 'ar' ? 'هل أنت متأكد من حذف هذه المحادثة نهائياً؟' : 'Are you sure you want to permanently delete this chat?';
+            if(!confirm(confirmMsg)) return;
+
+            if(supabaseClient) {
+                const {error} = await supabaseClient.from('messages').delete().eq('id', id);
+                if(error) {
+                    alert(currentLang === 'ar' ? 'فشل الحذف: ' + error.message : 'Delete failed: ' + error.message);
+                    return;
+                }
+            }
+            
+            inboxMessages = inboxMessages.filter(m => m.id !== id);
+            sentMessages = sentMessages.filter(m => m.id !== id);
+            archivedMessages = archivedMessages.filter(m => m.id !== id);
+            
+            renderInbox();
+            renderArchive();
+        }
+        
+        async function deleteCurrentChat() {
+            if(!activeChatMsgId || !supabaseClient) return;
+            const confirmMsg = currentLang === 'ar' ? 'هل أنت متأكد من حذف هذه المحادثة نهائياً؟' : 'Are you sure you want to permanently delete this chat?';
+            if(!confirm(confirmMsg)) return;
+
+            const { error } = await supabaseClient.from('messages').delete().eq('id', activeChatMsgId);
+            
+            if(error) {
+                alert(currentLang === 'ar' ? 'حدث خطأ أثناء الحذف' : 'Error deleting chat');
+                return;
+            }
+
+            inboxMessages = inboxMessages.filter(m => m.id !== activeChatMsgId);
+            sentMessages = sentMessages.filter(m => m.id !== activeChatMsgId);
+            archivedMessages = archivedMessages.filter(m => m.id !== activeChatMsgId);
+            
+            closeChat();
+            renderInbox();
+            renderArchive();
         }
 
         function renderArchive() {
@@ -1332,58 +1438,12 @@
             }
             document.getElementById('chat-title').innerHTML = `<i class="fas ${isSenderView ? 'fa-user' : 'fa-user-secret'} ms-1"></i> <span>${headerLabel}</span>`;
             
-            const chatBox = document.getElementById('chat-messages');
-            
-            // Render Initial Message
-            // If I am the sender, the first message goes on the left (sent by me)
-            // If I am the receiver, the first message goes on the right (received by me) -> Note: standard chat apps put received on left, sent on right. 
-            // In RTL: Sent (Right/End), Received (Left/Start). Let's follow this standard.
-            
-            let chatHtml = '';
-            
-            if (isSenderView) {
-                 chatHtml += `
-                <div class="flex justify-end relative z-10 mb-4">
-                    <div class="bg-brand-primary text-white max-w-[80%] p-3 rounded-2xl rounded-ss-none text-sm leading-relaxed shadow-sm">
-                        ${formatMessageText(msg.content)}
-                    </div>
-                </div>`;
-            } else {
-                 chatHtml += `
-                <div class="flex justify-start relative z-10 mb-4">
-                    <div class="bg-white dark:bg-[#2a3754] text-gray-800 dark:text-white border border-gray-200 dark:border-transparent max-w-[80%] p-3 rounded-2xl rounded-se-none text-sm leading-relaxed shadow-sm">
-                        ${formatMessageText(msg.content)}
-                    </div>
-                </div>`;
-            }
-
-            // Render Replies
-            const replies = msg.replies || [];
-            replies.forEach(reply => {
-                const isMyReply = reply.sender_id === currentUser.id;
-                if (isMyReply) {
-                    chatHtml += `
-                    <div class="flex justify-end fade-in relative z-10 mt-2">
-                        <div class="bg-brand-primary text-white max-w-[80%] p-3 rounded-2xl rounded-ss-none text-sm shadow-sm">
-                            ${formatMessageText(reply.text)}
-                        </div>
-                    </div>`;
-                } else {
-                    chatHtml += `
-                    <div class="flex justify-start fade-in relative z-10 mt-2">
-                        <div class="bg-white dark:bg-[#2a3754] text-gray-800 dark:text-white border border-gray-200 dark:border-transparent max-w-[80%] p-3 rounded-2xl rounded-se-none text-sm shadow-sm">
-                            ${formatMessageText(reply.text)}
-                        </div>
-                    </div>`;
-                }
-            });
-            
-            chatBox.innerHTML = chatHtml;
+            updateActiveChat(msg);
             
             document.getElementById('view-chat').classList.remove('hidden');
             document.getElementById('view-chat').classList.add('flex');
             
-            // Auto scroll to bottom
+            const chatBox = document.getElementById('chat-messages');
             setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 50);
             
             updateTrustUI();
@@ -1403,11 +1463,14 @@
             const txt = input.value.trim();
             if(!txt || !activeChatMsgId) return;
 
-            // Update UI immediately for snappiness
+            // جلب أحدث رسالة من قاعدة البيانات لتجنب فقدان الردود السابقة
             const chatBox = document.getElementById('chat-messages');
+            
+            // واجهة استباقية (Optimistic UI)
+            const tempId = `temp-${Date.now()}`;
             chatBox.insertAdjacentHTML('beforeend', `
-                <div class="flex justify-end fade-in relative z-10 mt-2">
-                    <div class="bg-brand-primary text-white max-w-[80%] p-3 rounded-2xl rounded-ss-none text-sm opacity-50 shadow-sm" id="temp-reply">
+                <div class="flex justify-end fade-in relative z-10 mt-2" id="${tempId}">
+                    <div class="bg-brand-primary text-white max-w-[80%] p-3 rounded-2xl rounded-ss-none text-sm opacity-50 shadow-sm">
                         ${formatMessageText(txt)}
                     </div>
                 </div>
@@ -1415,38 +1478,45 @@
             input.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
             
-            activeChatTrust++;
-            
-            // Save reply to DB
             if(supabaseClient) {
-                // Find msg in appropriate list
-                let msg = inboxMessages.find(m => m.id === activeChatMsgId) || sentMessages.find(m => m.id === activeChatMsgId);
+                // جلب النسخة الأخيرة
+                const { data: latestMsg, error: fetchErr } = await supabaseClient.from('messages').select('replies, trust_level').eq('id', activeChatMsgId).single();
                 
-                if (msg) {
-                    const currentReplies = msg.replies || [];
-                    const newReply = { text: txt, sender_id: currentUser.id, timestamp: new Date().toISOString() };
-                    const updatedReplies = [...currentReplies, newReply];
+                if (fetchErr || !latestMsg) {
+                    console.error("Failed to fetch latest msg", fetchErr);
+                    alert(currentLang === 'ar' ? 'حدث خطأ، يرجى المحاولة' : 'Error, please try again');
+                    document.getElementById(tempId)?.remove();
+                    return;
+                }
+
+                const currentReplies = latestMsg.replies || [];
+                const newReply = { text: txt, sender_id: currentUser.id, timestamp: new Date().toISOString() };
+                const updatedReplies = [...currentReplies, newReply];
+                
+                const newTrust = (latestMsg.trust_level || 1) + 1;
+                
+                const { error } = await supabaseClient.from('messages')
+                    .update({
+                        trust_level: newTrust,
+                        replies: updatedReplies,
+                        is_read: false 
+                    })
+                    .eq('id', activeChatMsgId);
                     
-                    const { error } = await supabaseClient.from('messages')
-                        .update({
-                            trust_level: activeChatTrust,
-                            replies: updatedReplies,
-                            is_read: false // Mark as unread for the other person
-                        })
-                        .eq('id', activeChatMsgId);
-                        
-                    if (error) {
-                        console.error("Error saving reply:", error);
-                        alert(currentLang === 'ar' ? 'فشل إرسال الرد' : 'Failed to send reply');
-                    } else {
-                        // Remove opacity to indicate success
-                        const tempRep = document.getElementById('temp-reply');
-                        if(tempRep) tempRep.classList.remove('opacity-50');
-                        
-                        // Update local state
+                if (error) {
+                    console.error("Error saving reply:", error);
+                    alert(currentLang === 'ar' ? 'فشل إرسال الرد' : 'Failed to send reply');
+                    document.getElementById(tempId)?.remove();
+                } else {
+                    document.getElementById(tempId)?.firstElementChild?.classList.remove('opacity-50');
+                    
+                    // تحديث المصفوفة المحلية
+                    let msg = inboxMessages.find(m => m.id === activeChatMsgId) || sentMessages.find(m => m.id === activeChatMsgId);
+                    if (msg) {
                         msg.replies = updatedReplies;
-                        msg.trust_level = activeChatTrust;
+                        msg.trust_level = newTrust;
                     }
+                    activeChatTrust = newTrust;
                 }
             }
             updateTrustUI();
