@@ -984,12 +984,22 @@
             btn.innerHTML = `<div class="loader border-white border-t-brand-primary"></div>`;
 
             if(supabaseClient && publicTargetProfile) {
-                await supabaseClient.from('messages').insert([{
+                const { error } = await supabaseClient.from('messages').insert([{
                     receiver_id: publicTargetProfile.id,
                     content: text,
                     sender_id: currentUser ? currentUser.id : null, 
-                    is_archived: false
+                    is_archived: false,
+                    trust_level: 1,
+                    is_revealed: false
                 }]);
+
+                if (error) {
+                    console.error("Send Error: ", error);
+                    alert(currentLang === 'ar' ? "لم يتم إرسال الرسالة، يرجى التأكد من صلاحيات قاعدة البيانات (RLS) لجداول Supabase." : "Message sending failed, please check Supabase RLS policies.");
+                    btn.innerHTML = `<span data-ar="إرسال" data-en="Send">إرسال</span>`;
+                    applyTranslations();
+                    return;
+                }
             }
 
             // Professional UI Update
@@ -1010,6 +1020,7 @@
                 document.getElementById('view-public').classList.add('hidden');
                 document.getElementById('view-public').classList.remove('flex');
                 showMainApp();
+                loadInbox(); // Refresh instantly
             } else {
                 window.location.href = window.location.pathname;
             }
@@ -1029,7 +1040,7 @@
                 
                 if (error) {
                     console.error("Load inbox error:", error);
-                    // alert("Error loading messages: " + error.message);
+                    alert(currentLang === 'ar' ? "فشل في تحميل الرسائل: " + error.message : "Failed to load messages: " + error.message);
                 }
                 
                 inboxMessages = msgs ? msgs.filter(m => !m.is_archived) : [];
@@ -1046,7 +1057,7 @@
         function setupRealtime() {
             if(!supabaseClient || !currentUser) return;
             try {
-                supabaseClient.channel('public:messages')
+                supabaseClient.channel('custom-all-channel')
                     .on('postgres_changes', { 
                         event: 'INSERT', 
                         schema: 'public', 
@@ -1054,11 +1065,14 @@
                         filter: `receiver_id=eq.${currentUser.id}` 
                     }, payload => {
                         const newMsg = payload.new;
-                        inboxMessages.unshift(newMsg);
-                        renderInbox();
-                        
-                        if(document.getElementById('tab-inbox').classList.contains('hidden')) {
-                            document.getElementById('inbox-count-badge').classList.remove('hidden');
+                        // Prevent duplicates if already fetched manually
+                        if (!inboxMessages.some(m => m.id === newMsg.id)) {
+                            inboxMessages.unshift(newMsg);
+                            renderInbox();
+                            
+                            if(document.getElementById('tab-inbox').classList.contains('hidden')) {
+                                document.getElementById('inbox-count-badge').classList.remove('hidden');
+                            }
                         }
                     }).subscribe();
             } catch (e) {
@@ -1079,9 +1093,10 @@
             
             let html = '';
             inboxMessages.forEach((msg, index) => {
-                const time = new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const time = msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'الآن';
                 const formattedContent = formatMessageText(msg.content);
-                const senderLabel = msg.is_revealed ? 'كُشف القناع' : `مجهول #${msg.id.substring(0,4)}`;
+                const safeId = (msg.id || '0000').toString().substring(0,4);
+                const senderLabel = msg.is_revealed ? 'كُشف القناع' : `مجهول #${safeId}`;
                 const senderColor = msg.is_revealed ? 'text-green-500 bg-green-500/10' : 'text-brand-primary bg-brand-primary/10';
 
                 html += `
@@ -1151,7 +1166,8 @@
             activeChatMsgId = msgId;
             activeChatTrust = msg.trust_level || 1; 
             
-            const senderLabel = msg.is_revealed ? 'تم كشف الهوية' : `مجهول #${msg.id.substring(0,4)}`;
+            const safeId = (msg.id || '0000').toString().substring(0,4);
+            const senderLabel = msg.is_revealed ? 'تم كشف الهوية' : `مجهول #${safeId}`;
             document.getElementById('chat-title').innerHTML = `<i class="fas fa-user-secret ms-1"></i> <span>${senderLabel}</span>`;
             
             const chatBox = document.getElementById('chat-messages');
@@ -1229,7 +1245,7 @@
                     <div class="bg-white dark:bg-[#2a3754] p-4 rounded-2xl border border-brand-primary/50">
                         <i class="fas fa-flag-checkered text-brand-primary text-xl mb-2"></i>
                         <p class="text-xs font-bold mb-3" data-ar="اكتمل عداد الثقة! يمكنك طلب كشف القناع." data-en="Trust level reached! Request mask drop.">اكتمل عداد الثقة! يمكنك طلب كشف القناع.</p>
-                        <button onclick="extendTrust()" class="bg-brand-primary text-white px-4 py-2 rounded-xl text-xs font-bold w-full" data-ar="تمديد المحادثة" data-en="Extend Chat">تمديد المحادثة</button>
+                        <button onclick="extendTrust()" class="bg-brand-primary text-white px-4 py-2 rounded-xl text-xs font-bold w-full" data-ar="تمد المحادثة" data-en="Extend Chat">تمديد المحادثة</button>
                     </div>
                 `;
                 applyTranslations();
