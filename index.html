@@ -253,7 +253,7 @@
                     </div>
                 </div>
 
-                <div id="inbox-header" class="flex justify-between items-center mb-2 border-b border-gray-200 dark:border-gray-700 pb-2">
+                <div id="inbox-header" class="flex justify-between items-center mb-2 border-b border-gray-200 dark:border-gray-700 pb-2 max-w-3xl mx-auto w-full">
                     <h2 class="text-gray-500 dark:text-gray-400 text-sm font-semibold flex items-center gap-2">
                         <span id="inbox-title" data-ar="الرسائل المستلمة" data-en="Received Messages">الرسائل المستلمة</span>
                         <span id="inbox-count-badge" class="bg-brand-primary text-white text-[10px] px-2 py-1 rounded-full hidden">جديد</span>
@@ -271,7 +271,7 @@
 
             <!-- TAB: Archive -->
             <div id="tab-archive" class="hidden flex-1 overflow-y-auto p-4 md:p-6 space-y-4 fade-in">
-                <h2 class="text-gray-500 dark:text-gray-400 text-sm font-semibold mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
+                <h2 class="text-gray-500 dark:text-gray-400 text-sm font-semibold mb-4 border-b border-gray-200 dark:border-gray-700 pb-2 max-w-3xl mx-auto w-full">
                     <i class="fas fa-box-archive me-2"></i> <span data-ar="الرسائل المؤرشفة" data-en="Archived Messages">الرسائل المؤرشفة</span>
                 </h2>
                 <!-- رسائل الأرشيف تحت بعضها -->
@@ -372,7 +372,7 @@
                         </div>
                     </div>
 
-                    <!-- Language -->
+                    <!-- Language (Now RTL safe) -->
                     <div class="bg-white dark:bg-[#1f2940] p-3 rounded-2xl flex justify-between items-center border border-gray-200 dark:border-gray-700">
                         <div class="flex items-center gap-3">
                             <div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-[#2a3754] flex items-center justify-center text-gray-500">
@@ -444,7 +444,7 @@
             </div>
 
             <!-- Chat Messages -->
-            <div class="flex-1 overflow-y-auto p-4 space-y-4 relative z-10" id="chat-messages">
+            <div class="flex-1 overflow-y-auto p-4 space-y-4 relative z-10 max-w-3xl mx-auto w-full" id="chat-messages">
                 <!-- Messages injected here -->
             </div>
 
@@ -510,11 +510,8 @@
                     </div>
                     
                     <h3 class="font-black text-xl text-green-800 dark:text-green-400 mb-2 relative z-10" data-ar="تم الإرسال بنجاح!" data-en="Sent Successfully!">تم الإرسال بنجاح!</h3>
-                    <p class="text-sm text-green-700/80 dark:text-green-300/80 font-semibold relative z-10 text-center leading-relaxed" data-ar="تم تسليم رسالتك بسرية تامة، لن يتمكن أحد من معرفة هويتك." data-en="Your message was delivered securely, your identity is 100% safe.">تم تسليم رسالتك بسرية تامة، لن يتمكن أحد من معرفة هويتك.</p>
-                    
-                    <button onclick="resetPublicView()" class="cursor-pointer mt-8 bg-white dark:bg-brand-dark text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800/50 px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-green-100 dark:hover:bg-[#22354a] active:scale-95 transition-all duration-200 relative z-10 flex items-center gap-2 shadow-sm">
-                        <i class="fas fa-redo text-xs"></i> <span data-ar="إرسال رسالة أخرى" data-en="Send another message">إرسال رسالة أخرى</span>
-                    </button>
+                    <p class="text-sm text-green-700/80 dark:text-green-300/80 font-semibold relative z-10 text-center leading-relaxed mb-2" data-ar="تم تسليم رسالتك بسرية تامة، لن يتمكن أحد من معرفة هويتك." data-en="Your message was delivered securely, your identity is 100% safe.">تم تسليم رسالتك بسرية تامة، لن يتمكن أحد من معرفة هويتك.</p>
+                    <p class="text-xs text-gray-500 font-bold relative z-10 animate-pulse" data-ar="جاري العودة..." data-en="Returning...">جاري العودة...</p>
                 </div>
             </div>
             
@@ -696,31 +693,32 @@
             setTheme('dark'); 
             setLang('ar');
             
+            if(!supabaseClient) { hideLoader(); showLogin(); return; }
+            
             const urlParams = new URLSearchParams(window.location.search);
             const targetUsername = urlParams.get('u');
 
-            if (targetUsername) {
-                await loadPublicProfile(targetUsername);
-            } else {
-                await checkSession();
-            }
-        };
-
-        async function checkSession() {
-            if(!supabaseClient) { hideLoader(); showLogin(); return; }
-            
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
                 currentUser = session.user;
                 await fetchProfile();
                 await loadInbox();
                 setupRealtime();
-                showMainApp();
+                
+                if (targetUsername) {
+                    await loadPublicProfile(targetUsername);
+                } else {
+                    showMainApp();
+                }
             } else {
                 hideLoader();
-                showLogin();
+                if (targetUsername) {
+                    await loadPublicProfile(targetUsername);
+                } else {
+                    showLogin();
+                }
             }
-        }
+        };
 
         /* =========================================================
            5. AUTHENTICATION & PROFILES
@@ -767,6 +765,7 @@
             errDiv.classList.add('hidden');
             successDiv.classList.add('hidden');
 
+            // 1. Check if username exists
             const { data: existing } = await supabaseClient.from('profiles').select('id').eq('username', username).single();
             if(existing) {
                 errDiv.innerText = currentLang === 'ar' ? "اسم المستخدم محجوز" : "Username taken";
@@ -775,6 +774,7 @@
                 return;
             }
 
+            // 2. Sign Up Auth
             const { data, error } = await supabaseClient.auth.signUp({ email, password: pass });
             
             if (error) {
@@ -783,6 +783,7 @@
                 return;
             }
 
+            // 3. Create Profile Entry
             if(data.user) {
                 const rndAvatar = allAvatars[Math.floor(Math.random() * allAvatars.length)];
                 const { error: profileError } = await supabaseClient.from('profiles').insert([
@@ -1010,12 +1011,12 @@
                 const { data, error } = await supabaseClient.from('messages').insert([{
                     receiver_id: publicTargetProfile.id,
                     content: text,
-                    sender_id: currentUser ? currentUser.id : null, 
+                    sender_id: currentUser.id, 
                     is_archived: false,
                     trust_level: 1,
                     is_revealed: false,
                     is_read: false
-                }]).select(`*, receiver_profile:profiles!messages_receiver_id_fkey(username, full_name, avatar_url)`).single();
+                }]).select().single();
 
                 if (error) {
                     console.error("Send Error: ", error);
@@ -1025,8 +1026,10 @@
                     return;
                 }
                 
-                // إضافة الرسالة للمرسلات فوراً لكي تظهر دون انتظار الريل تايم
+                // إضافة الرسالة للمرسلات محلياً فوراً وتحديث الواجهة للسرعة
                 if(data) {
+                    data.receiver_profile = publicTargetProfile;
+                    data.sender_profile = userProfile;
                     sentMessages.unshift(data);
                     if(currentInboxFilter === 'sent') renderInbox();
                 }
@@ -1034,8 +1037,10 @@
 
             document.getElementById('public-msg-form').classList.add('hidden');
             document.getElementById('public-success').classList.remove('hidden');
-            btn.innerHTML = `<span data-ar="إرسال" data-en="Send">إرسال</span>`;
-            applyTranslations();
+            
+            setTimeout(() => {
+                closePublicView();
+            }, 2500);
         }
 
         function resetPublicView() {
@@ -1048,6 +1053,9 @@
             if (currentUser) {
                 document.getElementById('view-public').classList.add('hidden');
                 document.getElementById('view-public').classList.remove('flex');
+                
+                window.history.pushState({}, document.title, window.location.pathname);
+                
                 showMainApp();
                 renderInbox(); 
             } else {
@@ -1063,17 +1071,29 @@
             
             try {
                 const { data: msgs, error } = await supabaseClient.from('messages')
-                    .select(`
-                        *,
-                        sender_profile:profiles!messages_sender_id_fkey(username, full_name, avatar_url),
-                        receiver_profile:profiles!messages_receiver_id_fkey(username, full_name, avatar_url)
-                    `)
+                    .select('*')
                     .or(`receiver_id.eq.${currentUser.id},sender_id.eq.${currentUser.id}`)
                     .order('created_at', { ascending: false });
                 
-                if (error) {
-                    console.error("Load inbox error:", error);
-                } else if (msgs) {
+                if (error) throw error;
+                
+                if (msgs) {
+                    // جلب بيانات المستخدمين بطريقة يدوية وآمنة لتجنب مشاكل Foreign Keys
+                    const profileIds = new Set();
+                    msgs.forEach(m => { if(m.sender_id) profileIds.add(m.sender_id); if(m.receiver_id) profileIds.add(m.receiver_id); });
+                    
+                    const { data: profiles } = await supabaseClient.from('profiles')
+                        .select('id, username, full_name, avatar_url')
+                        .in('id', Array.from(profileIds));
+                        
+                    const profileMap = {};
+                    if(profiles) profiles.forEach(p => profileMap[p.id] = p);
+                    
+                    msgs.forEach(m => {
+                        m.sender_profile = profileMap[m.sender_id] || null;
+                        m.receiver_profile = profileMap[m.receiver_id] || null;
+                    });
+
                     inboxMessages = msgs.filter(m => m.receiver_id === currentUser.id && !m.is_archived);
                     archivedMessages = msgs.filter(m => m.receiver_id === currentUser.id && m.is_archived);
                     sentMessages = msgs.filter(m => m.sender_id === currentUser.id);
@@ -1144,63 +1164,13 @@
         function setupRealtime() {
             if(!supabaseClient || !currentUser) return;
             try {
+                // بدلاً من التعامل المعقد مع المصفوفات، نجلب البيانات الجديدة بالكامل لضمان الدقة
                 supabaseClient.channel('custom-all-channel')
-                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, async payload => {
-                        const newMsg = payload.new;
-                        if(newMsg.receiver_id === currentUser.id || newMsg.sender_id === currentUser.id) {
-                            const { data } = await supabaseClient.from('messages')
-                                .select('*, sender_profile:profiles!messages_sender_id_fkey(username, full_name, avatar_url), receiver_profile:profiles!messages_receiver_id_fkey(username, full_name, avatar_url)')
-                                .eq('id', newMsg.id).single();
-                            
-                            if(data) {
-                                if(data.receiver_id === currentUser.id && !data.is_archived) {
-                                    if (!inboxMessages.some(m => m.id === data.id)) inboxMessages.unshift(data);
-                                }
-                                if(data.sender_id === currentUser.id) {
-                                    if (!sentMessages.some(m => m.id === data.id)) sentMessages.unshift(data);
-                                }
-                                renderInbox();
-                                if(data.receiver_id === currentUser.id && (document.getElementById('tab-inbox').classList.contains('hidden') || currentInboxFilter === 'sent')) {
-                                    document.getElementById('inbox-count-badge').classList.remove('hidden');
-                                }
-                            }
-                        }
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `receiver_id=eq.${currentUser.id}` }, payload => {
+                        loadInbox();
                     })
-                    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, payload => {
-                        const updatedMsg = payload.new;
-                        const updateInArray = (arr) => {
-                            const idx = arr.findIndex(m => m.id === updatedMsg.id);
-                            if(idx !== -1) {
-                                updatedMsg.sender_profile = arr[idx].sender_profile;
-                                updatedMsg.receiver_profile = arr[idx].receiver_profile;
-                                arr[idx] = updatedMsg;
-                                return true;
-                            }
-                            return false;
-                        };
-                        
-                        let changed = updateInArray(inboxMessages) || updateInArray(sentMessages) || updateInArray(archivedMessages);
-                        
-                        if (changed) {
-                            if (activeChatMsgId === updatedMsg.id) {
-                                updateActiveChat(updatedMsg);
-                            } else {
-                                renderInbox();
-                                renderArchive();
-                            }
-                        }
-                    })
-                    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, payload => {
-                        const deletedId = payload.old.id;
-                        inboxMessages = inboxMessages.filter(m => m.id !== deletedId);
-                        sentMessages = sentMessages.filter(m => m.id !== deletedId);
-                        archivedMessages = archivedMessages.filter(m => m.id !== deletedId);
-                        
-                        if (activeChatMsgId === deletedId) {
-                            closeChat();
-                        }
-                        renderInbox();
-                        renderArchive();
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `sender_id=eq.${currentUser.id}` }, payload => {
+                        loadInbox();
                     }).subscribe();
             } catch (e) {
                 console.error("Realtime setup failed:", e);
@@ -1320,15 +1290,9 @@
 
         async function archiveMessageUI(id, e) {
             e.stopPropagation();
-            if(supabaseClient) await supabaseClient.from('messages').update({is_archived: true}).eq('id', id);
-            
-            const msg = inboxMessages.find(m => m.id === id);
-            if(msg) {
-                msg.is_archived = true;
-                inboxMessages = inboxMessages.filter(m => m.id !== id);
-                archivedMessages.unshift(msg);
-                renderInbox();
-                renderArchive();
+            if(supabaseClient) {
+                await supabaseClient.from('messages').update({is_archived: true}).eq('id', id);
+                loadInbox();
             }
         }
         
@@ -1343,14 +1307,8 @@
                     alert(currentLang === 'ar' ? 'فشل الحذف، يرجى تفعيل صلاحيات الحذف (RLS) في الخادم: ' + error.message : 'Delete failed (Check RLS): ' + error.message);
                     return;
                 }
+                loadInbox(); 
             }
-            
-            inboxMessages = inboxMessages.filter(m => m.id !== id);
-            sentMessages = sentMessages.filter(m => m.id !== id);
-            archivedMessages = archivedMessages.filter(m => m.id !== id);
-            
-            renderInbox();
-            renderArchive();
         }
         
         async function deleteCurrentChat() {
@@ -1365,15 +1323,8 @@
                 return;
             }
 
-            const deletedId = activeChatMsgId;
             closeChat();
-            
-            inboxMessages = inboxMessages.filter(m => m.id !== deletedId);
-            sentMessages = sentMessages.filter(m => m.id !== deletedId);
-            archivedMessages = archivedMessages.filter(m => m.id !== deletedId);
-            
-            renderInbox();
-            renderArchive();
+            loadInbox(); 
         }
 
         function renderArchive() {
@@ -1492,6 +1443,13 @@
                 } else {
                     document.getElementById(tempId)?.firstElementChild?.classList.remove('opacity-50');
                     activeChatTrust = newTrust;
+                    // تحديث محلي سريع
+                    let msg = inboxMessages.find(m => m.id === activeChatMsgId) || sentMessages.find(m => m.id === activeChatMsgId);
+                    if(msg) {
+                        msg.replies = updatedReplies;
+                        msg.trust_level = newTrust;
+                        msg.is_read = false; // غير مقروءة للطرف الآخر
+                    }
                 }
             }
             updateTrustUI();
