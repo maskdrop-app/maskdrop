@@ -100,518 +100,522 @@
         .dark .msg-unread-sent { background-color: rgba(59, 130, 246, 0.1); }
     </style>
 </head>
-<body class="text-gray-900 dark:text-white transition-colors duration-300 flex justify-center items-start sm:items-center">
+<body class="text-gray-900 dark:text-white transition-colors duration-300">
 
-    <!-- Container: 100dvh ensures mobile browsers don't hide the input field behind toolbars -->
-    <div class="bg-white dark:bg-brand-secondary w-full h-[100dvh] max-w-md md:max-w-2xl lg:max-w-4xl flex flex-col relative sm:h-[90vh] sm:rounded-3xl sm:border border-gray-200 dark:border-brand-light shadow-2xl overflow-hidden">
+    <!-- الغلاف الخارجي ثابت لمنع مشاكل العرض في الجوال -->
+    <div class="fixed inset-0 w-full h-full flex flex-col items-center justify-center sm:p-4 z-0">
         
-        <!-- Loading Overlay -->
-        <div id="global-loader" class="absolute inset-0 bg-white dark:bg-brand-dark z-[200] flex flex-col items-center justify-center fade-in">
-            <div class="w-16 h-16 rounded-full bg-brand-primary/10 flex items-center justify-center mb-4 text-brand-primary animate-pulse">
-                <i class="fas fa-mask text-3xl"></i>
-            </div>
-            <div class="loader"></div>
-            <p class="mt-4 text-gray-500 text-sm font-bold" data-ar="جاري التحميل..." data-en="Loading...">جاري التحميل...</p>
-        </div>
-
-        <!-- ==================== 1. LOGIN VIEW ==================== -->
-        <div id="view-login" class="hidden flex-1 overflow-y-auto flex-col justify-center p-8 md:px-16 fade-in h-full bg-gray-50 dark:bg-brand-dark z-50 absolute inset-0 transition-colors duration-300">
-            <div class="text-center mb-8 mt-4">
-                <div class="w-20 h-20 mx-auto rounded-full bg-brand-primary flex items-center justify-center mb-4 text-white">
-                    <i class="fas fa-mask text-4xl"></i>
+        <!-- الحاوية الرئيسية للتطبيق -->
+        <div class="bg-white dark:bg-brand-secondary w-full h-full max-w-md md:max-w-2xl lg:max-w-4xl flex flex-col relative sm:rounded-3xl sm:border border-gray-200 dark:border-brand-light shadow-2xl overflow-hidden">
+            
+            <!-- Loading Overlay -->
+            <div id="global-loader" class="absolute inset-0 bg-white dark:bg-brand-dark z-[200] flex flex-col items-center justify-center fade-in">
+                <div class="w-16 h-16 rounded-full bg-brand-primary/10 flex items-center justify-center mb-4 text-brand-primary animate-pulse">
+                    <i class="fas fa-mask text-3xl"></i>
                 </div>
-                <h1 class="font-bold text-3xl" data-ar="قناع" data-en="Mask">قناع</h1>
-                <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm" data-ar="تجرأ، واكتشف من خلف القناع!" data-en="Dare to discover who's behind the mask!">تجرأ، واكتشف من خلف القناع!</p>
+                <div class="loader"></div>
+                <p class="mt-4 text-gray-500 text-sm font-bold" data-ar="جاري التحميل..." data-en="Loading...">جاري التحميل...</p>
             </div>
 
-            <div class="space-y-4 max-w-sm mx-auto w-full">
-                <div id="login-error" class="hidden bg-red-100 text-red-600 p-3 rounded-xl text-sm text-center font-bold"></div>
-                <div>
-                    <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1" data-ar="البريد الإلكتروني" data-en="Email Address">البريد الإلكتروني</label>
-                    <div class="relative">
-                        <i class="fas fa-envelope absolute start-4 top-3.5 text-gray-400"></i>
-                        <input type="email" id="login-email" data-ar-ph="example@email.com" data-en-ph="example@email.com" placeholder="example@email.com" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-900 dark:text-white rounded-xl ps-10 pe-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary transition text-start" dir="ltr">
+            <!-- ==================== 1. LOGIN VIEW ==================== -->
+            <div id="view-login" class="hidden flex-1 overflow-y-auto flex-col justify-center p-8 md:px-16 fade-in h-full bg-gray-50 dark:bg-brand-dark z-50 absolute inset-0 transition-colors duration-300">
+                <div class="text-center mb-8 mt-4">
+                    <div class="w-20 h-20 mx-auto rounded-full bg-brand-primary flex items-center justify-center mb-4 text-white">
+                        <i class="fas fa-mask text-4xl"></i>
                     </div>
+                    <h1 class="font-bold text-3xl" data-ar="قناع" data-en="Mask">قناع</h1>
+                    <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm" data-ar="تجرأ، واكتشف من خلف القناع!" data-en="Dare to discover who's behind the mask!">تجرأ، واكتشف من خلف القناع!</p>
                 </div>
-                <div>
-                    <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1" data-ar="كلمة المرور" data-en="Password">كلمة المرور</label>
-                    <div class="relative">
-                        <i class="fas fa-lock absolute start-4 top-3.5 text-gray-400"></i>
-                        <input type="password" id="login-pass" data-ar-ph="••••••••" data-en-ph="••••••••" placeholder="••••••••" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-900 dark:text-white rounded-xl ps-10 pe-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary transition text-start" dir="ltr">
-                    </div>
-                </div>
-                <button onclick="login()" id="btn-login" class="cursor-pointer w-full bg-brand-primary text-white font-bold py-3 rounded-xl hover:brightness-110 active:scale-95 transition-all duration-150 mt-4 flex justify-center items-center gap-2">
-                    <span data-ar="تسجيل الدخول" data-en="Login">تسجيل الدخول</span>
-                </button>
-                <div class="text-center mt-4">
-                    <button onclick="showForgotPassword()" class="cursor-pointer text-sm text-gray-500 dark:text-gray-400 hover:text-brand-primary dark:hover:text-white transition" data-ar="نسيت كلمة المرور؟" data-en="Forgot Password?">نسيت كلمة المرور؟</button>
-                </div>
-            </div>
 
-            <div class="mt-8 text-center pt-6 border-t border-gray-200 dark:border-brand-light pb-4">
-                <p class="text-sm text-gray-500 dark:text-gray-400">
-                    <span data-ar="ليس لديك حساب؟" data-en="Don't have an account?">ليس لديك حساب؟</span> 
-                    <button onclick="showRegister()" class="cursor-pointer text-brand-primary font-bold hover:underline ml-1 mr-1" data-ar="سجل الآن" data-en="Register Now">سجل الآن</button>
-                </p>
-            </div>
-        </div>
-
-        <!-- ==================== 1.1 REGISTER VIEW ==================== -->
-        <div id="view-register" class="hidden flex-1 overflow-y-auto flex-col justify-center p-8 md:px-16 fade-in h-full bg-gray-50 dark:bg-brand-dark z-50 absolute inset-0 transition-colors duration-300">
-            <div class="text-center mb-6 mt-4">
-                <h1 class="font-bold text-2xl tracking-wide text-brand-primary" data-ar="إنشاء حساب جديد" data-en="Create Account">إنشاء حساب جديد</h1>
-                <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm" data-ar="انضم إلينا وابدأ بتلقي رسائلك المجهولة!" data-en="Join us and start receiving anonymous messages!">انضم إلينا وابدأ بتلقي رسائلك المجهولة!</p>
-            </div>
-
-            <div class="space-y-4 max-w-sm mx-auto w-full">
-                <div id="reg-error" class="hidden bg-red-100 text-red-600 p-3 rounded-xl text-sm text-center font-bold"></div>
-                <div id="reg-success" class="hidden bg-green-100 text-green-700 p-3 rounded-xl text-sm text-center font-bold"></div>
-                <div>
-                    <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1" data-ar="الاسم الشخصي" data-en="Full Name">الاسم الشخصي</label>
-                    <div class="relative">
-                        <i class="fas fa-user absolute start-4 top-3.5 text-gray-400"></i>
-                        <input type="text" id="reg-name" data-ar-ph="سارة أحمد" data-en-ph="Sarah Ahmed" placeholder="سارة أحمد" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-900 dark:text-white rounded-xl ps-10 pe-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary transition text-start">
-                    </div>
-                </div>
-                <div>
-                    <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1" data-ar="اسم المستخدم" data-en="Username">اسم المستخدم</label>
-                    <div class="relative">
-                        <i class="fas fa-at absolute start-4 top-3.5 text-gray-400"></i>
-                        <input type="text" id="reg-username" data-ar-ph="username" data-en-ph="username" placeholder="username" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-900 dark:text-white rounded-xl ps-10 pe-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary transition text-start" dir="ltr">
-                    </div>
-                </div>
-                <div>
-                    <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1" data-ar="البريد الإلكتروني" data-en="Email Address">البريد الإلكتروني</label>
-                    <div class="relative">
-                        <i class="fas fa-envelope absolute start-4 top-3.5 text-gray-400"></i>
-                        <input type="email" id="reg-email" data-ar-ph="example@email.com" data-en-ph="example@email.com" placeholder="example@email.com" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-900 dark:text-white rounded-xl ps-10 pe-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary transition text-start" dir="ltr">
-                    </div>
-                </div>
-                <div>
-                    <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1" data-ar="كلمة المرور" data-en="Password">كلمة المرور</label>
-                    <div class="relative">
-                        <i class="fas fa-lock absolute start-4 top-3.5 text-gray-400"></i>
-                        <input type="password" id="reg-pass" data-ar-ph="••••••••" data-en-ph="••••••••" placeholder="••••••••" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-900 dark:text-white rounded-xl ps-10 pe-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary transition text-start" dir="ltr">
-                    </div>
-                </div>
-                <button onclick="register()" id="btn-reg" class="cursor-pointer w-full bg-brand-primary text-white font-bold py-3 rounded-xl hover:brightness-110 active:scale-95 transition-all duration-150 mt-4 flex justify-center items-center gap-2">
-                    <span data-ar="سجل الآن" data-en="Register">سجل الآن</span>
-                </button>
-            </div>
-
-            <div class="mt-8 text-center pt-6 border-t border-gray-200 dark:border-brand-light pb-4">
-                <p class="text-sm text-gray-500 dark:text-gray-400">
-                    <span data-ar="لديك حساب بالفعل؟" data-en="Already have an account?">لديك حساب بالفعل؟</span> 
-                    <button onclick="showLogin()" class="cursor-pointer text-brand-primary font-bold hover:underline ml-1 mr-1" data-ar="تسجيل الدخول" data-en="Login Here">تسجيل الدخول</button>
-                </p>
-            </div>
-        </div>
-
-        <!-- ==================== 1.2 FORGOT PASSWORD VIEW ==================== -->
-        <div id="view-forgot" class="hidden flex-1 overflow-y-auto flex-col justify-center p-8 fade-in h-full bg-gray-50 dark:bg-brand-dark z-50 absolute inset-0 transition-colors duration-300">
-            <button onclick="showLogin()" class="absolute top-6 start-6 text-gray-500 hover:text-gray-800 dark:hover:text-white transition cursor-pointer">
-                <i class="fas fa-arrow-right text-xl rtl-arrow"></i>
-            </button>
-            <div class="text-center mb-10">
-                <div class="w-16 h-16 mx-auto rounded-full bg-gray-200 dark:bg-[#1f2940] flex items-center justify-center mb-4 text-brand-primary">
-                    <i class="fas fa-key text-2xl"></i>
-                </div>
-                <h1 class="font-bold text-2xl tracking-wide" data-ar="استعادة كلمة المرور" data-en="Reset Password">استعادة كلمة المرور</h1>
-                <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm" data-ar="أدخل بريدك الإلكتروني وسنرسل لك رابطاً لاستعادة حسابك." data-en="Enter your email and we'll send you a link to reset your password.">أدخل بريدك الإلكتروني وسنرسل لك رابطاً لاستعادة حسابك.</p>
-            </div>
-            <div class="space-y-4 max-w-sm mx-auto w-full">
-                <div>
-                    <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1" data-ar="البريد الإلكتروني" data-en="Email Address">البريد الإلكتروني</label>
-                    <div class="relative">
-                        <i class="fas fa-envelope absolute start-4 top-3.5 text-gray-400"></i>
-                        <input type="email" id="forgot-email" data-ar-ph="example@email.com" data-en-ph="example@email.com" placeholder="example@email.com" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-900 dark:text-white rounded-xl ps-10 pe-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary transition text-start" dir="ltr">
-                    </div>
-                </div>
-                <button onclick="simulateReset()" class="cursor-pointer w-full bg-brand-primary text-white font-bold py-3 rounded-xl hover:brightness-110 active:scale-95 transition-all duration-150 mt-4">
-                    <span data-ar="إرسال رابط الاستعادة" data-en="Send Reset Link">إرسال رابط الاستعادة</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- ==================== 2. MAIN APP VIEW ==================== -->
-        <div id="view-main" class="hidden flex-1 flex-col h-full fade-in relative">
-            <!-- App Header -->
-            <div class="bg-gray-100 dark:bg-brand-light p-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-700 z-10 transition-colors duration-300 shrink-0">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center text-white">
-                        <i class="fas fa-mask text-xl"></i>
+                <div class="space-y-4 max-w-sm mx-auto w-full">
+                    <div id="login-error" class="hidden bg-red-100 text-red-600 p-3 rounded-xl text-sm text-center font-bold"></div>
+                    <div>
+                        <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1" data-ar="البريد الإلكتروني" data-en="Email Address">البريد الإلكتروني</label>
+                        <div class="relative">
+                            <i class="fas fa-envelope absolute start-4 top-3.5 text-gray-400"></i>
+                            <input type="email" id="login-email" data-ar-ph="example@email.com" data-en-ph="example@email.com" placeholder="example@email.com" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-900 dark:text-white rounded-xl ps-10 pe-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary transition text-start" dir="ltr">
+                        </div>
                     </div>
                     <div>
-                        <h1 class="font-bold text-xl text-gray-800 dark:text-white" data-ar="قناع" data-en="Mask">قناع</h1>
-                        <p class="text-xs text-gray-500 dark:text-gray-300" id="header-welcome-msg">أهلاً بك 👋</p>
-                    </div>
-                </div>
-                <button onclick="logout()" class="cursor-pointer text-gray-400 hover:text-brand-primary active:scale-90 transition-transform" title="تسجيل الخروج">
-                    <i class="fas fa-sign-out-alt text-xl"></i>
-                </button>
-            </div>
-
-            <!-- TAB: Inbox -->
-            <div id="tab-inbox" class="flex-1 overflow-y-auto p-4 md:p-6 relative bg-white dark:bg-[#1a1a2e]">
-                
-                <div id="inbox-header" class="flex justify-between items-center mb-4 max-w-3xl mx-auto w-full">
-                    <h2 class="text-gray-900 dark:text-white text-xl font-black flex items-center gap-2">
-                        <span id="inbox-title" data-ar="المحادثات النشطة" data-en="Active Chats">المحادثات النشطة</span>
-                        <span id="inbox-count-badge" class="bg-brand-primary text-white text-[10px] px-2 py-0.5 rounded-full hidden shadow-sm animate-pulse">جديد</span>
-                    </h2>
-                </div>
-                
-                <!-- رسائل الانبوكس المنسقة والمرتبة -->
-                <div id="inbox-list" class="flex flex-col gap-3 max-w-3xl mx-auto w-full pb-16">
-                    <div id="empty-inbox" class="text-center text-gray-400 dark:text-gray-500 py-10 text-sm block">
-                        <i class="fas fa-inbox text-4xl mb-3 opacity-50"></i>
-                        <p data-ar="لا توجد رسائل حالياً" data-en="No messages yet">لا توجد رسائل حالياً</p>
-                    </div>
-                </div>
-
-                <!-- Floating Action Button (No Glow) -->
-                <button id="fab-new-msg" onclick="openSearchModal()" class="cursor-pointer absolute bottom-6 end-6 md:end-10 w-14 h-14 bg-brand-primary text-white rounded-full flex items-center justify-center active:scale-95 transition-all z-20">
-                    <i class="fas fa-plus text-xl"></i>
-                </button>
-            </div>
-
-            <!-- TAB: Archive -->
-            <div id="tab-archive" class="hidden flex-1 overflow-y-auto p-4 md:p-6 fade-in bg-white dark:bg-[#1a1a2e]">
-                <div class="flex justify-between items-center mb-4 max-w-3xl mx-auto w-full">
-                    <h2 class="text-gray-900 dark:text-white text-xl font-black flex items-center gap-2">
-                        <i class="fas fa-box-archive me-1 text-gray-400"></i> <span data-ar="الأرشيف" data-en="Archive">الأرشيف</span>
-                    </h2>
-                </div>
-                
-                <div id="archive-list" class="flex flex-col gap-3 max-w-3xl mx-auto w-full pb-6">
-                    <div id="empty-archive" class="text-center text-gray-400 dark:text-gray-500 py-10 text-sm block">
-                        <i class="fas fa-folder-open text-4xl mb-3 opacity-50"></i>
-                        <p data-ar="لا توجد رسائل مؤرشفة" data-en="No archived messages">لا توجد رسائل مؤرشفة</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TAB: Profile & Settings -->
-            <div id="tab-profile" class="hidden flex-1 overflow-y-auto p-4 md:p-8 space-y-6 fade-in max-w-2xl mx-auto w-full pb-6">
-                <!-- User Info -->
-                <div class="text-center mt-2 relative group cursor-pointer" onclick="openAvatarModal()">
-                    <div class="w-24 h-24 mx-auto rounded-full border-4 border-brand-primary p-1 mb-1 relative hover:scale-105 transition-transform bg-white dark:bg-transparent">
-                        <img id="avatar-profile" src="https://api.dicebear.com/7.x/avataaars/svg?seed=MaskUser&backgroundColor=e94560" alt="Avatar" class="w-full h-full rounded-full bg-gray-200 dark:bg-brand-light object-cover">
-                        <div class="absolute bottom-0 end-0 bg-brand-primary text-white w-7 h-7 rounded-full flex items-center justify-center border-2 border-white dark:border-[#1f2940]">
-                            <i class="fas fa-camera text-xs"></i>
+                        <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1" data-ar="كلمة المرور" data-en="Password">كلمة المرور</label>
+                        <div class="relative">
+                            <i class="fas fa-lock absolute start-4 top-3.5 text-gray-400"></i>
+                            <input type="password" id="login-pass" data-ar-ph="••••••••" data-en-ph="••••••••" placeholder="••••••••" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-900 dark:text-white rounded-xl ps-10 pe-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary transition text-start" dir="ltr">
                         </div>
                     </div>
-                    <span class="text-[10px] text-brand-primary font-bold mb-2 block" data-ar="اضغط لتغيير الشخصية" data-en="Tap to change avatar">اضغط لتغيير الشخصية</span>
-                    <h2 id="profile-display-name" class="text-xl font-bold text-gray-900 dark:text-white">...</h2>
-                    <p id="profile-display-username" class="text-sm text-gray-500 dark:text-gray-400">@...</p>
+                    <button onclick="login()" id="btn-login" class="cursor-pointer w-full bg-brand-primary text-white font-bold py-3 rounded-xl hover:brightness-110 active:scale-95 transition-all duration-150 mt-4 flex justify-center items-center gap-2">
+                        <span data-ar="تسجيل الدخول" data-en="Login">تسجيل الدخول</span>
+                    </button>
+                    <div class="text-center mt-4">
+                        <button onclick="showForgotPassword()" class="cursor-pointer text-sm text-gray-500 dark:text-gray-400 hover:text-brand-primary dark:hover:text-white transition" data-ar="نسيت كلمة المرور؟" data-en="Forgot Password?">نسيت كلمة المرور؟</button>
+                    </div>
                 </div>
 
-                <!-- Link Share Card -->
-                <div class="bg-gradient-to-r from-brand-primary to-purple-600 rounded-2xl p-5 text-center relative overflow-hidden border border-transparent shadow-lg shadow-brand-primary/20">
-                    <div class="absolute -end-4 -bottom-4 text-white/10 text-8xl pointer-events-none"><i class="fas fa-link"></i></div>
-                    <h3 class="font-bold text-white mb-2 relative z-10" data-ar="احصل على رسائل مجهولة!" data-en="Get anonymous messages!">احصل على رسائل مجهولة!</h3>
-                    <p class="text-xs text-white/80 mb-4 relative z-10" data-ar="انسخ الرابط وشاركه في انستجرام أو سناب شات" data-en="Copy your link and share it on Instagram or Snapchat">انسخ الرابط وشاركه في انستجرام أو سناب شات</p>
+                <div class="mt-8 text-center pt-6 border-t border-gray-200 dark:border-brand-light pb-4">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        <span data-ar="ليس لديك حساب؟" data-en="Don't have an account?">ليس لديك حساب؟</span> 
+                        <button onclick="showRegister()" class="cursor-pointer text-brand-primary font-bold hover:underline ml-1 mr-1" data-ar="سجل الآن" data-en="Register Now">سجل الآن</button>
+                    </p>
+                </div>
+            </div>
+
+            <!-- ==================== 1.1 REGISTER VIEW ==================== -->
+            <div id="view-register" class="hidden flex-1 overflow-y-auto flex-col justify-center p-8 md:px-16 fade-in h-full bg-gray-50 dark:bg-brand-dark z-50 absolute inset-0 transition-colors duration-300">
+                <div class="text-center mb-6 mt-4">
+                    <h1 class="font-bold text-2xl tracking-wide text-brand-primary" data-ar="إنشاء حساب جديد" data-en="Create Account">إنشاء حساب جديد</h1>
+                    <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm" data-ar="انضم إلينا وابدأ بتلقي رسائلك المجهولة!" data-en="Join us and start receiving anonymous messages!">انضم إلينا وابدأ بتلقي رسائلك المجهولة!</p>
+                </div>
+
+                <div class="space-y-4 max-w-sm mx-auto w-full">
+                    <div id="reg-error" class="hidden bg-red-100 text-red-600 p-3 rounded-xl text-sm text-center font-bold"></div>
+                    <div id="reg-success" class="hidden bg-green-100 text-green-700 p-3 rounded-xl text-sm text-center font-bold"></div>
+                    <div>
+                        <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1" data-ar="الاسم الشخصي" data-en="Full Name">الاسم الشخصي</label>
+                        <div class="relative">
+                            <i class="fas fa-user absolute start-4 top-3.5 text-gray-400"></i>
+                            <input type="text" id="reg-name" data-ar-ph="سارة أحمد" data-en-ph="Sarah Ahmed" placeholder="سارة أحمد" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-900 dark:text-white rounded-xl ps-10 pe-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary transition text-start">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1" data-ar="اسم المستخدم" data-en="Username">اسم المستخدم</label>
+                        <div class="relative">
+                            <i class="fas fa-at absolute start-4 top-3.5 text-gray-400"></i>
+                            <input type="text" id="reg-username" data-ar-ph="username" data-en-ph="username" placeholder="username" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-900 dark:text-white rounded-xl ps-10 pe-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary transition text-start" dir="ltr">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1" data-ar="البريد الإلكتروني" data-en="Email Address">البريد الإلكتروني</label>
+                        <div class="relative">
+                            <i class="fas fa-envelope absolute start-4 top-3.5 text-gray-400"></i>
+                            <input type="email" id="reg-email" data-ar-ph="example@email.com" data-en-ph="example@email.com" placeholder="example@email.com" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-900 dark:text-white rounded-xl ps-10 pe-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary transition text-start" dir="ltr">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1" data-ar="كلمة المرور" data-en="Password">كلمة المرور</label>
+                        <div class="relative">
+                            <i class="fas fa-lock absolute start-4 top-3.5 text-gray-400"></i>
+                            <input type="password" id="reg-pass" data-ar-ph="••••••••" data-en-ph="••••••••" placeholder="••••••••" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-900 dark:text-white rounded-xl ps-10 pe-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary transition text-start" dir="ltr">
+                        </div>
+                    </div>
+                    <button onclick="register()" id="btn-reg" class="cursor-pointer w-full bg-brand-primary text-white font-bold py-3 rounded-xl hover:brightness-110 active:scale-95 transition-all duration-150 mt-4 flex justify-center items-center gap-2">
+                        <span data-ar="سجل الآن" data-en="Register">سجل الآن</span>
+                    </button>
+                </div>
+
+                <div class="mt-8 text-center pt-6 border-t border-gray-200 dark:border-brand-light pb-4">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        <span data-ar="لديك حساب بالفعل؟" data-en="Already have an account?">لديك حساب بالفعل؟</span> 
+                        <button onclick="showLogin()" class="cursor-pointer text-brand-primary font-bold hover:underline ml-1 mr-1" data-ar="تسجيل الدخول" data-en="Login Here">تسجيل الدخول</button>
+                    </p>
+                </div>
+            </div>
+
+            <!-- ==================== 1.2 FORGOT PASSWORD VIEW ==================== -->
+            <div id="view-forgot" class="hidden flex-1 overflow-y-auto flex-col justify-center p-8 fade-in h-full bg-gray-50 dark:bg-brand-dark z-50 absolute inset-0 transition-colors duration-300">
+                <button onclick="showLogin()" class="absolute top-6 start-6 text-gray-500 hover:text-gray-800 dark:hover:text-white transition cursor-pointer">
+                    <i class="fas fa-arrow-right text-xl rtl-arrow"></i>
+                </button>
+                <div class="text-center mb-10">
+                    <div class="w-16 h-16 mx-auto rounded-full bg-gray-200 dark:bg-[#1f2940] flex items-center justify-center mb-4 text-brand-primary">
+                        <i class="fas fa-key text-2xl"></i>
+                    </div>
+                    <h1 class="font-bold text-2xl tracking-wide" data-ar="استعادة كلمة المرور" data-en="Reset Password">استعادة كلمة المرور</h1>
+                    <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm" data-ar="أدخل بريدك الإلكتروني وسنرسل لك رابطاً لاستعادة حسابك." data-en="Enter your email and we'll send you a link to reset your password.">أدخل بريدك الإلكتروني وسنرسل لك رابطاً لاستعادة حسابك.</p>
+                </div>
+                <div class="space-y-4 max-w-sm mx-auto w-full">
+                    <div>
+                        <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1" data-ar="البريد الإلكتروني" data-en="Email Address">البريد الإلكتروني</label>
+                        <div class="relative">
+                            <i class="fas fa-envelope absolute start-4 top-3.5 text-gray-400"></i>
+                            <input type="email" id="forgot-email" data-ar-ph="example@email.com" data-en-ph="example@email.com" placeholder="example@email.com" class="w-full bg-gray-200 dark:bg-[#1f2940] text-gray-900 dark:text-white rounded-xl ps-10 pe-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary transition text-start" dir="ltr">
+                        </div>
+                    </div>
+                    <button onclick="simulateReset()" class="cursor-pointer w-full bg-brand-primary text-white font-bold py-3 rounded-xl hover:brightness-110 active:scale-95 transition-all duration-150 mt-4">
+                        <span data-ar="إرسال رابط الاستعادة" data-en="Send Reset Link">إرسال رابط الاستعادة</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ==================== 2. MAIN APP VIEW ==================== -->
+            <div id="view-main" class="hidden flex-1 flex-col h-full fade-in relative">
+                <!-- App Header -->
+                <div class="bg-gray-100 dark:bg-brand-light p-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-700 z-10 transition-colors duration-300 shrink-0">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center text-white">
+                            <i class="fas fa-mask text-xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="font-bold text-xl text-gray-800 dark:text-white" data-ar="قناع" data-en="Mask">قناع</h1>
+                            <p class="text-xs text-gray-500 dark:text-gray-300" id="header-welcome-msg">أهلاً بك 👋</p>
+                        </div>
+                    </div>
+                    <button onclick="logout()" class="cursor-pointer text-gray-400 hover:text-brand-primary active:scale-90 transition-transform" title="تسجيل الخروج">
+                        <i class="fas fa-sign-out-alt text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- TAB: Inbox -->
+                <div id="tab-inbox" class="flex-1 overflow-y-auto p-4 md:p-6 relative bg-white dark:bg-[#1a1a2e]">
                     
-                    <div class="flex items-center gap-2 bg-brand-dark/50 p-2 rounded-xl relative z-10 border border-white/20">
-                        <input type="text" id="share-link-input" readonly value="" class="bg-transparent text-sm text-white flex-1 outline-none text-start" dir="ltr">
-                        <button onclick="copyLink()" class="cursor-pointer bg-white text-brand-primary hover:bg-gray-100 active:scale-95 px-3 py-1.5 rounded-lg text-sm font-bold transition-all duration-150">
-                            <i class="fas fa-copy"></i> <span data-ar="نسخ" data-en="Copy">نسخ</span>
+                    <div id="inbox-header" class="flex justify-between items-center mb-4 max-w-3xl mx-auto w-full">
+                        <h2 class="text-gray-900 dark:text-white text-xl font-black flex items-center gap-2">
+                            <span id="inbox-title" data-ar="المحادثات النشطة" data-en="Active Chats">المحادثات النشطة</span>
+                            <span id="inbox-count-badge" class="bg-brand-primary text-white text-[10px] px-2 py-0.5 rounded-full hidden shadow-sm animate-pulse">جديد</span>
+                        </h2>
+                    </div>
+                    
+                    <!-- رسائل الانبوكس المنسقة والمرتبة -->
+                    <div id="inbox-list" class="flex flex-col gap-3 max-w-3xl mx-auto w-full pb-16">
+                        <div id="empty-inbox" class="text-center text-gray-400 dark:text-gray-500 py-10 text-sm block">
+                            <i class="fas fa-inbox text-4xl mb-3 opacity-50"></i>
+                            <p data-ar="لا توجد رسائل حالياً" data-en="No messages yet">لا توجد رسائل حالياً</p>
+                        </div>
+                    </div>
+
+                    <!-- Floating Action Button -->
+                    <button id="fab-new-msg" onclick="openSearchModal()" class="cursor-pointer absolute bottom-6 end-6 md:end-10 w-14 h-14 bg-brand-primary text-white rounded-full flex items-center justify-center active:scale-95 transition-all z-20 shadow-md shadow-brand-primary/30">
+                        <i class="fas fa-plus text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- TAB: Archive -->
+                <div id="tab-archive" class="hidden flex-1 overflow-y-auto p-4 md:p-6 fade-in bg-white dark:bg-[#1a1a2e]">
+                    <div class="flex justify-between items-center mb-4 max-w-3xl mx-auto w-full">
+                        <h2 class="text-gray-900 dark:text-white text-xl font-black flex items-center gap-2">
+                            <i class="fas fa-box-archive me-1 text-gray-400"></i> <span data-ar="الأرشيف" data-en="Archive">الأرشيف</span>
+                        </h2>
+                    </div>
+                    
+                    <div id="archive-list" class="flex flex-col gap-3 max-w-3xl mx-auto w-full pb-6">
+                        <div id="empty-archive" class="text-center text-gray-400 dark:text-gray-500 py-10 text-sm block">
+                            <i class="fas fa-folder-open text-4xl mb-3 opacity-50"></i>
+                            <p data-ar="لا توجد رسائل مؤرشفة" data-en="No archived messages">لا توجد رسائل مؤرشفة</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: Profile & Settings -->
+                <div id="tab-profile" class="hidden flex-1 overflow-y-auto p-4 md:p-8 space-y-6 fade-in max-w-2xl mx-auto w-full pb-6">
+                    <!-- User Info -->
+                    <div class="text-center mt-2 relative group cursor-pointer" onclick="openAvatarModal()">
+                        <div class="w-24 h-24 mx-auto rounded-full border-4 border-brand-primary p-1 mb-1 relative hover:scale-105 transition-transform bg-white dark:bg-transparent">
+                            <img id="avatar-profile" src="https://api.dicebear.com/7.x/avataaars/svg?seed=MaskUser&backgroundColor=e94560" alt="Avatar" class="w-full h-full rounded-full bg-gray-200 dark:bg-brand-light object-cover">
+                            <div class="absolute bottom-0 end-0 bg-brand-primary text-white w-7 h-7 rounded-full flex items-center justify-center border-2 border-white dark:border-[#1f2940]">
+                                <i class="fas fa-camera text-xs"></i>
+                            </div>
+                        </div>
+                        <span class="text-[10px] text-brand-primary font-bold mb-2 block" data-ar="اضغط لتغيير الشخصية" data-en="Tap to change avatar">اضغط لتغيير الشخصية</span>
+                        <h2 id="profile-display-name" class="text-xl font-bold text-gray-900 dark:text-white">...</h2>
+                        <p id="profile-display-username" class="text-sm text-gray-500 dark:text-gray-400">@...</p>
+                    </div>
+
+                    <!-- Link Share Card -->
+                    <div class="bg-gradient-to-r from-brand-primary to-purple-600 rounded-2xl p-5 text-center relative overflow-hidden border border-transparent shadow-lg shadow-brand-primary/20">
+                        <div class="absolute -end-4 -bottom-4 text-white/10 text-8xl pointer-events-none"><i class="fas fa-link"></i></div>
+                        <h3 class="font-bold text-white mb-2 relative z-10" data-ar="احصل على رسائل مجهولة!" data-en="Get anonymous messages!">احصل على رسائل مجهولة!</h3>
+                        <p class="text-xs text-white/80 mb-4 relative z-10" data-ar="انسخ الرابط وشاركه في انستجرام أو سناب شات" data-en="Copy your link and share it on Instagram or Snapchat">انسخ الرابط وشاركه في انستجرام أو سناب شات</p>
+                        
+                        <div class="flex items-center gap-2 bg-brand-dark/50 p-2 rounded-xl relative z-10 border border-white/20">
+                            <input type="text" id="share-link-input" readonly value="" class="bg-transparent text-sm text-white flex-1 outline-none text-start" dir="ltr">
+                            <button onclick="copyLink()" class="cursor-pointer bg-white text-brand-primary hover:bg-gray-100 active:scale-95 px-3 py-1.5 rounded-lg text-sm font-bold transition-all duration-150">
+                                <i class="fas fa-copy"></i> <span data-ar="نسخ" data-en="Copy">نسخ</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Profile Edit Section -->
+                    <div class="space-y-2">
+                        <button onclick="toggleProfileEdit()" class="cursor-pointer w-full flex justify-between items-center bg-white dark:bg-[#1f2940] p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm active:scale-[0.98] transition-all">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-gray-50 dark:bg-[#2a3754] flex items-center justify-center text-gray-500">
+                                    <i class="fas fa-user-edit"></i>
+                                </div>
+                                <span class="text-sm font-bold text-gray-800 dark:text-white" data-ar="تعديل الملف الشخصي" data-en="Edit Profile">تعديل الملف الشخصي</span>
+                            </div>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform duration-300" id="edit-profile-icon"></i>
+                        </button>
+                        <div id="edit-profile-form" class="hidden bg-white dark:bg-[#1f2940] p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
+                            <div>
+                                <label class="text-xs text-gray-500 block mb-1" data-ar="الاسم الشخصي" data-en="Full Name">الاسم الشخصي</label>
+                                <input type="text" id="edit-fullname" class="w-full bg-gray-50 dark:bg-brand-dark text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm outline-none border border-transparent focus:border-brand-primary">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 block mb-1" data-ar="اسم المستخدم (يمكن تغييره مرة كل 30 يوم)" data-en="Username (Changeable every 30 days)">اسم المستخدم (يمكن تغييره مرة كل 30 يوم)</label>
+                                <input type="text" id="edit-username" dir="ltr" class="w-full bg-gray-50 dark:bg-brand-dark text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm outline-none text-start border border-transparent focus:border-brand-primary">
+                            </div>
+                            <button onclick="saveProfileEdit()" id="btn-save-profile" class="cursor-pointer w-full bg-brand-primary text-white text-sm font-bold py-2.5 rounded-xl hover:brightness-110 active:scale-95 transition-all flex justify-center items-center gap-2">
+                                <span data-ar="حفظ التعديلات" data-en="Save Changes">حفظ التعديلات</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="openTutorial()" class="cursor-pointer bg-white dark:bg-[#1f2940] border border-gray-100 dark:border-gray-800 shadow-sm text-gray-700 dark:text-gray-300 py-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-[#2a3754] active:scale-95 transition-all duration-150 text-xs font-bold flex flex-col items-center justify-center gap-2">
+                            <i class="fas fa-magic text-brand-primary text-xl"></i>
+                            <span data-ar="كيف يعمل التطبيق؟" data-en="How it works?">كيف يعمل التطبيق؟</span>
+                        </button>
+                        <button onclick="openPrivacy()" class="cursor-pointer bg-white dark:bg-[#1f2940] border border-gray-100 dark:border-gray-800 shadow-sm text-gray-700 dark:text-gray-300 py-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-[#2a3754] active:scale-95 transition-all duration-150 text-xs font-bold flex flex-col items-center justify-center gap-2">
+                            <i class="fas fa-shield-alt text-brand-primary text-xl"></i>
+                            <span data-ar="سياسة الخصوصية" data-en="Privacy Policy">سياسة الخصوصية</span>
                         </button>
                     </div>
+
+                    <!-- App Settings -->
+                    <div class="space-y-3">
+                        <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 px-2" data-ar="الإعدادات" data-en="Settings">الإعدادات</h3>
+                        
+                        <div class="bg-white dark:bg-[#1f2940] p-3 rounded-2xl flex justify-between items-center border border-gray-100 dark:border-gray-800 shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-gray-50 dark:bg-[#2a3754] flex items-center justify-center text-gray-500">
+                                    <i class="fas fa-palette"></i>
+                                </div>
+                                <span class="text-sm font-bold text-gray-800 dark:text-white" data-ar="المظهر" data-en="Appearance">المظهر</span>
+                            </div>
+                            <div class="flex gap-1 bg-gray-50 dark:bg-[#2a3754] p-1 rounded-xl border border-gray-100 dark:border-gray-700">
+                                <button id="theme-btn-light" onclick="setTheme('light')" class="cursor-pointer w-8 h-8 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-[#1f2940] transition-all flex items-center justify-center" title="فاتح / Light">
+                                    <i class="fas fa-sun text-sm"></i>
+                                </button>
+                                <button id="theme-btn-dark" onclick="setTheme('dark')" class="cursor-pointer w-8 h-8 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-[#1f2940] transition-all flex items-center justify-center" title="داكن / Dark">
+                                    <i class="fas fa-moon text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-[#1f2940] p-3 rounded-2xl flex justify-between items-center border border-gray-100 dark:border-gray-800 shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-gray-50 dark:bg-[#2a3754] flex items-center justify-center text-gray-500">
+                                    <i class="fas fa-globe"></i>
+                                </div>
+                                <span class="text-sm font-bold text-gray-800 dark:text-white" data-ar="اللغة" data-en="Language">اللغة</span>
+                            </div>
+                            <div class="flex gap-1 bg-gray-50 dark:bg-[#2a3754] p-1 rounded-xl border border-gray-100 dark:border-gray-700">
+                                <button id="lang-btn-ar" onclick="setLang('ar')" class="cursor-pointer w-8 h-8 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-[#1f2940] transition-all flex items-center justify-center font-bold text-sm" title="العربية">
+                                    ع
+                                </button>
+                                <button id="lang-btn-en" onclick="setLang('en')" class="cursor-pointer w-8 h-8 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-[#1f2940] transition-all flex items-center justify-center font-black text-xs" title="English">
+                                    EN
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Profile Edit Section -->
-                <div class="space-y-2">
-                    <button onclick="toggleProfileEdit()" class="cursor-pointer w-full flex justify-between items-center bg-white dark:bg-[#1f2940] p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm active:scale-[0.98] transition-all">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-gray-50 dark:bg-[#2a3754] flex items-center justify-center text-gray-500">
-                                <i class="fas fa-user-edit"></i>
-                            </div>
-                            <span class="text-sm font-bold text-gray-800 dark:text-white" data-ar="تعديل الملف الشخصي" data-en="Edit Profile">تعديل الملف الشخصي</span>
-                        </div>
-                        <i class="fas fa-chevron-down text-gray-500 transition-transform duration-300" id="edit-profile-icon"></i>
+                <!-- Bottom Navigation -->
+                <div class="bg-white dark:bg-brand-secondary border-t border-gray-200 dark:border-brand-light flex justify-around items-center p-2 pb-safe z-10 transition-colors duration-300 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                    <button onclick="switchTab('inbox')" id="nav-inbox" class="cursor-pointer flex flex-col items-center p-2 text-brand-primary active:scale-90 transition-transform relative">
+                        <i class="fas fa-message text-xl mb-1 relative"></i>
+                        <span class="text-[10px] font-bold" data-ar="المحادثات" data-en="Chats">المحادثات</span>
                     </button>
-                    <div id="edit-profile-form" class="hidden bg-white dark:bg-[#1f2940] p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
-                        <div>
-                            <label class="text-xs text-gray-500 block mb-1" data-ar="الاسم الشخصي" data-en="Full Name">الاسم الشخصي</label>
-                            <input type="text" id="edit-fullname" class="w-full bg-gray-50 dark:bg-brand-dark text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm outline-none border border-transparent focus:border-brand-primary">
+                    <button onclick="switchTab('archive')" id="nav-archive" class="cursor-pointer flex flex-col items-center p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 active:scale-90 transition-transform">
+                        <i class="fas fa-box-archive text-xl mb-1"></i>
+                        <span class="text-[10px] font-bold" data-ar="الأرشيف" data-en="Archive">الأرشيف</span>
+                    </button>
+                    <button onclick="switchTab('profile')" id="nav-profile" class="cursor-pointer flex flex-col items-center p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 active:scale-90 transition-transform">
+                        <i class="fas fa-user text-xl mb-1"></i>
+                        <span class="text-[10px] font-bold" data-ar="حسابي" data-en="Profile">حسابي</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ==================== 3. CHAT VIEW ==================== -->
+            <div id="view-chat" class="hidden flex-1 flex-col h-full z-30 absolute inset-0 fade-in transition-colors duration-300 bg-gray-50 dark:bg-brand-dark sm:rounded-3xl">
+                <div class="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none z-0 chat-bg"></div>
+                
+                <!-- Chat Header -->
+                <div class="bg-white dark:bg-[#1f2940] p-3 sm:p-4 flex items-center z-30 border-b border-gray-200 dark:border-gray-800 relative shrink-0 shadow-sm">
+                    <button onclick="closeChat()" class="cursor-pointer text-gray-500 hover:text-brand-primary active:scale-90 transition-transform w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 dark:bg-brand-dark">
+                        <i class="fas fa-arrow-right text-lg rtl-arrow"></i>
+                    </button>
+                    <div class="flex-1 ms-3">
+                        <h2 id="chat-title" class="font-bold text-sm sm:text-md text-gray-900 dark:text-white flex items-center gap-1.5 truncate">
+                            <i class="fas fa-user-secret"></i> <span>مجهول</span>
+                        </h2>
+                        <div class="mt-0.5">
+                            <div class="flex justify-between text-[9px] sm:text-[10px] text-gray-500 dark:text-gray-400 mb-1">
+                                <span data-ar="مستوى الثقة لكسر القناع" data-en="Trust level to drop mask">مستوى الثقة لكسر القناع</span>
+                                <span id="trust-level" class="font-bold text-brand-primary">0/10</span>
+                            </div>
+                            <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1 relative overflow-hidden">
+                                <div id="trust-bar" class="bg-gradient-to-r from-brand-primary to-pink-500 h-1 rounded-full transition-all duration-500 relative" style="width: 0%"></div>
+                            </div>
                         </div>
-                        <div>
-                            <label class="text-xs text-gray-500 block mb-1" data-ar="اسم المستخدم (يمكن تغييره مرة كل 30 يوم)" data-en="Username (Changeable every 30 days)">اسم المستخدم (يمكن تغييره مرة كل 30 يوم)</label>
-                            <input type="text" id="edit-username" dir="ltr" class="w-full bg-gray-50 dark:bg-brand-dark text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm outline-none text-start border border-transparent focus:border-brand-primary">
+                    </div>
+                    <!-- زر الحذف النهائي للمحادثة -->
+                    <button onclick="deleteCurrentChat()" class="cursor-pointer text-red-500 hover:text-red-600 active:scale-90 transition-transform px-3" title="حذف المحادثة">
+                        <i class="fas fa-trash-alt text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Chat Messages (Flex-1 + Overflow forces input to bottom) -->
+                <div class="flex-1 overflow-y-auto p-4 space-y-4 relative z-10 w-full" id="chat-messages">
+                    <!-- Messages injected here -->
+                </div>
+
+                <!-- MASK DROP ACTION BAR -->
+                <div id="mask-drop-action" class="hidden p-4 bg-white/80 dark:bg-brand-dark/80 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 text-center relative z-20 shrink-0">
+                    <!-- Injected by JS -->
+                </div>
+
+                <!-- Chat Input -->
+                <div id="chat-input-area" class="p-3 bg-white dark:bg-[#1f2940] border-t border-gray-100 dark:border-gray-800 flex gap-2 items-center z-20 relative shrink-0 pb-safe shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
+                    <!-- Emoji Picker -->
+                    <div id="emoji-picker" class="hidden absolute bottom-[100%] start-2 mb-2 bg-white dark:bg-brand-dark border border-gray-100 dark:border-gray-700 shadow-xl p-3 rounded-2xl z-50 w-[280px] h-60 flex flex-col scale-in origin-bottom-left">
+                        <h4 class="text-[10px] font-bold text-gray-400 mb-2 px-1 uppercase tracking-wider" data-ar="إيموجي متحرك" data-en="Animated Emoji">إيموجي متحرك</h4>
+                        <div class="grid grid-cols-5 gap-2 overflow-y-auto emoji-scroll flex-1 pe-1 content-start" id="emoji-grid"></div>
+                    </div>
+
+                    <button onclick="toggleEmojiPicker(event)" class="cursor-pointer w-10 h-10 rounded-full bg-gray-50 dark:bg-brand-dark flex items-center justify-center text-gray-500 hover:text-brand-primary transition-all duration-150 shrink-0">
+                        <i class="fas fa-smile text-lg"></i>
+                    </button>
+                    <input type="text" id="reply-input" oninput="sendTypingEvent()" data-ar-ph="اكتب ردك هنا..." data-en-ph="Type your reply..." placeholder="اكتب ردك هنا..." class="flex-1 bg-gray-50 dark:bg-brand-dark border border-gray-100 dark:border-gray-800 text-sm text-gray-900 dark:text-white rounded-full px-4 py-2.5 outline-none focus:ring-1 focus:ring-brand-primary transition text-start min-w-0">
+                    <button onclick="sendReply()" class="cursor-pointer w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center text-white hover:brightness-110 active:scale-90 transition-all duration-150 shrink-0 shadow-sm shadow-brand-primary/30">
+                        <i class="fas fa-paper-plane text-sm fa-flip-horizontal rtl-arrow-reverse"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ==================== 4. PUBLIC SEND VIEW ==================== -->
+            <div id="view-public" class="hidden flex-1 flex-col h-full bg-gray-50 dark:bg-brand-dark z-40 absolute inset-0 fade-in overflow-y-auto transition-colors duration-300 sm:rounded-3xl">
+                <div class="p-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1f2940] shrink-0 shadow-sm">
+                    <div class="text-brand-primary font-black text-lg flex items-center gap-1.5"><i class="fas fa-mask text-xl"></i> <span data-ar="قناع" data-en="Mask">قناع</span></div>
+                    <button onclick="closePublicView()" class="cursor-pointer text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-brand-dark px-4 py-1.5 rounded-full font-bold active:scale-95 transition-all">
+                        <span data-ar="العودة" data-en="Go Back">العودة</span>
+                    </button>
+                </div>
+
+                <div class="flex-1 p-6 md:p-10 flex flex-col items-center justify-center relative max-w-xl mx-auto w-full">
+                    <div class="w-28 h-28 mx-auto rounded-full border-4 border-white dark:border-[#1f2940] shadow-xl p-1 mb-5 z-10 relative bg-brand-primary/10">
+                        <img id="public-target-avatar" src="" class="w-full h-full rounded-full bg-gray-200 dark:bg-brand-light object-cover">
+                        <div class="absolute -bottom-2 -end-2 bg-white dark:bg-[#1f2940] text-brand-primary p-1.5 rounded-full shadow-md text-sm border border-gray-100 dark:border-gray-700">
+                            <i class="fas fa-lock"></i>
                         </div>
-                        <button onclick="saveProfileEdit()" id="btn-save-profile" class="cursor-pointer w-full bg-brand-primary text-white text-sm font-bold py-2.5 rounded-xl hover:brightness-110 active:scale-95 transition-all flex justify-center items-center gap-2">
-                            <span data-ar="حفظ التعديلات" data-en="Save Changes">حفظ التعديلات</span>
+                    </div>
+                    <h2 id="public-target-name" class="text-2xl font-black mb-1 text-gray-900 dark:text-white z-10 relative">...</h2>
+                    <p id="public-target-username" class="text-sm text-gray-500 mb-8 font-mono z-10 relative bg-gray-200 dark:bg-gray-800 px-3 py-1 rounded-full">@...</p>
+
+                    <!-- Send Message Form -->
+                    <div id="public-msg-form" class="w-full bg-white dark:bg-[#1f2940] rounded-3xl p-5 border border-gray-100 dark:border-gray-800 relative z-10 shadow-sm flex flex-col">
+                        <textarea id="public-msg-input" rows="4" class="w-full bg-gray-50 dark:bg-brand-dark border border-transparent focus:border-brand-primary/30 p-4 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 outline-none resize-none text-sm transition-colors mb-4" data-ar-ph="اكتب رسالتك الصريحة هنا بكل سرية..." data-en-ph="Write your honest message secretly..." placeholder="اكتب رسالتك الصريحة هنا بكل سرية..."></textarea>
+                        
+                        <button onclick="sendPublicMessage()" id="btn-send-public" class="cursor-pointer bg-brand-primary active:scale-95 text-white font-bold py-3.5 px-8 rounded-xl transition-all duration-150 flex items-center justify-center gap-2 hover:brightness-110 w-full">
+                            <span data-ar="إرسال الرسالة" data-en="Send Message">إرسال الرسالة</span> <i class="fas fa-paper-plane text-sm fa-flip-horizontal rtl-arrow-reverse"></i>
+                        </button>
+                        
+                        <div class="text-[10px] text-gray-400 flex items-center justify-center gap-1 font-bold mt-4">
+                            <i class="fas fa-lock text-brand-primary"></i> <span data-ar="هوية مخفية ومحمية 100%" data-en="100% Secure & Anonymous">هوية مخفية ومحمية 100%</span>
+                        </div>
+                    </div>
+
+                    <!-- Success Frame -->
+                    <div id="public-success" class="hidden mt-4 w-full fade-in flex flex-col items-center justify-center p-8 bg-white dark:bg-[#1f2940] border border-green-500/20 rounded-3xl shadow-xl shadow-green-500/5 relative overflow-hidden z-10 text-center">
+                        <div class="w-20 h-20 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center text-4xl mb-4 relative z-10 scale-in border border-green-500/20">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <h3 class="font-black text-2xl text-gray-900 dark:text-white mb-2" data-ar="تم الإرسال!" data-en="Sent!">تم الإرسال!</h3>
+                        <p class="text-sm text-gray-500 mb-6" data-ar="تم تسليم رسالتك بسرية تامة، هويتك في أمان." data-en="Your message was delivered securely.">تم تسليم رسالتك بسرية تامة، هويتك في أمان.</p>
+                        <div class="loader mb-2 border-gray-200 border-t-green-500"></div>
+                        <p class="text-[10px] text-gray-400 font-bold" data-ar="جاري العودة..." data-en="Returning...">جاري العودة...</p>
+                    </div>
+                </div>
+                
+                <div class="p-6 text-center border-t border-gray-200 dark:border-gray-800 mt-auto shrink-0 bg-white/50 dark:bg-brand-secondary/50 backdrop-blur-sm">
+                    <p class="text-xs text-gray-500 mb-2" data-ar="هل تريد أن تتلقى رسائل مجهولة أيضاً؟" data-en="Want to receive anonymous messages too?">هل تريد أن تتلقى رسائل مجهولة أيضاً؟</p>
+                    <button onclick="showRegister()" class="cursor-pointer text-sm text-brand-primary font-black hover:underline" data-ar="أنشئ حسابك الخاص مجاناً" data-en="Create your free account">أنشئ حسابك الخاص مجاناً</button>
+                </div>
+            </div>
+
+            <!-- ==================== AVATAR MODAL ==================== -->
+            <div id="avatar-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 fade-in">
+                <div class="bg-white dark:bg-brand-secondary w-full max-w-sm md:max-w-md rounded-3xl p-6 border border-gray-200 dark:border-brand-light scale-in shadow-2xl">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-black text-lg text-gray-900 dark:text-white" data-ar="اختر شخصيتك" data-en="Choose your Avatar">اختر شخصيتك</h3>
+                        <button onclick="closeAvatarModal()" class="cursor-pointer w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-red-500 transition">
+                            <i class="fas fa-times"></i>
                         </button>
                     </div>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="openTutorial()" class="cursor-pointer bg-white dark:bg-[#1f2940] border border-gray-100 dark:border-gray-800 shadow-sm text-gray-700 dark:text-gray-300 py-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-[#2a3754] active:scale-95 transition-all duration-150 text-xs font-bold flex flex-col items-center justify-center gap-2">
-                        <i class="fas fa-magic text-brand-primary text-xl"></i>
-                        <span data-ar="كيف يعمل التطبيق؟" data-en="How it works?">كيف يعمل التطبيق؟</span>
-                    </button>
-                    <button onclick="openPrivacy()" class="cursor-pointer bg-white dark:bg-[#1f2940] border border-gray-100 dark:border-gray-800 shadow-sm text-gray-700 dark:text-gray-300 py-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-[#2a3754] active:scale-95 transition-all duration-150 text-xs font-bold flex flex-col items-center justify-center gap-2">
-                        <i class="fas fa-shield-alt text-brand-primary text-xl"></i>
-                        <span data-ar="سياسة الخصوصية" data-en="Privacy Policy">سياسة الخصوصية</span>
-                    </button>
-                </div>
-
-                <!-- App Settings -->
-                <div class="space-y-3">
-                    <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 px-2" data-ar="الإعدادات" data-en="Settings">الإعدادات</h3>
-                    
-                    <div class="bg-white dark:bg-[#1f2940] p-3 rounded-2xl flex justify-between items-center border border-gray-100 dark:border-gray-800 shadow-sm">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-gray-50 dark:bg-[#2a3754] flex items-center justify-center text-gray-500">
-                                <i class="fas fa-palette"></i>
-                            </div>
-                            <span class="text-sm font-bold text-gray-800 dark:text-white" data-ar="المظهر" data-en="Appearance">المظهر</span>
-                        </div>
-                        <div class="flex gap-1 bg-gray-50 dark:bg-[#2a3754] p-1 rounded-xl border border-gray-100 dark:border-gray-700">
-                            <button id="theme-btn-light" onclick="setTheme('light')" class="cursor-pointer w-8 h-8 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-[#1f2940] transition-all flex items-center justify-center" title="فاتح / Light">
-                                <i class="fas fa-sun text-sm"></i>
-                            </button>
-                            <button id="theme-btn-dark" onclick="setTheme('dark')" class="cursor-pointer w-8 h-8 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-[#1f2940] transition-all flex items-center justify-center" title="داكن / Dark">
-                                <i class="fas fa-moon text-sm"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="bg-white dark:bg-[#1f2940] p-3 rounded-2xl flex justify-between items-center border border-gray-100 dark:border-gray-800 shadow-sm">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-gray-50 dark:bg-[#2a3754] flex items-center justify-center text-gray-500">
-                                <i class="fas fa-globe"></i>
-                            </div>
-                            <span class="text-sm font-bold text-gray-800 dark:text-white" data-ar="اللغة" data-en="Language">اللغة</span>
-                        </div>
-                        <div class="flex gap-1 bg-gray-50 dark:bg-[#2a3754] p-1 rounded-xl border border-gray-100 dark:border-gray-700">
-                            <button id="lang-btn-ar" onclick="setLang('ar')" class="cursor-pointer w-8 h-8 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-[#1f2940] transition-all flex items-center justify-center font-bold text-sm" title="العربية">
-                                ع
-                            </button>
-                            <button id="lang-btn-en" onclick="setLang('en')" class="cursor-pointer w-8 h-8 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-[#1f2940] transition-all flex items-center justify-center font-black text-xs" title="English">
-                                EN
-                            </button>
-                        </div>
+                    <div class="grid grid-cols-4 sm:grid-cols-5 gap-3" id="avatar-all-grid" style="max-height: 60vh; overflow-y: auto;">
+                        <!-- Populated by JS -->
                     </div>
                 </div>
             </div>
 
-            <!-- Bottom Navigation -->
-            <div class="bg-white dark:bg-brand-secondary border-t border-gray-200 dark:border-brand-light flex justify-around items-center p-2 pb-safe z-10 transition-colors duration-300 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-                <button onclick="switchTab('inbox')" id="nav-inbox" class="cursor-pointer flex flex-col items-center p-2 text-brand-primary active:scale-90 transition-transform relative">
-                    <i class="fas fa-message text-xl mb-1 relative"></i>
-                    <span class="text-[10px] font-bold" data-ar="المحادثات" data-en="Chats">المحادثات</span>
-                </button>
-                <button onclick="switchTab('archive')" id="nav-archive" class="cursor-pointer flex flex-col items-center p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 active:scale-90 transition-transform">
-                    <i class="fas fa-box-archive text-xl mb-1"></i>
-                    <span class="text-[10px] font-bold" data-ar="الأرشيف" data-en="Archive">الأرشيف</span>
-                </button>
-                <button onclick="switchTab('profile')" id="nav-profile" class="cursor-pointer flex flex-col items-center p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 active:scale-90 transition-transform">
-                    <i class="fas fa-user text-xl mb-1"></i>
-                    <span class="text-[10px] font-bold" data-ar="حسابي" data-en="Profile">حسابي</span>
-                </button>
-            </div>
-        </div>
+            <!-- ==================== PRIVACY POLICY MODAL ==================== -->
+            <div id="privacy-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 fade-in">
+                <div class="bg-white dark:bg-brand-secondary w-full max-w-md rounded-3xl p-6 border border-gray-200 dark:border-brand-light scale-in max-h-[80vh] flex flex-col shadow-2xl">
+                    <div class="flex justify-between items-center mb-4 border-b border-gray-200 dark:border-gray-700 pb-3 shrink-0">
+                        <h3 class="font-black text-lg text-brand-primary flex items-center gap-2">
+                            <i class="fas fa-shield-alt"></i> <span data-ar="سياسة الخصوصية" data-en="Privacy Policy">سياسة الخصوصية</span>
+                        </h3>
+                        <button onclick="closePrivacy()" class="cursor-pointer w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-red-500 transition">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="flex-1 overflow-y-auto pe-2 text-sm text-gray-600 dark:text-gray-400 space-y-4">
+                        <p data-ar="مرحباً بك في تطبيقنا. خصوصيتك وحماية بياناتك هي أولويتنا القصوى." data-en="Welcome to our app. Your privacy and data protection are our top priorities.">مرحباً بك في تطبيقنا. خصوصيتك وحماية بياناتك هي أولويتنا القصوى.</p>
+                        
+                        <h4 class="font-bold text-gray-900 dark:text-white mt-4" data-ar="1. سرية الرسائل المجهولة" data-en="1. Anonymous Messages Confidentiality">1. سرية الرسائل المجهولة</h4>
+                        <p data-ar="التطبيق مبني على فكرة الرسائل المجهولة. نحن نضمن عدم كشف هوية المرسل للمتلقي بأي شكل من الأشكال إلا في حال قام المرسل نفسه باختيار كشف هويته طواعية من خلال ميزة 'كشف القناع' داخل المحادثة." data-en="The app is built on the concept of anonymous messaging. We guarantee that the sender's identity is not revealed to the recipient under any circumstances, unless the sender voluntarily chooses to reveal their identity through the 'Drop the Mask' feature within the chat.">التطبيق مبني على فكرة الرسائل المجهولة. نحن نضمن عدم كشف هوية المرسل للمتلقي بأي شكل من الأشكال إلا في حال قام المرسل نفسه باختيار كشف هويته طواعية من خلال ميزة 'كشف القناع' داخل المحادثة.</p>
+                        
+                        <h4 class="font-bold text-gray-900 dark:text-white mt-4" data-ar="2. جمع واستخدام البيانات" data-en="2. Data Collection and Use">2. جمع واستخدام البيانات</h4>
+                        <p data-ar="نحن نجمع فقط المعلومات الأساسية اللازمة لعمل التطبيق (مثل الاسم، البريد الإلكتروني، واسم المستخدم). لا نقوم ببيع أو مشاركة بياناتك الشخصية مع أي جهات خارجية لأغراض تسويقية. نستخدم البيانات فقط لتحسين تجربة المستخدم وإدارة الحسابات." data-en="We only collect essential information necessary for the app to function (such as name, email, and username). We do not sell or share your personal data with any third parties for marketing purposes. We use the data solely to improve user experience and manage accounts.">نحن نجمع فقط المعلومات الأساسية اللازمة لعمل التطبيق (مثل الاسم، البريد الإلكتروني، واسم المستخدم). لا نقوم ببيع أو مشاركة بياناتك الشخصية مع أي جهات خارجية لأغراض تسويقية. نستخدم البيانات فقط لتحسين تجربة المستخدم وإدارة الحسابات.</p>
 
-        <!-- ==================== 3. CHAT VIEW ==================== -->
-        <div id="view-chat" class="hidden flex-1 flex-col h-full z-30 absolute inset-0 fade-in transition-colors duration-300 bg-gray-50 dark:bg-brand-dark sm:rounded-3xl">
-            <div class="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none z-0 chat-bg"></div>
-            
-            <!-- Chat Header -->
-            <div class="bg-white dark:bg-[#1f2940] p-3 sm:p-4 flex items-center z-30 border-b border-gray-200 dark:border-gray-800 relative shrink-0 shadow-sm">
-                <button onclick="closeChat()" class="cursor-pointer text-gray-500 hover:text-brand-primary active:scale-90 transition-transform w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 dark:bg-brand-dark">
-                    <i class="fas fa-arrow-right text-lg rtl-arrow"></i>
-                </button>
-                <div class="flex-1 ms-3">
-                    <h2 id="chat-title" class="font-bold text-sm sm:text-md text-gray-900 dark:text-white flex items-center gap-1.5 truncate">
-                        <i class="fas fa-user-secret"></i> <span>مجهول</span>
-                    </h2>
-                    <div class="mt-0.5">
-                        <div class="flex justify-between text-[9px] sm:text-[10px] text-gray-500 dark:text-gray-400 mb-1">
-                            <span data-ar="مستوى الثقة لكسر القناع" data-en="Trust level to drop mask">مستوى الثقة لكسر القناع</span>
-                            <span id="trust-level" class="font-bold text-brand-primary">0/10</span>
+                        <h4 class="font-bold text-gray-900 dark:text-white mt-4" data-ar="3. الأمان والتشفير" data-en="3. Security and Encryption">3. الأمان والتشفير</h4>
+                        <p data-ar="جميع الرسائل والمحادثات التي تتم عبر منصتنا مشفرة ومحفوظة في قواعد بيانات آمنة ومحمية بأحدث تقنيات التشفير لضمان عدم وصول أي طرف غير مصرح له إليها." data-en="All messages and chats conducted on our platform are encrypted and stored in secure databases, protected by the latest encryption technologies to ensure no unauthorized access.">جميع الرسائل والمحادثات التي تتم عبر منصتنا مشفرة ومحفوظة في قواعد بيانات آمنة ومحمية بأحدث تقنيات التشفير لضمان عدم وصول أي طرف غير مصرح له إليها.</p>
+                        
+                    </div>
+                    <button onclick="closePrivacy()" class="cursor-pointer w-full bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-bold py-3 rounded-xl mt-4 hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-95 transition-all shrink-0">
+                        <span data-ar="فهمت ذلك" data-en="I Understand">فهمت ذلك</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ==================== TUTORIAL MODAL ==================== -->
+            <div id="tutorial-modal" class="hidden fixed inset-0 bg-brand-dark/90 backdrop-blur-md z-[100] flex items-center justify-center p-4 fade-in">
+                <div class="w-full max-w-sm text-center">
+                    <div class="mb-8 relative h-32 flex justify-center items-center">
+                        <i id="tut-icon-1" class="fas fa-link text-6xl text-brand-primary absolute animate-float drop-shadow-lg"></i>
+                        <i id="tut-icon-2" class="fas fa-envelope-open-text text-6xl text-blue-500 absolute opacity-0 drop-shadow-lg"></i>
+                        <i id="tut-icon-3" class="fas fa-theater-masks text-6xl text-green-500 absolute opacity-0 drop-shadow-lg"></i>
+                    </div>
+                    <div class="bg-white dark:bg-[#1f2940] p-6 rounded-3xl border border-gray-200 dark:border-gray-800 relative overflow-hidden shadow-2xl">
+                        <div class="absolute top-0 left-0 w-full h-1.5 bg-gray-100 dark:bg-gray-800">
+                            <div id="tut-progress" class="h-full bg-brand-primary transition-all duration-300" style="width: 33%;"></div>
                         </div>
-                        <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1 relative overflow-hidden">
-                            <div id="trust-bar" class="bg-gradient-to-r from-brand-primary to-pink-500 h-1 rounded-full transition-all duration-500 relative" style="width: 0%"></div>
+                        <h3 id="tut-title" class="font-black text-xl text-gray-900 dark:text-white mb-2 mt-4">1. شارك رابطك</h3>
+                        <p id="tut-desc" class="text-sm text-gray-500 dark:text-gray-400 mb-8 min-h-[60px] leading-relaxed">انسخ رابطك وانشره لتبدأ بتلقي الرسائل.</p>
+                        <div class="flex justify-between items-center">
+                            <button onclick="closeTutorial()" class="cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-white text-sm font-bold transition">تخطي</button>
+                            <button onclick="nextTutorialStep()" class="cursor-pointer bg-brand-primary text-white px-8 py-2.5 rounded-xl font-bold shadow-lg shadow-brand-primary/30 hover:scale-105 active:scale-95 transition-all">التالي</button>
                         </div>
                     </div>
                 </div>
-                <!-- زر الحذف النهائي للمحادثة -->
-                <button onclick="deleteCurrentChat()" class="cursor-pointer text-red-500 hover:text-red-600 active:scale-90 transition-transform px-3" title="حذف المحادثة">
-                    <i class="fas fa-trash-alt text-lg"></i>
-                </button>
             </div>
 
-            <!-- Chat Messages (Flex-1 + Overflow forces input to bottom) -->
-            <div class="flex-1 overflow-y-auto p-4 space-y-4 relative z-10 w-full" id="chat-messages">
-                <!-- Messages injected here -->
-            </div>
-
-            <!-- MASK DROP ACTION BAR -->
-            <div id="mask-drop-action" class="hidden p-4 bg-white/80 dark:bg-brand-dark/80 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 text-center relative z-20 shrink-0">
-                <!-- Injected by JS -->
-            </div>
-
-            <!-- Chat Input -->
-            <div id="chat-input-area" class="p-3 bg-white dark:bg-[#1f2940] border-t border-gray-200 dark:border-gray-800 flex gap-2 items-center z-20 relative mt-auto shrink-0 shadow-[0_-4px_10px_-2px_rgba(0,0,0,0.05)]">
-                <!-- Emoji Picker -->
-                <div id="emoji-picker" class="hidden absolute bottom-[100%] start-2 mb-2 bg-white dark:bg-brand-dark border border-gray-100 dark:border-gray-700 shadow-xl p-3 rounded-2xl z-50 w-[280px] h-60 flex flex-col scale-in origin-bottom-left">
-                    <h4 class="text-[10px] font-bold text-gray-400 mb-2 px-1 uppercase tracking-wider" data-ar="إيموجي متحرك" data-en="Animated Emoji">إيموجي متحرك</h4>
-                    <div class="grid grid-cols-5 gap-2 overflow-y-auto emoji-scroll flex-1 pe-1 content-start" id="emoji-grid"></div>
-                </div>
-
-                <button onclick="toggleEmojiPicker(event)" class="cursor-pointer w-10 h-10 rounded-full bg-gray-50 dark:bg-brand-dark flex items-center justify-center text-gray-500 hover:text-brand-primary transition-all duration-150 shrink-0">
-                    <i class="fas fa-smile text-lg"></i>
-                </button>
-                <input type="text" id="reply-input" oninput="sendTypingEvent()" data-ar-ph="اكتب ردك هنا..." data-en-ph="Type your reply..." placeholder="اكتب ردك هنا..." class="flex-1 bg-gray-50 dark:bg-brand-dark border border-gray-100 dark:border-gray-800 text-sm text-gray-900 dark:text-white rounded-full px-4 py-2.5 outline-none focus:ring-1 focus:ring-brand-primary transition text-start min-w-0">
-                <button onclick="sendReply()" class="cursor-pointer w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center text-white hover:brightness-110 active:scale-90 transition-all duration-150 shrink-0 shadow-sm">
-                    <i class="fas fa-paper-plane text-sm fa-flip-horizontal rtl-arrow-reverse"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- ==================== 4. PUBLIC SEND VIEW ==================== -->
-        <div id="view-public" class="hidden flex-1 flex-col h-full bg-gray-50 dark:bg-brand-dark z-40 absolute inset-0 fade-in overflow-y-auto transition-colors duration-300 sm:rounded-3xl">
-            <div class="p-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1f2940] shrink-0 shadow-sm">
-                <div class="text-brand-primary font-black text-lg flex items-center gap-1.5"><i class="fas fa-mask text-xl"></i> <span data-ar="قناع" data-en="Mask">قناع</span></div>
-                <button onclick="closePublicView()" class="cursor-pointer text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-brand-dark px-4 py-1.5 rounded-full font-bold active:scale-95 transition-all">
-                    <span data-ar="العودة" data-en="Go Back">العودة</span>
-                </button>
-            </div>
-
-            <div class="flex-1 p-6 md:p-10 flex flex-col items-center justify-center relative max-w-xl mx-auto w-full">
-                <div class="w-28 h-28 mx-auto rounded-full border-4 border-white dark:border-[#1f2940] shadow-xl p-1 mb-5 z-10 relative bg-brand-primary/10">
-                    <img id="public-target-avatar" src="" class="w-full h-full rounded-full bg-gray-200 dark:bg-brand-light object-cover">
-                    <div class="absolute -bottom-2 -end-2 bg-white dark:bg-[#1f2940] text-brand-primary p-1.5 rounded-full shadow-md text-sm border border-gray-100 dark:border-gray-700">
-                        <i class="fas fa-lock"></i>
+            <!-- ==================== SEARCH MODAL ==================== -->
+            <div id="search-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 fade-in">
+                <div class="bg-white dark:bg-brand-secondary w-full max-w-sm rounded-3xl p-6 border border-gray-200 dark:border-brand-light scale-in shadow-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-black text-lg text-gray-900 dark:text-white flex items-center gap-2" data-ar="إنشاء رسالة" data-en="New Message">
+                            <i class="fas fa-pen-to-square text-brand-primary"></i> إنشاء رسالة
+                        </h3>
+                        <button onclick="closeSearchModal()" class="cursor-pointer w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-red-500 transition">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
-                </div>
-                <h2 id="public-target-name" class="text-2xl font-black mb-1 text-gray-900 dark:text-white z-10 relative">...</h2>
-                <p id="public-target-username" class="text-sm text-gray-500 mb-8 font-mono z-10 relative bg-gray-200 dark:bg-gray-800 px-3 py-1 rounded-full">@...</p>
-
-                <!-- Send Message Form -->
-                <div id="public-msg-form" class="w-full bg-white dark:bg-[#1f2940] rounded-3xl p-5 border border-gray-100 dark:border-gray-800 relative z-10 shadow-sm flex flex-col gap-3">
-                    <div class="text-[11px] bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 px-3 py-1.5 rounded-lg flex items-center justify-center gap-2 font-bold border border-green-100 dark:border-green-800/30 w-fit mx-auto mb-2">
-                        <i class="fas fa-user-shield text-sm"></i> <span data-ar="هوية مخفية ومحمية 100%" data-en="100% Secure & Anonymous">هوية مخفية ومحمية 100%</span>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-5 leading-relaxed" data-ar="أدخل اسم المستخدم للشخص الذي ترغب بإرسال رسالة مجهولة إليه." data-en="Enter the username to send an anonymous message.">أدخل اسم المستخدم للشخص الذي ترغب بإرسال رسالة مجهولة إليه.</p>
+                    <div class="flex items-center gap-2 bg-gray-50 dark:bg-brand-dark p-2 rounded-2xl border border-gray-200 dark:border-gray-800 focus-within:border-brand-primary focus-within:ring-1 focus-within:ring-brand-primary transition-all">
+                        <div class="w-8 h-8 flex items-center justify-center text-gray-400 font-black">@</div>
+                        <input type="text" id="direct-send-username" data-ar-ph="username" data-en-ph="username" placeholder="username" class="flex-1 bg-transparent text-sm text-gray-900 dark:text-white outline-none w-full font-mono" dir="ltr">
                     </div>
-                    <textarea id="public-msg-input" rows="4" class="w-full bg-gray-50 dark:bg-brand-dark border border-transparent focus:border-brand-primary/30 p-4 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 outline-none resize-none text-sm transition-colors" data-ar-ph="اكتب رسالتك الصريحة هنا بكل سرية..." data-en-ph="Write your honest message secretly..." placeholder="اكتب رسالتك الصريحة هنا بكل سرية..."></textarea>
-                    
-                    <button onclick="sendPublicMessage()" id="btn-send-public" class="cursor-pointer bg-brand-primary active:scale-95 text-white font-bold py-3.5 px-8 rounded-xl transition-all duration-150 flex items-center justify-center gap-2 hover:brightness-110 w-full mt-2">
-                        <span data-ar="إرسال الرسالة" data-en="Send Message">إرسال الرسالة</span> <i class="fas fa-paper-plane text-sm fa-flip-horizontal rtl-arrow-reverse"></i>
+                    <button onclick="sendToSpecificUser()" class="cursor-pointer w-full mt-5 bg-brand-primary text-white py-3 rounded-xl text-sm font-bold shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex justify-center items-center gap-2">
+                        <span data-ar="بحث وإرسال" data-en="Search & Send">بحث وإرسال</span> <i class="fas fa-search text-xs"></i>
                     </button>
                 </div>
+            </div>
 
-                <!-- Success Frame -->
-                <div id="public-success" class="hidden mt-4 w-full fade-in flex flex-col items-center justify-center p-8 bg-white dark:bg-[#1f2940] border border-green-500/20 rounded-3xl shadow-xl shadow-green-500/5 relative overflow-hidden z-10 text-center">
-                    <div class="w-20 h-20 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center text-4xl mb-4 relative z-10 scale-in border border-green-500/20">
-                        <i class="fas fa-check"></i>
-                    </div>
-                    <h3 class="font-black text-2xl text-gray-900 dark:text-white mb-2" data-ar="تم الإرسال!" data-en="Sent!">تم الإرسال!</h3>
-                    <p class="text-sm text-gray-500 mb-6" data-ar="تم تسليم رسالتك بسرية تامة، هويتك في أمان." data-en="Your message was delivered securely.">تم تسليم رسالتك بسرية تامة، هويتك في أمان.</p>
-                    <div class="loader mb-2 border-gray-200 border-t-green-500"></div>
-                    <p class="text-[10px] text-gray-400 font-bold" data-ar="جاري العودة..." data-en="Returning...">جاري العودة...</p>
-                </div>
-            </div>
-            
-            <div class="p-6 text-center border-t border-gray-200 dark:border-gray-800 mt-auto shrink-0 bg-white/50 dark:bg-brand-secondary/50 backdrop-blur-sm">
-                <p class="text-xs text-gray-500 mb-2" data-ar="هل تريد أن تتلقى رسائل مجهولة أيضاً؟" data-en="Want to receive anonymous messages too?">هل تريد أن تتلقى رسائل مجهولة أيضاً؟</p>
-                <button onclick="showRegister()" class="cursor-pointer text-sm text-brand-primary font-black hover:underline" data-ar="أنشئ حسابك الخاص مجاناً" data-en="Create your free account">أنشئ حسابك الخاص مجاناً</button>
-            </div>
         </div>
-
-        <!-- ==================== AVATAR MODAL ==================== -->
-        <div id="avatar-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 fade-in">
-            <div class="bg-white dark:bg-brand-secondary w-full max-w-sm md:max-w-md rounded-3xl p-6 border border-gray-200 dark:border-brand-light scale-in shadow-2xl">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-black text-lg text-gray-900 dark:text-white" data-ar="اختر شخصيتك" data-en="Choose your Avatar">اختر شخصيتك</h3>
-                    <button onclick="closeAvatarModal()" class="cursor-pointer w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-red-500 transition">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="grid grid-cols-4 sm:grid-cols-5 gap-3" id="avatar-all-grid" style="max-height: 60vh; overflow-y: auto;">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
-        </div>
-
-        <!-- ==================== PRIVACY POLICY MODAL ==================== -->
-        <div id="privacy-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 fade-in">
-            <div class="bg-white dark:bg-brand-secondary w-full max-w-md rounded-3xl p-6 border border-gray-200 dark:border-brand-light scale-in max-h-[80vh] flex flex-col shadow-2xl">
-                <div class="flex justify-between items-center mb-4 border-b border-gray-200 dark:border-gray-700 pb-3 shrink-0">
-                    <h3 class="font-black text-lg text-brand-primary flex items-center gap-2">
-                        <i class="fas fa-shield-alt"></i> <span data-ar="سياسة الخصوصية" data-en="Privacy Policy">سياسة الخصوصية</span>
-                    </h3>
-                    <button onclick="closePrivacy()" class="cursor-pointer w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-red-500 transition">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="flex-1 overflow-y-auto pe-2 text-sm text-gray-600 dark:text-gray-400 space-y-4">
-                    <p data-ar="مرحباً بك في تطبيقنا. خصوصيتك وحماية بياناتك هي أولويتنا القصوى." data-en="Welcome to our app. Your privacy and data protection are our top priorities.">مرحباً بك في تطبيقنا. خصوصيتك وحماية بياناتك هي أولويتنا القصوى.</p>
-                    
-                    <h4 class="font-bold text-gray-900 dark:text-white mt-4" data-ar="1. سرية الرسائل المجهولة" data-en="1. Anonymous Messages Confidentiality">1. سرية الرسائل المجهولة</h4>
-                    <p data-ar="التطبيق مبني على فكرة الرسائل المجهولة. نحن نضمن عدم كشف هوية المرسل للمتلقي بأي شكل من الأشكال إلا في حال قام المرسل نفسه باختيار كشف هويته طواعية من خلال ميزة 'كشف القناع' داخل المحادثة." data-en="The app is built on the concept of anonymous messaging. We guarantee that the sender's identity is not revealed to the recipient under any circumstances, unless the sender voluntarily chooses to reveal their identity through the 'Drop the Mask' feature within the chat.">التطبيق مبني على فكرة الرسائل المجهولة. نحن نضمن عدم كشف هوية المرسل للمتلقي بأي شكل من الأشكال إلا في حال قام المرسل نفسه باختيار كشف هويته طواعية من خلال ميزة 'كشف القناع' داخل المحادثة.</p>
-                    
-                    <h4 class="font-bold text-gray-900 dark:text-white mt-4" data-ar="2. جمع واستخدام البيانات" data-en="2. Data Collection and Use">2. جمع واستخدام البيانات</h4>
-                    <p data-ar="نحن نجمع فقط المعلومات الأساسية اللازمة لعمل التطبيق (مثل الاسم، البريد الإلكتروني، واسم المستخدم). لا نقوم ببيع أو مشاركة بياناتك الشخصية مع أي جهات خارجية لأغراض تسويقية. نستخدم البيانات فقط لتحسين تجربة المستخدم وإدارة الحسابات." data-en="We only collect essential information necessary for the app to function (such as name, email, and username). We do not sell or share your personal data with any third parties for marketing purposes. We use the data solely to improve user experience and manage accounts.">نحن نجمع فقط المعلومات الأساسية اللازمة لعمل التطبيق (مثل الاسم، البريد الإلكتروني، واسم المستخدم). لا نقوم ببيع أو مشاركة بياناتك الشخصية مع أي جهات خارجية لأغراض تسويقية. نستخدم البيانات فقط لتحسين تجربة المستخدم وإدارة الحسابات.</p>
-
-                    <h4 class="font-bold text-gray-900 dark:text-white mt-4" data-ar="3. الأمان والتشفير" data-en="3. Security and Encryption">3. الأمان والتشفير</h4>
-                    <p data-ar="جميع الرسائل والمحادثات التي تتم عبر منصتنا مشفرة ومحفوظة في قواعد بيانات آمنة ومحمية بأحدث تقنيات التشفير لضمان عدم وصول أي طرف غير مصرح له إليها." data-en="All messages and chats conducted on our platform are encrypted and stored in secure databases, protected by the latest encryption technologies to ensure no unauthorized access.">جميع الرسائل والمحادثات التي تتم عبر منصتنا مشفرة ومحفوظة في قواعد بيانات آمنة ومحمية بأحدث تقنيات التشفير لضمان عدم وصول أي طرف غير مصرح له إليها.</p>
-                    
-                </div>
-                <button onclick="closePrivacy()" class="cursor-pointer w-full bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-bold py-3 rounded-xl mt-4 hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-95 transition-all shrink-0">
-                    <span data-ar="فهمت ذلك" data-en="I Understand">فهمت ذلك</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- ==================== TUTORIAL MODAL ==================== -->
-        <div id="tutorial-modal" class="hidden fixed inset-0 bg-brand-dark/90 backdrop-blur-md z-[100] flex items-center justify-center p-4 fade-in">
-            <div class="w-full max-w-sm text-center">
-                <div class="mb-8 relative h-32 flex justify-center items-center">
-                    <i id="tut-icon-1" class="fas fa-link text-6xl text-brand-primary absolute animate-float drop-shadow-lg"></i>
-                    <i id="tut-icon-2" class="fas fa-envelope-open-text text-6xl text-blue-500 absolute opacity-0 drop-shadow-lg"></i>
-                    <i id="tut-icon-3" class="fas fa-theater-masks text-6xl text-green-500 absolute opacity-0 drop-shadow-lg"></i>
-                </div>
-                <div class="bg-white dark:bg-[#1f2940] p-6 rounded-3xl border border-gray-200 dark:border-gray-800 relative overflow-hidden shadow-2xl">
-                    <div class="absolute top-0 left-0 w-full h-1.5 bg-gray-100 dark:bg-gray-800">
-                        <div id="tut-progress" class="h-full bg-brand-primary transition-all duration-300" style="width: 33%;"></div>
-                    </div>
-                    <h3 id="tut-title" class="font-black text-xl text-gray-900 dark:text-white mb-2 mt-4">1. شارك رابطك</h3>
-                    <p id="tut-desc" class="text-sm text-gray-500 dark:text-gray-400 mb-8 min-h-[60px] leading-relaxed">انسخ رابطك وانشره لتبدأ بتلقي الرسائل.</p>
-                    <div class="flex justify-between items-center">
-                        <button onclick="closeTutorial()" class="cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-white text-sm font-bold transition">تخطي</button>
-                        <button onclick="nextTutorialStep()" class="cursor-pointer bg-brand-primary text-white px-8 py-2.5 rounded-xl font-bold shadow-lg shadow-brand-primary/30 hover:scale-105 active:scale-95 transition-all">التالي</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ==================== SEARCH MODAL ==================== -->
-        <div id="search-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 fade-in">
-            <div class="bg-white dark:bg-brand-secondary w-full max-w-sm rounded-3xl p-6 border border-gray-200 dark:border-brand-light scale-in shadow-2xl">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-black text-lg text-gray-900 dark:text-white flex items-center gap-2" data-ar="إنشاء رسالة" data-en="New Message">
-                        <i class="fas fa-pen-to-square text-brand-primary"></i> إنشاء رسالة
-                    </h3>
-                    <button onclick="closeSearchModal()" class="cursor-pointer w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-red-500 transition">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-5 leading-relaxed" data-ar="أدخل اسم المستخدم للشخص الذي ترغب بإرسال رسالة مجهولة إليه." data-en="Enter the username to send an anonymous message.">أدخل اسم المستخدم للشخص الذي ترغب بإرسال رسالة مجهولة إليه.</p>
-                <div class="flex items-center gap-2 bg-gray-50 dark:bg-brand-dark p-2 rounded-2xl border border-gray-200 dark:border-gray-800 focus-within:border-brand-primary focus-within:ring-1 focus-within:ring-brand-primary transition-all">
-                    <div class="w-8 h-8 flex items-center justify-center text-gray-400 font-black">@</div>
-                    <input type="text" id="direct-send-username" data-ar-ph="username" data-en-ph="username" placeholder="username" class="flex-1 bg-transparent text-sm text-gray-900 dark:text-white outline-none w-full font-mono" dir="ltr">
-                </div>
-                <button onclick="sendToSpecificUser()" class="cursor-pointer w-full mt-5 bg-brand-primary text-white py-3 rounded-xl text-sm font-bold hover:scale-[1.02] active:scale-95 transition-all flex justify-center items-center gap-2">
-                    <span data-ar="بحث وإرسال" data-en="Search & Send">بحث وإرسال</span> <i class="fas fa-search text-xs"></i>
-                </button>
-            </div>
-        </div>
-
     </div>
-    </div> <!-- End of Layout Wrapper -->
 
     <!-- Logic and Supabase Integration -->
     <script>
@@ -1032,7 +1036,7 @@
                 if (error) {
                     console.error("Send Error: ", error);
                     alert(currentLang === 'ar' ? "فشل الإرسال: " + error.message : "Message sending failed: " + error.message);
-                    btn.innerHTML = `<span data-ar="إرسال الرسالة" data-en="Send Message">إرسال الرسالة</span> <i class="fas fa-paper-plane text-xs fa-flip-horizontal rtl-arrow-reverse"></i>`;
+                    btn.innerHTML = `<span data-ar="إرسال الرسالة" data-en="Send Message">إرسال الرسالة</span> <i class="fas fa-paper-plane text-sm fa-flip-horizontal rtl-arrow-reverse"></i>`;
                     applyTranslations();
                     return;
                 }
@@ -1150,6 +1154,24 @@
             if(!silent) hideLoader();
         }
 
+        function buildBubbleHtml(text, isMyMessage) {
+            if (isMyMessage) {
+                return `
+                <div class="flex justify-end w-full mb-3 fade-in">
+                    <div class="bg-brand-primary text-white max-w-[85%] p-3 rounded-2xl rounded-tl-sm text-sm leading-relaxed shadow-sm">
+                        ${formatMessageText(text)}
+                    </div>
+                </div>`;
+            } else {
+                return `
+                <div class="flex justify-start w-full mb-3 fade-in">
+                    <div class="bg-white dark:bg-[#2a3754] text-gray-800 dark:text-white border border-gray-100 dark:border-gray-800 max-w-[85%] p-3 rounded-2xl rounded-tr-sm text-sm leading-relaxed shadow-sm">
+                        ${formatMessageText(text)}
+                    </div>
+                </div>`;
+            }
+        }
+
         function updateActiveChat(updatedMsg, silent = false) {
             const chatBox = document.getElementById('chat-messages');
             let isSenderView = updatedMsg.sender_id === currentUser.id;
@@ -1168,43 +1190,16 @@
 
             let chatHtml = '';
             
-            // الرسالة الأولى الأصلية
-            if (isSenderView) {
-                 chatHtml += `
-                <div class="flex justify-end relative z-10 mb-4">
-                    <div class="bg-brand-primary text-white max-w-[80%] p-3 rounded-2xl rounded-ss-none text-sm leading-relaxed shadow-sm">
-                        ${formatMessageText(updatedMsg.content)}
-                    </div>
-                </div>`;
-            } else {
-                 chatHtml += `
-                <div class="flex justify-start relative z-10 mb-4">
-                    <div class="bg-white dark:bg-[#2a3754] text-gray-800 dark:text-white border border-gray-200 dark:border-transparent max-w-[80%] p-3 rounded-2xl rounded-se-none text-sm leading-relaxed shadow-sm">
-                        ${formatMessageText(updatedMsg.content)}
-                    </div>
-                </div>`;
-            }
+            // الرسالة الأولى (تحديد من أرسلها يعتمد على المعرف)
+            let amIInitialSender = updatedMsg.sender_id === currentUser.id;
+            chatHtml += buildBubbleHtml(updatedMsg.content, amIInitialSender);
 
             const replies = updatedMsg.replies || [];
             replies.forEach(reply => {
-                if (reply.type === 'system_mask_request') return; // لا تقم بطباعة رسائل النظام كفقاعات دردشة
+                if (reply.type === 'system_mask_request') return; 
                 
-                const isMyReply = reply.sender_id === currentUser.id;
-                if (isMyReply) {
-                    chatHtml += `
-                    <div class="flex justify-end fade-in relative z-10 mt-2">
-                        <div class="bg-brand-primary text-white max-w-[80%] p-3 rounded-2xl rounded-ss-none text-sm shadow-sm">
-                            ${formatMessageText(reply.text)}
-                        </div>
-                    </div>`;
-                } else {
-                    chatHtml += `
-                    <div class="flex justify-start fade-in relative z-10 mt-2">
-                        <div class="bg-white dark:bg-[#2a3754] text-gray-800 dark:text-white border border-gray-200 dark:border-transparent max-w-[80%] p-3 rounded-2xl rounded-se-none text-sm shadow-sm">
-                            ${formatMessageText(reply.text)}
-                        </div>
-                    </div>`;
-                }
+                let amIReplySender = reply.sender_id === currentUser.id;
+                chatHtml += buildBubbleHtml(reply.text, amIReplySender);
             });
             
             const isScrolledToBottom = chatBox.scrollHeight - chatBox.clientHeight <= chatBox.scrollTop + 50;
@@ -1233,13 +1228,14 @@
                 supabaseClient.channel('custom-all-channel')
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
                         const rec = payload.new || payload.old;
+                        // نتحقق من الـ id للتأكد أن الرسالة تخصنا 
                         if (rec && rec.id) {
                             const isOurs = activeChatMsgId === rec.id || allMessages.some(m => m.id === rec.id) || archivedMessages.some(m => m.id === rec.id);
                             const isNewForUs = payload.eventType === 'INSERT' && (rec.sender_id === currentUser.id || rec.receiver_id === currentUser.id);
                             
                             if (isOurs || isNewForUs) {
                                 if(window.rtTimeout) clearTimeout(window.rtTimeout);
-                                window.rtTimeout = setTimeout(() => { loadInbox(true); }, 500);
+                                window.rtTimeout = setTimeout(() => { loadInbox(true); }, 300);
                             }
                         }
                     }).subscribe();
@@ -1291,23 +1287,27 @@
                         : '<i class="fas fa-check text-gray-400" title="تم التسليم"></i>';
                 } else if (isUnreadForMe) {
                     const badgeText = currentLang === 'ar' ? 'جديد' : 'New';
+                    // شارة احترافية للرسالة الجديدة
                     statusBadge = `<span class="bg-gradient-to-r from-brand-primary to-pink-500 text-white text-[9px] px-2 py-0.5 rounded-full font-black shadow-sm whitespace-nowrap animate-pulse">${badgeText}</span>`;
                 }
 
+                // مستلمة (Receiver) 
                 if (msg.receiver_id === currentUser.id) {
                     senderLabel = msg.is_revealed ? (msg.sender_profile ? msg.sender_profile.full_name : 'كُشف القناع') : `مجهول #${safeId}`;
                     senderColor = msg.is_revealed ? 'text-green-600 bg-green-100 dark:bg-green-900/30' : 'text-brand-primary bg-brand-primary/10';
                     iconClass = msg.is_revealed ? 'fa-user' : 'fa-user-secret';
                     typeLabel = `<span class="text-[9px] bg-brand-primary/10 text-brand-primary px-1.5 py-0.5 rounded-md font-bold whitespace-nowrap flex items-center gap-0.5 shadow-sm">${currentLang === 'ar' ? 'واردة <i class="fas fa-arrow-down"></i>' : 'Received <i class="fas fa-arrow-down"></i>'}</span>`;
-                    if (isUnreadForMe) unreadClass = 'bg-gray-50/80 dark:bg-[#1f2940] border-brand-primary border border-gray-200 dark:border-gray-800';
+                    if (isUnreadForMe) unreadClass = 'bg-gray-50/80 dark:bg-[#1f2940] border-brand-primary border-s-4 border-t border-b border-e border-gray-100 dark:border-gray-800';
                     else unreadClass = 'bg-white dark:bg-[#1a2235] border border-gray-100 dark:border-gray-800';
-                } else {
+                } 
+                // مرسلة (Sender) 
+                else {
                     const receiverName = msg.receiver_profile ? msg.receiver_profile.full_name : 'مستخدم';
                     senderLabel = `إلى: ${receiverName}`;
                     senderColor = 'text-blue-600 bg-blue-100 dark:bg-blue-900/30';
                     iconClass = 'fa-paper-plane';
                     typeLabel = `<span class="text-[9px] bg-blue-500/10 text-blue-500 px-1.5 py-0.5 rounded-md font-bold whitespace-nowrap flex items-center gap-0.5 shadow-sm">${currentLang === 'ar' ? 'مرسلة <i class="fas fa-arrow-up"></i>' : 'Sent <i class="fas fa-arrow-up"></i>'}</span>`;
-                    if (isUnreadForMe) unreadClass = 'bg-gray-50/80 dark:bg-[#1f2940] border-blue-500 border border-gray-200 dark:border-gray-800';
+                    if (isUnreadForMe) unreadClass = 'bg-gray-50/80 dark:bg-[#1f2940] border-blue-500 border-s-4 border-t border-b border-e border-gray-100 dark:border-gray-800';
                     else unreadClass = 'bg-white dark:bg-[#1a2235] border border-gray-100 dark:border-gray-800';
                 }
                 
@@ -1318,6 +1318,8 @@
 
                 html += `
                 <div class="group msg-card fade-in w-full rounded-2xl cursor-pointer hover:-translate-y-0.5 active:scale-[0.98] transition-all shadow-sm flex flex-col ${unreadClass}" id="msg-${msg.id}" onclick="openChat('${msg.id}')">
+                    
+                    <!-- الصف الأول: الأيقونة + الاسم + النوع + الوقت -->
                     <div class="p-3 pb-2 flex items-center justify-between gap-3">
                         <div class="flex items-center gap-2 overflow-hidden">
                             <div class="w-10 h-10 rounded-full ${senderColor.split(' ')[1]} ${senderColor.split(' ')[0]} flex items-center justify-center shrink-0 shadow-sm border border-black/5 dark:border-white/5">
@@ -1335,11 +1337,15 @@
                             ${statusBadge}
                         </div>
                     </div>
+                    
                     <div class="h-[1px] w-[90%] mx-auto bg-gray-50 dark:bg-gray-800"></div>
+                    
+                    <!-- الصف الثاني: نص الرسالة + الإجراءات -->
                     <div class="p-3 pt-2 flex items-center justify-between gap-3">
                         <p class="text-xs text-gray-500 dark:text-gray-400 truncate flex-1 leading-relaxed">
                             ${previewText}
                         </p>
+                        <!-- الأزرار مخفية قليلا وتظهر بالكامل عند اللمس لتنظيف الشاشة -->
                         <div class="flex items-center gap-1.5 shrink-0 opacity-70 group-hover:opacity-100 transition-opacity">
                             <button onclick="archiveMessageUI('${msg.id}', event)" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-[#2a3754] text-gray-500 hover:text-brand-primary hover:bg-brand-primary/10 transition flex items-center justify-center" title="أرشفة">
                                 <i class="fas fa-box-archive text-[10px] pointer-events-none"></i>
@@ -1368,11 +1374,14 @@
             if(!confirm(confirmMsg)) return;
 
             if(supabaseClient) {
+                // إزالة .select() لكي لا يمنع الحذف في حال وجود مشكلة في RLS للإرجاع
                 const { error } = await supabaseClient.from('messages').delete().eq('id', id);
                 if(error) {
                     alert(currentLang === 'ar' ? 'فشل الحذف، يرجى تفعيل صلاحيات الحذف (RLS) في الخادم' : 'Delete failed (Check RLS policy)');
                     return; 
                 }
+                
+                // تحديث مباشر محلياً للسرعة
                 allMessages = allMessages.filter(m => m.id !== id);
                 renderInbox(); 
             }
@@ -1444,8 +1453,8 @@
             let indicator = document.getElementById('typing-indicator');
             if (!indicator) {
                 chatBox.insertAdjacentHTML('beforeend', `
-                    <div id="typing-indicator" class="flex justify-start fade-in relative z-10 mt-2 mb-2">
-                        <div class="bg-gray-200 dark:bg-[#2a3754] px-3 py-2 rounded-2xl rounded-se-none flex items-center gap-1.5 shadow-sm w-fit">
+                    <div id="typing-indicator" class="flex justify-start w-full mb-3 fade-in">
+                        <div class="bg-gray-200 dark:bg-[#2a3754] px-4 py-3 rounded-2xl rounded-tr-sm flex items-center gap-1.5 shadow-sm w-fit">
                             <div class="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce"></div>
                             <div class="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
                             <div class="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
@@ -1547,10 +1556,10 @@
             const tempId = `temp-${Date.now()}`;
             document.getElementById('typing-indicator')?.remove();
             
-            // إضافة الرسالة بشكل مؤقت للشاشة
+            // إضافة الرسالة بشكل مؤقت للشاشة (بناء صحيح يعتمد على أن المرسل دائما يسار)
             chatBox.insertAdjacentHTML('beforeend', `
-                <div class="flex justify-end fade-in relative z-10 mt-2 temp-msg" id="${tempId}">
-                    <div class="bg-brand-primary text-white max-w-[80%] p-3 rounded-2xl rounded-ss-none text-sm opacity-50 shadow-sm">
+                <div class="flex justify-end w-full mb-3 fade-in temp-msg" id="${tempId}">
+                    <div class="bg-brand-primary text-white max-w-[85%] p-3 rounded-2xl rounded-tl-sm text-sm opacity-50 shadow-sm">
                         ${formatMessageText(txt)}
                     </div>
                 </div>
@@ -1597,7 +1606,8 @@
                     }
                     activeChatTrust = newTrust;
                     
-                    loadInbox(true); // Sync silently
+                    // مزامنة صامتة قوية لضمان الاستمرارية
+                    loadInbox(true); 
                 }
             }
             updateTrustUI();
@@ -1666,7 +1676,7 @@
                 
                 let revealBtnHtml = '';
 
-                if (!isSenderView) { // أنا المستلم
+                if (!isSenderView) { // أنا المستلم (المستلم يطلب الكشف)
                     if (maskStatus === 'hidden') {
                         revealBtnHtml = `<button onclick="requestReveal(event)" class="cursor-pointer bg-green-500 text-white px-4 py-2 rounded-xl text-xs font-bold w-full hover:brightness-110 active:scale-95 transition-all mb-3 shadow-sm" data-ar="طلب كشف هوية المرسل" data-en="Request Sender Identity">طلب كشف هوية المرسل</button>`;
                     } else if (maskStatus === 'pending') {
@@ -1676,7 +1686,7 @@
                     } else if (maskStatus === 'revealed') {
                         revealBtnHtml = `<p class="text-xs text-green-600 dark:text-green-400 font-bold mb-3 bg-green-100 dark:bg-green-900/30 p-2 rounded-lg text-center"><i class="fas fa-check-circle"></i> تم كشف الهوية بنجاح!</p>`;
                     }
-                } else { // أنا المرسل
+                } else { // أنا المرسل (المرسل يقبل أو يرفض)
                     if (maskStatus === 'hidden') {
                         revealBtnHtml = `<p class="text-[10px] text-gray-500 dark:text-gray-400 mb-3 bg-gray-100 dark:bg-gray-800 p-2 rounded-lg text-center">لم يطلب المستلم كشف هويتك بعد.</p>`;
                     } else if (maskStatus === 'pending') {
