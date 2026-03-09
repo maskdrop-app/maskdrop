@@ -81,9 +81,23 @@
             border: 3px solid #f3f3f3; border-top: 3px solid #e94560; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Message Status Styles */
+        .msg-unread {
+            background-color: rgba(233, 69, 96, 0.05);
+        }
+        .dark .msg-unread {
+            background-color: rgba(233, 69, 96, 0.1);
+        }
+        .msg-unread-sent {
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+        .dark .msg-unread-sent {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
     </style>
 </head>
-<body class="min-h-[100dvh] flex items-center justify-center p-0 sm:p-4 bg-gray-100 dark:bg-[#1a1a2e] text-gray-900 dark:text-white transition-colors duration-300 overflow-hidden">
+<body class="min-h-screen flex items-center justify-center p-0 sm:p-4 bg-gray-100 dark:bg-[#1a1a2e] text-gray-900 dark:text-white transition-colors duration-300 overflow-hidden">
 
     <!-- Container uses 100dvh and flex-col to perfectly fit mobile screens and avoid scroll overlapping -->
     <div class="bg-white dark:bg-brand-secondary w-full max-w-md md:max-w-2xl lg:max-w-4xl mx-auto sm:rounded-3xl shadow-2xl overflow-hidden relative h-[100dvh] sm:h-[800px] flex flex-col sm:border border-gray-200 dark:border-brand-light transition-colors duration-300">
@@ -252,8 +266,8 @@
                     </div>
                 </div>
 
-                <!-- Floating Action Button -->
-                <button id="fab-new-msg" onclick="openSearchModal()" class="cursor-pointer absolute bottom-6 end-6 md:end-10 w-14 h-14 bg-brand-primary text-white rounded-full flex items-center justify-center shadow-lg shadow-brand-primary/40 hover:scale-105 active:scale-95 transition-all z-20">
+                <!-- Floating Action Button (No Glow) -->
+                <button id="fab-new-msg" onclick="openSearchModal()" class="cursor-pointer absolute bottom-6 end-6 md:end-10 w-14 h-14 bg-brand-primary text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all z-20">
                     <i class="fas fa-plus text-xl"></i>
                 </button>
             </div>
@@ -303,7 +317,7 @@
                     </div>
                 </div>
 
-                <!-- Profile Edit Section -->
+                <!-- Profile Edit Section (Collapsible) -->
                 <div class="space-y-2">
                     <button onclick="toggleProfileEdit()" class="cursor-pointer w-full flex justify-between items-center bg-white dark:bg-[#1f2940] p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm active:scale-[0.98] transition-all">
                         <div class="flex items-center gap-3">
@@ -585,7 +599,7 @@
                     <div class="w-8 h-8 flex items-center justify-center text-gray-400 font-black">@</div>
                     <input type="text" id="direct-send-username" data-ar-ph="username" data-en-ph="username" placeholder="username" class="flex-1 bg-transparent text-sm text-gray-900 dark:text-white outline-none w-full font-mono" dir="ltr">
                 </div>
-                <button onclick="sendToSpecificUser()" class="cursor-pointer w-full mt-5 bg-brand-primary text-white py-3 rounded-xl text-sm font-bold shadow-lg shadow-brand-primary/30 hover:scale-[1.02] active:scale-95 transition-all flex justify-center items-center gap-2">
+                <button onclick="sendToSpecificUser()" class="cursor-pointer w-full mt-5 bg-brand-primary text-white py-3 rounded-xl text-sm font-bold shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex justify-center items-center gap-2">
                     <span data-ar="بحث وإرسال" data-en="Search & Send">بحث وإرسال</span> <i class="fas fa-search text-xs"></i>
                 </button>
             </div>
@@ -624,6 +638,7 @@
         let activeChatMsgId = null;
         let activeChatTrust = 0;
         let activeChatMaxTrust = 10;
+        let currentInboxFilter = 'received'; 
         
         let publicTargetProfile = null; 
 
@@ -1102,7 +1117,7 @@
                     const getLatestTime = (m) => m.replies && m.replies.length > 0 ? new Date(m.replies[m.replies.length - 1].timestamp).getTime() : new Date(m.created_at).getTime();
 
                     // Checksum logic: only re-render if data has changed to prevent scroll jumping
-                    const newChecksum = JSON.stringify(msgs.map(m => m.id + m.trust_level + (m.replies?.length||0) + m.is_read + m.is_archived));
+                    const newChecksum = JSON.stringify(msgs.map(m => m.id + m.trust_level + (m.replies?.length||0) + m.is_read + m.is_archived + m.is_revealed));
                     
                     if (window.lastInboxChecksum !== newChecksum) {
                         window.lastInboxChecksum = newChecksum;
@@ -1192,10 +1207,15 @@
                 supabaseClient.channel('custom-all-channel')
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
                         const rec = payload.new || payload.old;
-                        if (rec && (rec.sender_id === currentUser.id || rec.receiver_id === currentUser.id)) {
-                            // Fetch quietly to avoid screen disruption
-                            if(window.rtTimeout) clearTimeout(window.rtTimeout);
-                            window.rtTimeout = setTimeout(() => { loadInbox(true); }, 500);
+                        // نتحقق من الـ id للتأكد أن الرسالة تخصنا حتى لو لم يكن sender_id موجود في الـ payload
+                        if (rec && rec.id) {
+                            const isOurs = activeChatMsgId === rec.id || allMessages.some(m => m.id === rec.id) || archivedMessages.some(m => m.id === rec.id);
+                            const isNewForUs = payload.eventType === 'INSERT' && (rec.sender_id === currentUser.id || rec.receiver_id === currentUser.id);
+                            
+                            if (isOurs || isNewForUs) {
+                                if(window.rtTimeout) clearTimeout(window.rtTimeout);
+                                window.rtTimeout = setTimeout(() => { loadInbox(true); }, 300);
+                            }
                         }
                     }).subscribe();
             } catch (e) {
@@ -1252,10 +1272,10 @@
 
                 // مستلمة (Receiver) 
                 if (msg.receiver_id === currentUser.id) {
-                    senderLabel = msg.is_revealed ? 'كُشف القناع' : `مجهول #${safeId}`;
+                    senderLabel = msg.is_revealed ? (msg.sender_profile ? msg.sender_profile.full_name : 'كُشف القناع') : `مجهول #${safeId}`;
                     senderColor = msg.is_revealed ? 'text-green-600 bg-green-100 dark:bg-green-900/30' : 'text-brand-primary bg-brand-primary/10';
                     iconClass = msg.is_revealed ? 'fa-user' : 'fa-user-secret';
-                    typeLabel = `<span class="text-[9px] bg-brand-primary/10 text-brand-primary px-1.5 py-0.5 rounded-md font-bold whitespace-nowrap flex items-center gap-0.5">${currentLang === 'ar' ? 'واردة <i class="fas fa-arrow-down"></i>' : 'Received <i class="fas fa-arrow-down"></i>'}</span>`;
+                    typeLabel = `<span class="text-[9px] bg-brand-primary/10 text-brand-primary border border-brand-primary/20 px-1.5 py-0.5 rounded font-bold whitespace-nowrap flex items-center gap-0.5 shadow-sm">${currentLang === 'ar' ? 'واردة <i class="fas fa-arrow-down"></i>' : 'Received <i class="fas fa-arrow-down"></i>'}</span>`;
                     if (isUnreadForMe) unreadClass = 'bg-gray-50/80 dark:bg-[#1f2940] border-brand-primary border-s-4 border-t border-b border-e border-gray-100 dark:border-gray-800';
                     else unreadClass = 'bg-white dark:bg-[#1a2235] border border-gray-100 dark:border-gray-800';
                 } 
@@ -1265,7 +1285,7 @@
                     senderLabel = `إلى: ${receiverName}`;
                     senderColor = 'text-blue-600 bg-blue-100 dark:bg-blue-900/30';
                     iconClass = 'fa-paper-plane';
-                    typeLabel = `<span class="text-[9px] bg-blue-500/10 text-blue-500 px-1.5 py-0.5 rounded-md font-bold whitespace-nowrap flex items-center gap-0.5">${currentLang === 'ar' ? 'مرسلة <i class="fas fa-arrow-up"></i>' : 'Sent <i class="fas fa-arrow-up"></i>'}</span>`;
+                    typeLabel = `<span class="text-[9px] bg-blue-500/10 text-blue-500 border border-blue-500/20 px-1.5 py-0.5 rounded font-bold whitespace-nowrap flex items-center gap-0.5 shadow-sm">${currentLang === 'ar' ? 'مرسلة <i class="fas fa-arrow-up"></i>' : 'Sent <i class="fas fa-arrow-up"></i>'}</span>`;
                     if (isUnreadForMe) unreadClass = 'bg-gray-50/80 dark:bg-[#1f2940] border-blue-500 border-s-4 border-t border-b border-e border-gray-100 dark:border-gray-800';
                     else unreadClass = 'bg-white dark:bg-[#1a2235] border border-gray-100 dark:border-gray-800';
                 }
@@ -1333,6 +1353,7 @@
             if(!confirm(confirmMsg)) return;
 
             if(supabaseClient) {
+                // إزالة .select() لكي لا يمنع الحذف في حال وجود مشكلة في RLS للإرجاع
                 const { error } = await supabaseClient.from('messages').delete().eq('id', id);
                 if(error) {
                     alert(currentLang === 'ar' ? 'فشل الحذف، يرجى تفعيل صلاحيات الحذف (RLS) في الخادم' : 'Delete failed (Check RLS policy)');
@@ -1467,7 +1488,7 @@
                 headerLabel = `محادثة مع ${recName}`;
             } else {
                 const safeId = (msg.id || '0000').toString().substring(0,4);
-                headerLabel = msg.is_revealed ? 'تم كشف الهوية' : `مجهول #${safeId}`;
+                headerLabel = msg.is_revealed ? (msg.sender_profile ? msg.sender_profile.full_name : 'تم كشف الهوية') : `مجهول #${safeId}`;
             }
             document.getElementById('chat-title').innerHTML = `<i class="fas ${isSenderView ? 'fa-user' : 'fa-user-secret'} ms-1"></i> <span>${headerLabel}</span>`;
             
@@ -1519,7 +1540,7 @@
             const tempId = `temp-${Date.now()}`;
             document.getElementById('typing-indicator')?.remove();
             
-            // إضافة الرسالة بشكل مؤقت للشاشة (لتجاوب أسرع)
+            // إضافة الرسالة بشكل مؤقت للشاشة
             chatBox.insertAdjacentHTML('beforeend', `
                 <div class="flex justify-end fade-in relative z-10 mt-2 temp-msg" id="${tempId}">
                     <div class="bg-brand-primary text-white max-w-[80%] p-3 rounded-2xl rounded-ss-none text-sm opacity-50 shadow-sm">
@@ -1530,7 +1551,7 @@
             chatBox.scrollTop = chatBox.scrollHeight;
             
             if(supabaseClient) {
-                // 1. جلب المحادثة الحالية للدمج الآمن
+                // 1. جلب المحادثة الحالية
                 const { data: latestMsg, error: fetchErr } = await supabaseClient.from('messages')
                     .select('replies, trust_level, max_trust')
                     .eq('id', activeChatMsgId)
@@ -1539,7 +1560,7 @@
                 if (fetchErr || !latestMsg) {
                     console.error("Fetch Error: ", fetchErr);
                     document.getElementById(tempId)?.remove();
-                    alert(currentLang === 'ar' ? 'فشل جلب بيانات المحادثة، الرجاء المحاولة مرة أخرى.' : 'Failed to fetch conversation data.');
+                    alert(currentLang === 'ar' ? 'فشل جلب بيانات المحادثة، الرجاء المحاولة مرة أخرى.' : 'Failed to fetch conversation data, please try again.');
                     return;
                 }
 
@@ -1570,12 +1591,22 @@
                         tempMsgElement.firstElementChild.classList.remove('opacity-50');
                     }
                     activeChatTrust = newTrust;
-                    
-                    // Load inbox silently so it registers in the main list
-                    loadInbox(true);
                 }
             }
             updateTrustUI();
+        }
+
+        async function revealIdentity() {
+            if(!activeChatMsgId || !supabaseClient) return;
+            const confirmMsg = currentLang === 'ar' ? 'هل أنت متأكد أنك تريد كشف هويتك (الاسم والصورة) للطرف الآخر؟ لا يمكن التراجع عن هذا.' : 'Are you sure you want to reveal your identity? This cannot be undone.';
+            if(!confirm(confirmMsg)) return;
+
+            const { error } = await supabaseClient.from('messages').update({ is_revealed: true }).eq('id', activeChatMsgId);
+            if(!error) {
+                loadInbox(true);
+            } else {
+                alert(currentLang === 'ar' ? 'حدث خطأ أثناء كشف الهوية' : 'Error revealing identity');
+            }
         }
 
         function updateTrustUI() {
@@ -1587,11 +1618,24 @@
                 document.getElementById('chat-input-area').classList.add('hidden');
                 document.getElementById('chat-input-area').classList.remove('flex');
                 
+                let activeMsg = allMessages.find(m => m.id === activeChatMsgId) || archivedMessages.find(m => m.id === activeChatMsgId);
+                let isSenderView = activeMsg && activeMsg.sender_id === currentUser.id;
+                
+                let revealBtnHtml = '';
+                if (isSenderView && !activeMsg.is_revealed) {
+                    revealBtnHtml = `<button onclick="revealIdentity()" class="cursor-pointer bg-green-500 text-white px-4 py-2 rounded-xl text-xs font-bold w-full hover:brightness-110 active:scale-95 transition-all mb-2" data-ar="كشف هويتي للطرف الآخر" data-en="Reveal My Identity">كشف هويتي للطرف الآخر</button>`;
+                } else if (!isSenderView && !activeMsg.is_revealed) {
+                    revealBtnHtml = `<p class="text-[10px] text-gray-500 mb-2">يمكن للمرسل الآن كشف هويته إذا رغب بذلك.</p>`;
+                } else if (activeMsg.is_revealed) {
+                    revealBtnHtml = `<p class="text-xs text-green-500 font-bold mb-2">تم كشف الهوية بنجاح!</p>`;
+                }
+
                 const actionBox = document.getElementById('mask-drop-action');
                 actionBox.innerHTML = `
-                    <div class="bg-white dark:bg-[#2a3754] p-4 rounded-2xl border border-brand-primary/50">
+                    <div class="bg-white dark:bg-[#2a3754] p-4 rounded-2xl border border-brand-primary/50 shadow-lg">
                         <i class="fas fa-flag-checkered text-brand-primary text-xl mb-2"></i>
-                        <p class="text-xs font-bold mb-3" data-ar="اكتمل عداد الثقة! يمكنك طلب كشف القناع." data-en="Trust level reached! Request mask drop.">اكتمل عداد الثقة! يمكنك طلب كشف القناع.</p>
+                        <p class="text-xs font-bold mb-3" data-ar="اكتمل عداد الثقة!" data-en="Trust level reached!">اكتمل عداد الثقة!</p>
+                        ${revealBtnHtml}
                         <button onclick="extendTrust()" class="cursor-pointer bg-brand-primary text-white px-4 py-2 rounded-xl text-xs font-bold w-full hover:brightness-110 active:scale-95 transition-all" data-ar="تمديد المحادثة" data-en="Extend Chat">تمديد المحادثة</button>
                     </div>
                 `;
