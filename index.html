@@ -93,9 +93,10 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 sm:p-0 bg-gray-100 dark:bg-[#1a1a2e] text-gray-900 dark:text-white transition-colors duration-300">
+<body class="min-h-screen flex items-center justify-center p-0 sm:p-4 bg-gray-100 dark:bg-[#1a1a2e] text-gray-900 dark:text-white transition-colors duration-300 overflow-hidden">
 
-    <div class="bg-white dark:bg-brand-secondary w-full max-w-md md:max-w-2xl lg:max-w-4xl mx-auto sm:rounded-3xl shadow-xl overflow-hidden relative h-[100vh] sm:h-[800px] sm:max-h-[90vh] flex flex-col sm:border border-gray-200 dark:border-brand-light transition-colors duration-300">
+    <!-- Container uses 100dvh to fix mobile browser address bar overlap issues -->
+    <div class="bg-white dark:bg-brand-secondary w-full max-w-md md:max-w-2xl lg:max-w-4xl mx-auto sm:rounded-3xl shadow-xl overflow-hidden relative h-[100dvh] sm:h-[800px] sm:max-h-[90vh] flex flex-col sm:border border-gray-200 dark:border-brand-light transition-colors duration-300">
         
         <!-- Loading Overlay -->
         <div id="global-loader" class="absolute inset-0 bg-white dark:bg-brand-dark z-[200] flex flex-col items-center justify-center fade-in">
@@ -228,7 +229,7 @@
         <!-- ==================== 2. MAIN APP VIEW ==================== -->
         <div id="view-main" class="hidden flex-1 flex-col h-full fade-in relative">
             <!-- App Header -->
-            <div class="bg-gray-100 dark:bg-brand-light p-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-700 z-10 transition-colors duration-300">
+            <div class="bg-gray-100 dark:bg-brand-light p-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-700 z-10 transition-colors duration-300 shrink-0">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center text-white">
                         <i class="fas fa-mask text-xl"></i>
@@ -401,7 +402,7 @@
             </div>
 
             <!-- Bottom Navigation -->
-            <div class="bg-white dark:bg-brand-secondary border-t border-gray-200 dark:border-brand-light flex justify-around items-center p-3 pb-safe z-10 transition-colors duration-300">
+            <div class="bg-white dark:bg-brand-secondary border-t border-gray-200 dark:border-brand-light flex justify-around items-center p-3 pb-safe z-10 transition-colors duration-300 shrink-0">
                 <button onclick="switchTab('inbox')" id="nav-inbox" class="cursor-pointer flex flex-col items-center p-2 text-brand-primary active:scale-90 transition-transform relative">
                     <i class="fas fa-envelope text-xl mb-1 relative"></i>
                     <span class="text-[10px] font-bold" data-ar="الوارد" data-en="Inbox">الوارد</span>
@@ -422,7 +423,7 @@
             <div class="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none z-0 chat-bg"></div>
             
             <!-- Chat Header -->
-            <div class="bg-white dark:bg-brand-light p-4 flex items-center z-30 border-b border-gray-200 dark:border-gray-700 relative">
+            <div class="bg-white dark:bg-brand-light p-4 flex items-center z-30 border-b border-gray-200 dark:border-gray-700 relative shrink-0">
                 <button onclick="closeChat()" class="cursor-pointer text-gray-600 dark:text-white ms-2 hover:text-brand-primary active:scale-90 transition-transform">
                     <i class="fas fa-arrow-right text-xl rtl-arrow"></i>
                 </button>
@@ -452,12 +453,12 @@
             </div>
 
             <!-- MASK DROP ACTION BAR -->
-            <div id="mask-drop-action" class="hidden p-4 bg-gray-50 dark:bg-brand-dark border-t border-gray-200 dark:border-gray-700 text-center relative z-20">
+            <div id="mask-drop-action" class="hidden p-4 bg-gray-50 dark:bg-brand-dark border-t border-gray-200 dark:border-gray-700 text-center relative z-20 shrink-0">
                 <!-- Injected by JS -->
             </div>
 
             <!-- Chat Input -->
-            <div id="chat-input-area" class="p-3 bg-white dark:bg-brand-secondary border-t border-gray-200 dark:border-brand-light flex gap-2 items-center z-20 relative">
+            <div id="chat-input-area" class="p-3 bg-white dark:bg-brand-secondary border-t border-gray-200 dark:border-brand-light flex gap-2 items-center z-20 relative shrink-0 pb-safe">
                 <!-- Emoji Picker -->
                 <div id="emoji-picker" class="hidden absolute bottom-[100%] start-2 mb-2 bg-white dark:bg-[#1f2940] border border-gray-200 dark:border-gray-700 p-4 rounded-3xl z-50 w-72 h-64 flex flex-col scale-in origin-bottom-left">
                     <h4 class="text-xs font-bold text-gray-500 mb-3" data-ar="اختر إيموجي متحرك" data-en="Choose animated emoji">اختر إيموجي متحرك</h4>
@@ -476,7 +477,7 @@
 
         <!-- ==================== 4. PUBLIC SEND VIEW (Dynamic) ==================== -->
         <div id="view-public" class="hidden flex-1 flex-col h-full bg-gray-50 dark:bg-brand-dark z-40 absolute inset-0 fade-in overflow-y-auto transition-colors duration-300 md:rounded-3xl">
-            <div class="p-4 flex justify-between items-center border-b border-gray-200 dark:border-brand-light bg-white dark:bg-transparent">
+            <div class="p-4 flex justify-between items-center border-b border-gray-200 dark:border-brand-light bg-white dark:bg-transparent shrink-0">
                 <div class="text-brand-primary font-bold"><i class="fas fa-mask text-lg me-1"></i> <span data-ar="قِـنـاع" data-en="Mask">قِـنـاع</span></div>
                 <button onclick="closePublicView()" class="cursor-pointer text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 px-3 py-1.5 rounded-full font-semibold active:scale-95 transition-all duration-150">
                     <span data-ar="العودة" data-en="Go Back">العودة</span>
@@ -518,7 +519,7 @@
                 </div>
             </div>
             
-            <div class="p-4 text-center pb-8 border-t border-gray-200 dark:border-gray-700 mt-auto">
+            <div class="p-4 text-center pb-8 border-t border-gray-200 dark:border-gray-700 mt-auto shrink-0">
                 <p class="text-xs text-gray-500 mb-2" data-ar="هل تريد أن تتلقى رسائل مجهولة أيضاً؟" data-en="Want to receive anonymous messages too?">هل تريد أن تتلقى رسائل مجهولة أيضاً؟</p>
                 <button onclick="showRegister()" class="cursor-pointer text-sm text-brand-primary font-bold hover:underline" data-ar="أنشئ حسابك الخاص مجاناً" data-en="Create your free account">أنشئ حسابك الخاص مجاناً</button>
             </div>
@@ -542,7 +543,7 @@
         <!-- ==================== PRIVACY POLICY MODAL ==================== -->
         <div id="privacy-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 fade-in">
             <div class="bg-white dark:bg-brand-secondary w-full max-w-md rounded-3xl p-6 border border-gray-200 dark:border-brand-light scale-in max-h-[80vh] flex flex-col">
-                <div class="flex justify-between items-center mb-4 border-b border-gray-200 dark:border-gray-700 pb-3">
+                <div class="flex justify-between items-center mb-4 border-b border-gray-200 dark:border-gray-700 pb-3 shrink-0">
                     <h3 class="font-bold text-lg text-brand-primary flex items-center gap-2">
                         <i class="fas fa-shield-alt"></i> <span data-ar="سياسة الخصوصية" data-en="Privacy Policy">سياسة الخصوصية</span>
                     </h3>
@@ -568,7 +569,7 @@
                     <h4 class="font-bold text-gray-900 dark:text-white mt-4" data-ar="5. التعديلات على السياسة" data-en="5. Changes to the Policy">5. التعديلات على السياسة</h4>
                     <p data-ar="قد نقوم بتحديث سياسة الخصوصية هذه من وقت لآخر. استمرارك في استخدام التطبيق يعتبر موافقة منك على أي تعديلات تطرأ عليها." data-en="We may update this privacy policy from time to time. Your continued use of the app is considered an acceptance of any changes made to it.">قد نقوم بتحديث سياسة الخصوصية هذه من وقت لآخر. استمرارك في استخدام التطبيق يعتبر موافقة منك على أي تعديلات تطرأ عليها.</p>
                 </div>
-                <button onclick="closePrivacy()" class="cursor-pointer w-full bg-gray-200 dark:bg-[#1f2940] text-gray-800 dark:text-white font-bold py-3 rounded-xl mt-4 hover:brightness-95 active:scale-95 transition-all">
+                <button onclick="closePrivacy()" class="cursor-pointer w-full bg-gray-200 dark:bg-[#1f2940] text-gray-800 dark:text-white font-bold py-3 rounded-xl mt-4 hover:brightness-95 active:scale-95 transition-all shrink-0">
                     <span data-ar="فهمت ذلك" data-en="I Understand">فهمت ذلك</span>
                 </button>
             </div>
@@ -658,7 +659,6 @@
            3. UI SYSTEM & CONSTANTS
            ========================================================= */
         const allAvatars = [
-            // Females
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&backgroundColor=e94560", 
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Leila&backgroundColor=43a047", 
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Nora&backgroundColor=8e24aa",
@@ -667,7 +667,6 @@
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Mona&backgroundColor=1e88e5",
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Emma&backgroundColor=e53935",
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Lily&backgroundColor=8d6e63",
-            // Males
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=1e88e5", 
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Omar&backgroundColor=fb8c00",  
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Jasper&backgroundColor=5e35b1",
@@ -698,7 +697,7 @@
             
             if(!supabaseClient) { hideLoader(); showLogin(); return; }
             
-            const urlParams = newSearchParams = new URLSearchParams(window.location.search);
+            const urlParams = new URLSearchParams(window.location.search);
             const targetUsername = urlParams.get('u');
 
             const { data: { session } } = await supabaseClient.auth.getSession();
@@ -768,7 +767,6 @@
             errDiv.classList.add('hidden');
             successDiv.classList.add('hidden');
 
-            // 1. Check if username exists
             const { data: existing } = await supabaseClient.from('profiles').select('id').eq('username', username).single();
             if(existing) {
                 errDiv.innerText = currentLang === 'ar' ? "اسم المستخدم محجوز" : "Username taken";
@@ -777,7 +775,6 @@
                 return;
             }
 
-            // 2. Sign Up Auth
             const { data, error } = await supabaseClient.auth.signUp({ email, password: pass });
             
             if (error) {
@@ -786,7 +783,6 @@
                 return;
             }
 
-            // 3. Create Profile Entry
             if(data.user) {
                 const rndAvatar = allAvatars[Math.floor(Math.random() * allAvatars.length)];
                 const { error: profileError } = await supabaseClient.from('profiles').insert([
@@ -1088,9 +1084,9 @@
                 return lastSenderId !== currentUser.id && !m.is_read;
             });
 
-            if (hasUnreadInbox && currentInboxFilter !== 'received') {
+            if (hasUnreadInbox) {
                 document.getElementById('inbox-count-badge').classList.remove('hidden');
-            } else if (!hasUnreadInbox) {
+            } else {
                 document.getElementById('inbox-count-badge').classList.add('hidden');
             }
 
@@ -1314,7 +1310,7 @@
                         : '<i class="fas fa-check text-gray-400" title="تم التسليم"></i>';
                 } else if (isUnreadForMe) {
                     const badgeText = currentLang === 'ar' ? 'جديد' : 'New';
-                    statusBadge = `<span class="bg-brand-primary text-white text-[9px] px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap">${badgeText}</span>`;
+                    statusBadge = `<span class="bg-gradient-to-r from-brand-primary to-pink-500 text-white text-[10px] px-2 py-0.5 rounded-md font-black shadow-sm whitespace-nowrap animate-pulse">${badgeText}</span>`;
                     unreadClass = 'msg-unread border-brand-primary';
                 }
 
@@ -1354,7 +1350,7 @@
                             </div>
                         </div>
                         <div class="flex flex-col items-end justify-between shrink-0 gap-2">
-                            <div class="flex items-center gap-2 text-xs text-gray-400 font-mono">
+                            <div class="flex items-center gap-2 text-xs text-gray-400 font-mono" id="badge-area-${msg.id}">
                                 ${statusBadge} <span class="whitespace-nowrap">${time}</span>
                             </div>
                             <div class="flex items-center gap-2">
@@ -1382,14 +1378,12 @@
             if(!confirm(confirmMsg)) return;
 
             if(supabaseClient) {
-                // Remove .select() so RLS doesn't block the return, just execute delete.
                 const { error } = await supabaseClient.from('messages').delete().eq('id', id);
                 if(error) {
                     alert(currentLang === 'ar' ? 'فشل الحذف، يرجى تفعيل صلاحيات الحذف (RLS) في الخادم' : 'Delete failed (Check RLS policy)');
                     return; 
                 }
                 
-                // If success, filter locally to reflect immediately
                 inboxMessages = inboxMessages.filter(m => m.id !== id);
                 sentMessages = sentMessages.filter(m => m.id !== id);
                 archivedMessages = archivedMessages.filter(m => m.id !== id);
@@ -1499,8 +1493,17 @@
             
             if (lastSenderId !== currentUser.id && !msg.is_read) {
                 msg.is_read = true;
-                document.getElementById(`msg-${msgId}`)?.classList.remove('msg-unread');
+                const msgCard = document.getElementById(`msg-${msgId}`);
+                if(msgCard) {
+                    msgCard.classList.remove('msg-unread', 'border-brand-primary');
+                    const badgeArea = document.getElementById(`badge-area-${msgId}`);
+                    if(badgeArea) {
+                        const newBadge = badgeArea.querySelector('.bg-gradient-to-r');
+                        if(newBadge) newBadge.remove();
+                    }
+                }
                 if(supabaseClient) supabaseClient.from('messages').update({is_read: true}).eq('id', msgId);
+                updateTabBadges();
             }
             
             let headerLabel = '';
