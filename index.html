@@ -95,8 +95,8 @@
 </head>
 <body class="min-h-screen flex items-center justify-center p-4 sm:p-0 bg-gray-100 dark:bg-[#1a1a2e] text-gray-900 dark:text-white transition-colors duration-300">
 
-    <!-- حاوية التطبيق الرئيسية -->
-    <div class="bg-white dark:bg-brand-secondary w-full max-w-md md:max-w-2xl lg:max-w-4xl sm:rounded-3xl shadow-xl overflow-hidden relative h-[100vh] sm:h-[800px] sm:max-h-[90vh] flex flex-col sm:border border-gray-200 dark:border-brand-light transition-colors duration-300">
+    <!-- حاوية التطبيق الرئيسية: تم تعديل الأحجام (max-w-md md:max-w-xl) لتعمل على التابلت والموبايل بشكل احترافي -->
+    <div class="bg-white dark:bg-brand-secondary w-full max-w-md md:max-w-xl lg:max-w-2xl mx-auto sm:rounded-3xl shadow-xl overflow-hidden relative h-[100vh] sm:h-[800px] sm:max-h-[90vh] flex flex-col sm:border border-gray-200 dark:border-brand-light transition-colors duration-300">
         
         <!-- Loading Overlay -->
         <div id="global-loader" class="absolute inset-0 bg-white dark:bg-brand-dark z-[200] flex flex-col items-center justify-center fade-in">
@@ -108,7 +108,7 @@
         </div>
 
         <!-- ==================== 1. LOGIN VIEW ==================== -->
-        <div id="view-login" class="hidden flex-1 overflow-y-auto flex-col justify-center p-8 md:px-20 fade-in h-full bg-gray-50 dark:bg-brand-dark z-50 absolute inset-0 transition-colors duration-300">
+        <div id="view-login" class="hidden flex-1 overflow-y-auto flex-col justify-center p-8 md:px-16 fade-in h-full bg-gray-50 dark:bg-brand-dark z-50 absolute inset-0 transition-colors duration-300">
             <div class="text-center mb-8 mt-4">
                 <div class="w-20 h-20 mx-auto rounded-full bg-brand-primary flex items-center justify-center mb-4 text-white">
                     <i class="fas fa-mask text-4xl"></i>
@@ -150,7 +150,7 @@
         </div>
 
         <!-- ==================== 1.1 REGISTER VIEW ==================== -->
-        <div id="view-register" class="hidden flex-1 overflow-y-auto flex-col justify-center p-8 md:px-20 fade-in h-full bg-gray-50 dark:bg-brand-dark z-50 absolute inset-0 transition-colors duration-300">
+        <div id="view-register" class="hidden flex-1 overflow-y-auto flex-col justify-center p-8 md:px-16 fade-in h-full bg-gray-50 dark:bg-brand-dark z-50 absolute inset-0 transition-colors duration-300">
             <div class="text-center mb-6 mt-4">
                 <h1 class="font-bold text-2xl tracking-wide text-brand-primary" data-ar="إنشاء حساب جديد" data-en="Create Account">إنشاء حساب جديد</h1>
                 <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm" data-ar="انضم إلينا وابدأ بتلقي رسائلك المجهولة!" data-en="Join us and start receiving anonymous messages!">انضم إلينا وابدأ بتلقي رسائلك المجهولة!</p>
@@ -249,8 +249,8 @@
                 <!-- Message Type Toggles -->
                 <div class="flex justify-center mb-4">
                     <div class="bg-gray-200 dark:bg-[#1f2940] rounded-xl p-1 inline-flex">
-                        <button onclick="filterInbox('received')" id="btn-filter-received" class="px-4 py-2 rounded-lg text-sm font-bold bg-white dark:bg-brand-primary text-gray-900 dark:text-white shadow-sm transition-all" data-ar="المستلمة" data-en="Received">المستلمة</button>
-                        <button onclick="filterInbox('sent')" id="btn-filter-sent" class="px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-all" data-ar="المرسلة" data-en="Sent">المرسلة</button>
+                        <button onclick="filterInbox('received')" id="btn-filter-received" class="cursor-pointer px-4 py-2 rounded-lg text-sm font-bold bg-white dark:bg-brand-primary text-gray-900 dark:text-white shadow-sm transition-all" data-ar="المستلمة" data-en="Received">المستلمة</button>
+                        <button onclick="filterInbox('sent')" id="btn-filter-sent" class="cursor-pointer px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-all" data-ar="المرسلة" data-en="Sent">المرسلة</button>
                     </div>
                 </div>
 
@@ -260,8 +260,10 @@
                         <span id="inbox-count-badge" class="bg-brand-primary text-white text-[10px] px-2 py-1 rounded-full hidden">جديد</span>
                     </h2>
                 </div>
-                <div id="inbox-list" class="space-y-4 grid md:grid-cols-2 md:gap-4 md:space-y-0">
-                    <div id="empty-inbox" class="text-center text-gray-400 dark:text-gray-500 py-10 text-sm block md:col-span-2">
+                
+                <!-- رسائل الانبوكس تحت بعضها (بدون Grid) -->
+                <div id="inbox-list" class="space-y-4 flex flex-col">
+                    <div id="empty-inbox" class="text-center text-gray-400 dark:text-gray-500 py-10 text-sm block">
                         <i class="fas fa-inbox text-4xl mb-3 opacity-50"></i>
                         <p data-ar="لا توجد رسائل جديدة" data-en="No new messages">لا توجد رسائل جديدة</p>
                     </div>
@@ -273,8 +275,9 @@
                 <h2 class="text-gray-500 dark:text-gray-400 text-sm font-semibold mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
                     <i class="fas fa-box-archive me-2"></i> <span data-ar="الرسائل المؤرشفة" data-en="Archived Messages">الرسائل المؤرشفة</span>
                 </h2>
-                <div id="archive-list" class="space-y-4 grid md:grid-cols-2 md:gap-4 md:space-y-0">
-                    <div id="empty-archive" class="text-center text-gray-400 dark:text-gray-500 py-10 text-sm block md:col-span-2">
+                <!-- رسائل الأرشيف تحت بعضها -->
+                <div id="archive-list" class="space-y-4 flex flex-col">
+                    <div id="empty-archive" class="text-center text-gray-400 dark:text-gray-500 py-10 text-sm block">
                         <i class="fas fa-folder-open text-4xl mb-3 opacity-50"></i>
                         <p data-ar="لا توجد رسائل مؤرشفة" data-en="No archived messages">لا توجد رسائل مؤرشفة</p>
                     </div>
@@ -282,7 +285,7 @@
             </div>
 
             <!-- TAB: Profile & Settings -->
-            <div id="tab-profile" class="hidden flex-1 overflow-y-auto p-4 md:p-8 space-y-6 fade-in max-w-2xl mx-auto w-full">
+            <div id="tab-profile" class="hidden flex-1 overflow-y-auto p-4 md:p-8 space-y-6 fade-in w-full">
                 <!-- User Info -->
                 <div class="text-center mt-2 relative group cursor-pointer" onclick="openAvatarModal()">
                     <div class="w-24 h-24 mx-auto rounded-full border-4 border-brand-primary p-1 mb-1 relative hover:scale-105 transition-transform bg-white dark:bg-transparent">
@@ -1033,12 +1036,14 @@
 
                 if (error) {
                     console.error("Send Error: ", error);
-                    // التعديل هنا: طباعة الخطأ الفعلي من قاعدة البيانات للمستخدم لسهولة حله
                     alert(currentLang === 'ar' ? "فشل الإرسال: " + error.message : "Message sending failed: " + error.message);
                     btn.innerHTML = `<span data-ar="إرسال" data-en="Send">إرسال</span>`;
                     applyTranslations();
                     return;
                 }
+                
+                // نداء التحديث المباشر للمرسل ليظهر في صندوق "الرسائل المرسلة"
+                loadInbox();
             }
 
             // Professional UI Update
@@ -1059,7 +1064,6 @@
                 document.getElementById('view-public').classList.add('hidden');
                 document.getElementById('view-public').classList.remove('flex');
                 showMainApp();
-                loadInbox(); // Refresh instantly
             } else {
                 window.location.href = window.location.pathname;
             }
@@ -1072,29 +1076,27 @@
             if(!supabaseClient || !currentUser) return hideLoader();
             
             try {
-                // Fetch received messages
-                const { data: rMsgs, error: rErr } = await supabaseClient.from('messages')
-                    .select('*, sender_profile:profiles!messages_sender_id_fkey(username, full_name, avatar_url)')
-                    .eq('receiver_id', currentUser.id)
+                // Fetch all messages involving the current user directly using an OR condition for consistency
+                const { data: msgs, error } = await supabaseClient.from('messages')
+                    .select('*, sender_profile:profiles!messages_sender_id_fkey(username, full_name, avatar_url), receiver_profile:profiles!messages_receiver_id_fkey(username, full_name, avatar_url)')
+                    .or(`receiver_id.eq.${currentUser.id},sender_id.eq.${currentUser.id}`)
                     .order('created_at', { ascending: false });
                 
-                // Fetch sent messages
-                const { data: sMsgs, error: sErr } = await supabaseClient.from('messages')
-                    .select('*, receiver_profile:profiles!messages_receiver_id_fkey(username, full_name, avatar_url)')
-                    .eq('sender_id', currentUser.id)
-                    .order('created_at', { ascending: false });
+                if (error) throw error;
                 
-                if (rErr || sErr) {
-                    console.error("Load inbox error:", rErr || sErr);
-                }
-                
-                // Set globals
-                inboxMessages = rMsgs ? rMsgs.filter(m => !m.is_archived) : [];
-                archivedMessages = rMsgs ? rMsgs.filter(m => m.is_archived) : [];
-                sentMessages = sMsgs || [];
+                // Distribute properly
+                inboxMessages = msgs ? msgs.filter(m => m.receiver_id === currentUser.id && !m.is_archived) : [];
+                archivedMessages = msgs ? msgs.filter(m => m.receiver_id === currentUser.id && m.is_archived) : [];
+                sentMessages = msgs ? msgs.filter(m => m.sender_id === currentUser.id) : [];
                 
                 renderInbox();
                 renderArchive();
+                
+                // Update active chat if it's currently open
+                if (activeChatMsgId) {
+                    const activeMsg = msgs.find(m => m.id === activeChatMsgId);
+                    if (activeMsg) updateActiveChat(activeMsg);
+                }
             } catch (e) {
                 console.error("Inbox load exception", e);
             }
@@ -1103,7 +1105,6 @@
 
         function updateActiveChat(updatedMsg) {
             const chatBox = document.getElementById('chat-messages');
-            
             let isSenderView = updatedMsg.sender_id === currentUser.id;
             let chatHtml = '';
             
@@ -1143,14 +1144,10 @@
                 }
             });
             
-            // تحقق إذا كان المستخدم يتصفح المحادثة في الأسفل (للحفاظ على التمرير التلقائي)
+            // Auto scroll logic
             const isScrolledToBottom = chatBox.scrollHeight - chatBox.clientHeight <= chatBox.scrollTop + 50;
-            
             chatBox.innerHTML = chatHtml;
-            
-            if (isScrolledToBottom) {
-                chatBox.scrollTop = chatBox.scrollHeight;
-            }
+            if (isScrolledToBottom) { chatBox.scrollTop = chatBox.scrollHeight; }
             
             activeChatTrust = updatedMsg.trust_level || 1;
             updateTrustUI();
@@ -1159,64 +1156,13 @@
         function setupRealtime() {
             if(!supabaseClient || !currentUser) return;
             try {
+                // Listen to ALL changes where user is either sender or receiver, then call loadInbox to sync cleanly
                 supabaseClient.channel('custom-all-channel')
-                    .on('postgres_changes', { 
-                        event: 'INSERT', 
-                        schema: 'public', 
-                        table: 'messages', 
-                        filter: `receiver_id=eq.${currentUser.id}` 
-                    }, payload => {
-                        const newMsg = payload.new;
-                        // Prevent duplicates if already fetched manually
-                        if (!inboxMessages.some(m => m.id === newMsg.id)) {
-                            inboxMessages.unshift(newMsg);
-                            if(currentInboxFilter === 'received') renderInbox();
-                            
-                            if(document.getElementById('tab-inbox').classList.contains('hidden') || currentInboxFilter === 'sent') {
-                                document.getElementById('inbox-count-badge').classList.remove('hidden');
-                            }
-                        }
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `receiver_id=eq.${currentUser.id}` }, payload => {
+                        loadInbox();
                     })
-                    .on('postgres_changes', { 
-                        event: 'UPDATE', 
-                        schema: 'public', 
-                        table: 'messages',
-                        filter: `receiver_id=eq.${currentUser.id}` 
-                    }, payload => {
-                        // Update existing received message
-                        const updatedMsg = payload.new;
-                        const idx = inboxMessages.findIndex(m => m.id === updatedMsg.id);
-                        if (idx !== -1) {
-                            // Preserve joined profiles data if existing
-                            updatedMsg.sender_profile = inboxMessages[idx].sender_profile;
-                            inboxMessages[idx] = updatedMsg;
-                            
-                            if (activeChatMsgId === updatedMsg.id) {
-                                updateActiveChat(updatedMsg);
-                            } else if (currentInboxFilter === 'received') {
-                                renderInbox(); 
-                            }
-                        }
-                    })
-                    .on('postgres_changes', { 
-                        event: 'UPDATE', 
-                        schema: 'public', 
-                        table: 'messages',
-                        filter: `sender_id=eq.${currentUser.id}` 
-                    }, payload => {
-                        // Update existing sent message (e.g. if receiver replies)
-                        const updatedMsg = payload.new;
-                        const idx = sentMessages.findIndex(m => m.id === updatedMsg.id);
-                        if (idx !== -1) {
-                            updatedMsg.receiver_profile = sentMessages[idx].receiver_profile;
-                            sentMessages[idx] = updatedMsg;
-                            
-                            if (activeChatMsgId === updatedMsg.id) {
-                                updateActiveChat(updatedMsg);
-                            } else if (currentInboxFilter === 'sent') {
-                                renderInbox(); 
-                            }
-                        }
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `sender_id=eq.${currentUser.id}` }, payload => {
+                        loadInbox();
                     }).subscribe();
             } catch (e) {
                 console.error("Realtime setup failed:", e);
@@ -1233,7 +1179,7 @@
                 btnRec.className = 'px-4 py-2 rounded-lg text-sm font-bold bg-white dark:bg-brand-primary text-gray-900 dark:text-white shadow-sm transition-all';
                 btnSnt.className = 'px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-all';
                 title.setAttribute('data-ar', 'الرسائل المستلمة'); title.setAttribute('data-en', 'Received Messages');
-                document.getElementById('inbox-count-badge').classList.add('hidden'); // Clear badge when viewing received
+                document.getElementById('inbox-count-badge').classList.add('hidden'); 
             } else {
                 btnSnt.className = 'px-4 py-2 rounded-lg text-sm font-bold bg-white dark:bg-brand-primary text-gray-900 dark:text-white shadow-sm transition-all';
                 btnRec.className = 'px-4 py-2 rounded-lg text-sm font-bold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-all';
@@ -1272,34 +1218,43 @@
                 let actionBtn = '';
                 let unreadClass = '';
                 let iconClass = '';
+                let statusBadge = '';
 
-                // Determine unread status based on replies length change or explicit is_read flag
+                // Read/Unread Logic
+                const replies = msg.replies || [];
+                const lastSenderId = replies.length > 0 ? replies[replies.length - 1].sender_id : msg.sender_id;
+                const isUnreadForMe = (lastSenderId !== currentUser.id) && (!msg.is_read);
+                
+                // Set checking icons if I am the last sender
+                if (lastSenderId === currentUser.id) {
+                    statusBadge = msg.is_read 
+                        ? '<i class="fas fa-check-double text-blue-500" title="مقروء"></i>' 
+                        : '<i class="fas fa-check text-gray-400" title="تم التسليم"></i>';
+                } else if (isUnreadForMe) {
+                    statusBadge = '<div class="w-2 h-2 rounded-full bg-brand-primary"></div>';
+                    unreadClass = 'msg-unread';
+                }
+
                 if (currentInboxFilter === 'received') {
                     senderLabel = msg.is_revealed ? 'كُشف القناع' : `مجهول #${safeId}`;
                     senderColor = msg.is_revealed ? 'text-green-500 bg-green-500/10' : 'text-brand-primary bg-brand-primary/10';
                     iconClass = msg.is_revealed ? 'fa-user' : 'fa-user-secret';
+                    
                     actionBtn = `
                         <button onclick="archiveMessageUI('${msg.id}', event)" class="cursor-pointer text-gray-400 bg-gray-200 dark:bg-[#2a3754] w-7 h-7 rounded-full flex items-center justify-center hover:text-brand-primary transition" title="أرشفة">
                             <i class="fas fa-box-archive text-xs"></i>
                         </button>
-                        <button onclick="deleteMessageUI('${msg.id}', event)" class="cursor-pointer text-red-400 bg-red-50 dark:bg-red-900/20 w-7 h-7 rounded-full flex items-center justify-center hover:text-red-600 transition" title="حذف نهائي">
+                        <button onclick="deleteMessageUI('${msg.id}', event)" class="cursor-pointer ms-1 text-red-400 bg-red-50 dark:bg-red-900/20 w-7 h-7 rounded-full flex items-center justify-center hover:text-red-600 transition" title="حذف نهائي">
                             <i class="fas fa-trash-alt text-xs"></i>
                         </button>`;
-                    if (!msg.is_read) unreadClass = 'msg-unread';
                 } else {
                     // Sent messages view
                     const receiverName = msg.receiver_profile ? msg.receiver_profile.full_name : 'مستخدم';
                     senderLabel = `إلى: ${receiverName}`;
                     senderColor = 'text-blue-500 bg-blue-500/10';
                     iconClass = 'fa-paper-plane';
-                    // Check if receiver replied
-                    const hasReplies = msg.replies && msg.replies.length > 0;
-                    if (hasReplies && !msg.is_read) unreadClass = 'msg-unread'; // Highlight sent if receiver replied
                     
                     actionBtn = `
-                        <div class="text-[10px] text-gray-400 bg-gray-200 dark:bg-[#2a3754] px-2 py-1 rounded-full flex items-center justify-center font-bold">
-                            ${hasReplies ? '<i class="fas fa-reply text-brand-primary me-1"></i> رد' : '<i class="fas fa-check"></i>'}
-                        </div>
                         <button onclick="deleteMessageUI('${msg.id}', event)" class="cursor-pointer ms-1 text-red-400 bg-red-50 dark:bg-red-900/20 w-7 h-7 rounded-full flex items-center justify-center hover:text-red-600 transition" title="حذف نهائي">
                             <i class="fas fa-trash-alt text-xs"></i>
                         </button>`;
@@ -1313,7 +1268,10 @@
                             <span class="text-xs ${senderColor} px-2 py-1 rounded-full font-bold flex items-center gap-1">
                                 <i class="fas ${iconClass}"></i> <span>${senderLabel}</span>
                             </span>
-                            <span class="text-xs text-gray-400 pe-8">${time}</span>
+                            <span class="flex items-center gap-2">
+                                ${statusBadge}
+                                <span class="text-xs text-gray-400 pe-8">${time}</span>
+                            </span>
                         </div>
                         <p class="text-sm text-gray-800 dark:text-gray-200 mt-2 relative z-10 line-clamp-2">${formattedContent}</p>
                     </div>
@@ -1328,7 +1286,7 @@
         async function archiveMessageUI(id, e) {
             e.stopPropagation();
             if(supabaseClient) await supabaseClient.from('messages').update({is_archived: true}).eq('id', id);
-            
+            // loadInbox will catch it via realtime, but applying optimistically
             const msg = inboxMessages.find(m => m.id === id);
             if(msg) {
                 msg.is_archived = true;
@@ -1352,12 +1310,8 @@
                 }
             }
             
-            inboxMessages = inboxMessages.filter(m => m.id !== id);
-            sentMessages = sentMessages.filter(m => m.id !== id);
-            archivedMessages = archivedMessages.filter(m => m.id !== id);
-            
-            renderInbox();
-            renderArchive();
+            // Full refresh to ensure clean state
+            loadInbox(); 
         }
         
         async function deleteCurrentChat() {
@@ -1372,13 +1326,8 @@
                 return;
             }
 
-            inboxMessages = inboxMessages.filter(m => m.id !== activeChatMsgId);
-            sentMessages = sentMessages.filter(m => m.id !== activeChatMsgId);
-            archivedMessages = archivedMessages.filter(m => m.id !== activeChatMsgId);
-            
             closeChat();
-            renderInbox();
-            renderArchive();
+            loadInbox(); // Reload entirely to sync ui
         }
 
         function renderArchive() {
@@ -1403,27 +1352,22 @@
         }
 
         /* =========================================================
-           8. CHAT & TRUST LOGIC (Now using database replies)
+           8. CHAT & TRUST LOGIC 
            ========================================================= */
         async function openChat(msgId) {
-            // Find message in either inbox or sent lists
-            let msg = inboxMessages.find(m => m.id === msgId);
-            let isSenderView = false;
-            
-            if(!msg) {
-                msg = sentMessages.find(m => m.id === msgId);
-                if(msg) isSenderView = true;
-            }
+            let msg = inboxMessages.find(m => m.id === msgId) || sentMessages.find(m => m.id === msgId);
+            let isSenderView = msg && msg.sender_id === currentUser.id;
             
             if(!msg) return;
             
             activeChatMsgId = msgId;
             activeChatTrust = msg.trust_level || 1; 
             
-            // Mark as read in UI and DB if unread
-            if (!msg.is_read && currentInboxFilter === 'received') {
+            // Mark as read Logic
+            const replies = msg.replies || [];
+            const lastSenderId = replies.length > 0 ? replies[replies.length - 1].sender_id : msg.sender_id;
+            if (lastSenderId !== currentUser.id && !msg.is_read) {
                 msg.is_read = true;
-                document.getElementById(`msg-${msgId}`)?.firstElementChild?.classList.remove('msg-unread');
                 if(supabaseClient) supabaseClient.from('messages').update({is_read: true}).eq('id', msgId);
             }
             
@@ -1456,6 +1400,8 @@
             document.getElementById('chat-input-area').classList.remove('hidden');
             document.getElementById('chat-input-area').classList.add('flex');
             activeChatMsgId = null;
+            // Clean up unread status visually
+            renderInbox();
         }
 
         async function sendReply() {
@@ -1463,10 +1409,9 @@
             const txt = input.value.trim();
             if(!txt || !activeChatMsgId) return;
 
-            // جلب أحدث رسالة من قاعدة البيانات لتجنب فقدان الردود السابقة
             const chatBox = document.getElementById('chat-messages');
             
-            // واجهة استباقية (Optimistic UI)
+            // واجهة استباقية مؤقتة (Optimistic UI)
             const tempId = `temp-${Date.now()}`;
             chatBox.insertAdjacentHTML('beforeend', `
                 <div class="flex justify-end fade-in relative z-10 mt-2" id="${tempId}">
@@ -1479,12 +1424,8 @@
             chatBox.scrollTop = chatBox.scrollHeight;
             
             if(supabaseClient) {
-                // جلب النسخة الأخيرة
                 const { data: latestMsg, error: fetchErr } = await supabaseClient.from('messages').select('replies, trust_level').eq('id', activeChatMsgId).single();
-                
                 if (fetchErr || !latestMsg) {
-                    console.error("Failed to fetch latest msg", fetchErr);
-                    alert(currentLang === 'ar' ? 'حدث خطأ، يرجى المحاولة' : 'Error, please try again');
                     document.getElementById(tempId)?.remove();
                     return;
                 }
@@ -1492,7 +1433,6 @@
                 const currentReplies = latestMsg.replies || [];
                 const newReply = { text: txt, sender_id: currentUser.id, timestamp: new Date().toISOString() };
                 const updatedReplies = [...currentReplies, newReply];
-                
                 const newTrust = (latestMsg.trust_level || 1) + 1;
                 
                 const { error } = await supabaseClient.from('messages')
@@ -1504,18 +1444,9 @@
                     .eq('id', activeChatMsgId);
                     
                 if (error) {
-                    console.error("Error saving reply:", error);
-                    alert(currentLang === 'ar' ? 'فشل إرسال الرد' : 'Failed to send reply');
                     document.getElementById(tempId)?.remove();
                 } else {
                     document.getElementById(tempId)?.firstElementChild?.classList.remove('opacity-50');
-                    
-                    // تحديث المصفوفة المحلية
-                    let msg = inboxMessages.find(m => m.id === activeChatMsgId) || sentMessages.find(m => m.id === activeChatMsgId);
-                    if (msg) {
-                        msg.replies = updatedReplies;
-                        msg.trust_level = newTrust;
-                    }
                     activeChatTrust = newTrust;
                 }
             }
@@ -1550,11 +1481,9 @@
             document.getElementById('chat-input-area').classList.remove('hidden');
             document.getElementById('chat-input-area').classList.add('flex');
             
-            // Update trust in DB when extending
             if(supabaseClient && activeChatMsgId) {
                 supabaseClient.from('messages').update({trust_level: activeChatTrust}).eq('id', activeChatMsgId);
             }
-            
             updateTrustUI();
         }
 
@@ -1581,7 +1510,6 @@
             }
             applyTranslations();
             
-            // Re-render inbox if titles changed
             if(currentUser) {
                 filterInbox(currentInboxFilter);
             }
@@ -1633,7 +1561,6 @@
             document.getElementById('nav-' + tabName).className = "flex flex-col items-center p-2 text-brand-primary active:scale-90 transition-transform relative";
             
             if(tabName === 'inbox') {
-                // Ensure correct filter is applied and rendered
                 filterInbox(currentInboxFilter);
                 document.getElementById('fab-new-msg').classList.remove('hidden');
             } else {
