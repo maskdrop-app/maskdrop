@@ -970,7 +970,7 @@
             if(!supabaseClient) { hideLoader(); return; } 
             
             try {
-                const { data, error } = await supabaseClient.from('profiles').select('id, full_name, username, avatar_url').eq('username', username).single();
+                const { data, error } = await supabaseClient.from('profiles').select('id, full_name, username, avatar_url').ilike('username', username).single();
                 
                 hideLoader();
                 hideAllAuthViews();
@@ -1020,30 +1020,27 @@
             btn.innerHTML = `<div class="loader border-white border-t-brand-primary"></div>`;
 
             if(supabaseClient && publicTargetProfile) {
-                const { data, error } = await supabaseClient.from('messages').insert([{
+                const { error } = await supabaseClient.from('messages').insert([{
                     receiver_id: publicTargetProfile.id,
                     content: text,
                     sender_id: currentUser.id, 
                     is_archived: false,
                     trust_level: 1,
                     is_revealed: false,
-                    is_read: false
-                }]).select().single();
+                    is_read: false,
+                    replies: []
+                }]);
 
                 if (error) {
                     console.error("Send Error: ", error);
-                    alert(currentLang === 'ar' ? "فشل الإرسال، تأكد من اتصالك: " + error.message : "Message sending failed: " + error.message);
+                    alert(currentLang === 'ar' ? "فشل الإرسال: " + error.message : "Message sending failed: " + error.message);
                     btn.innerHTML = `<span data-ar="إرسال" data-en="Send">إرسال</span>`;
                     applyTranslations();
                     return;
                 }
                 
-                if(data) {
-                    data.receiver_profile = publicTargetProfile;
-                    data.sender_profile = userProfile;
-                    sentMessages.unshift(data);
-                    if(currentInboxFilter === 'sent') renderInbox();
-                }
+                // Refresh local inbox so sent messages show up properly
+                loadInbox();
             }
 
             document.getElementById('public-msg-form').classList.add('hidden');
@@ -1068,7 +1065,6 @@
                 window.history.pushState({}, document.title, window.location.pathname);
                 
                 showMainApp();
-                renderInbox(); 
             } else {
                 window.location.href = window.location.pathname;
             }
@@ -1082,28 +1078,13 @@
             
             try {
                 const { data: msgs, error } = await supabaseClient.from('messages')
-                    .select('*')
+                    .select('*, sender_profile:profiles!messages_sender_id_fkey(username, full_name, avatar_url), receiver_profile:profiles!messages_receiver_id_fkey(username, full_name, avatar_url)')
                     .or(`receiver_id.eq.${currentUser.id},sender_id.eq.${currentUser.id}`)
                     .order('created_at', { ascending: false });
                 
                 if (error) throw error;
                 
                 if (msgs) {
-                    const profileIds = new Set();
-                    msgs.forEach(m => { if(m.sender_id) profileIds.add(m.sender_id); if(m.receiver_id) profileIds.add(m.receiver_id); });
-                    
-                    const { data: profiles } = await supabaseClient.from('profiles')
-                        .select('id, username, full_name, avatar_url')
-                        .in('id', Array.from(profileIds));
-                        
-                    const profileMap = {};
-                    if(profiles) profiles.forEach(p => profileMap[p.id] = p);
-                    
-                    msgs.forEach(m => {
-                        m.sender_profile = profileMap[m.sender_id] || null;
-                        m.receiver_profile = profileMap[m.receiver_id] || null;
-                    });
-
                     inboxMessages = msgs.filter(m => m.receiver_id === currentUser.id && !m.is_archived);
                     archivedMessages = msgs.filter(m => m.receiver_id === currentUser.id && m.is_archived);
                     sentMessages = msgs.filter(m => m.sender_id === currentUser.id);
@@ -1164,6 +1145,10 @@
             });
             
             const isScrolledToBottom = chatBox.scrollHeight - chatBox.clientHeight <= chatBox.scrollTop + 50;
+            
+            // Remove typing indicator if exists to redraw cleanly
+            document.getElementById('typing-indicator')?.remove();
+            
             chatBox.innerHTML = chatHtml;
             if (isScrolledToBottom) { chatBox.scrollTop = chatBox.scrollHeight; }
             
@@ -1171,16 +1156,84 @@
             updateTrustUI();
         }
 
+        function updateLocalMessage(updatedData) {
+            let changed = false;
+            
+            // Update in Inbox
+            let idx = inboxMessages.findIndex(m => m.id === updatedData.id);
+            if (idx > -1) {
+                updatedData.sender_profile = inboxMessages[idx].sender_profile;
+                updatedData.receiver_profile = inboxMessages[idx].receiver_profile;
+                inboxMessages[idx] = updatedData;
+                changed = true;
+            }
+            
+            // Update in Sent
+            idx = sentMessages.findIndex(m => m.id === updatedData.id);
+            if (idx > -1) {
+                updatedData.sender_profile = sentMessages[idx].sender_profile;
+                updatedData.receiver_profile = sentMessages[idx].receiver_profile;
+                sentMessages[idx] = updatedData;
+                changed = true;
+            }
+            
+            // Update in Archived
+            idx = archivedMessages.findIndex(m => m.id === updatedData.id);
+            if (idx > -1) {
+                updatedData.sender_profile = archivedMessages[idx].sender_profile;
+                updatedData.receiver_profile = archivedMessages[idx].receiver_profile;
+                archivedMessages[idx] = updatedData;
+                changed = true;
+            }
+
+            if (changed) {
+                if (activeChatMsgId === updatedData.id) {
+                    updateActiveChat(updatedData);
+                } else {
+                    renderInbox();
+                    renderArchive();
+                }
+            } else {
+                // If we don't have it locally at all, fetch fully
+                loadInbox();
+            }
+        }
+
         function setupRealtime() {
             if(!supabaseClient || !currentUser) return;
             try {
                 supabaseClient.channel('custom-all-channel')
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
-                        const rec = payload.new || payload.old;
-                        if (rec && (rec.sender_id === currentUser.id || rec.receiver_id === currentUser.id)) {
-                            // Fetch all again to ensure absolute perfect state (handles both sender and receiver instantly)
-                            loadInbox();
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+                        const rec = payload.new;
+                        if (rec.sender_id === currentUser.id || rec.receiver_id === currentUser.id) {
+                            loadInbox(); // fetch completely to get joined profiles
                         }
+                    })
+                    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, payload => {
+                        const rec = payload.new;
+                        if (rec.sender_id === currentUser.id || rec.receiver_id === currentUser.id) {
+                            updateLocalMessage(rec);
+                            
+                            // Visual badge if receiving an update (reply)
+                            if (rec.receiver_id === currentUser.id || rec.sender_id === currentUser.id) {
+                                const replies = rec.replies || [];
+                                const lastSenderId = replies.length > 0 ? replies[replies.length - 1].sender_id : rec.sender_id;
+                                if (lastSenderId !== currentUser.id && !rec.is_read) {
+                                    if(document.getElementById('tab-inbox').classList.contains('hidden')) {
+                                        document.getElementById('inbox-count-badge').classList.remove('hidden');
+                                    }
+                                }
+                            }
+                        }
+                    })
+                    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, payload => {
+                        const id = payload.old.id;
+                        inboxMessages = inboxMessages.filter(m => m.id !== id);
+                        sentMessages = sentMessages.filter(m => m.id !== id);
+                        archivedMessages = archivedMessages.filter(m => m.id !== id);
+                        if (activeChatMsgId === id) closeChat();
+                        renderInbox();
+                        renderArchive();
                     }).subscribe();
             } catch (e) {
                 console.error("Realtime setup failed:", e);
@@ -1278,7 +1331,6 @@
                 html += `
                 <div class="group msg-card fade-in w-full max-w-3xl mx-auto bg-gray-50 dark:bg-[#1f2940] p-4 rounded-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-[#2a3754] active:scale-[0.98] transition-all border-s-4 border-gray-300 dark:border-gray-600 ${unreadClass} shadow-sm flex flex-col gap-3" id="msg-${msg.id}" onclick="openChat('${msg.id}')">
                     <div class="flex justify-between items-start gap-2">
-                        
                         <div class="flex items-center gap-2 shrink-0 max-w-[60%]">
                             <div class="w-8 h-8 rounded-full ${senderColor.split(' ')[1]} ${senderColor.split(' ')[0]} flex items-center justify-center shrink-0">
                                 <i class="fas ${iconClass}"></i>
@@ -1287,7 +1339,6 @@
                                 <span class="text-sm font-bold ${senderColor.split(' ')[0]} truncate w-full">${senderLabel}</span>
                             </div>
                         </div>
-
                         <div class="flex flex-col items-end gap-2 shrink-0">
                             <div class="flex items-center gap-1.5 h-6">
                                 ${statusBadge}
@@ -1297,7 +1348,6 @@
                                 ${actionBtn}
                             </div>
                         </div>
-
                     </div>
                     <p class="text-sm text-gray-800 dark:text-gray-200 mt-1 line-clamp-2 leading-relaxed">${formattedContent}</p>
                 </div>`;
@@ -1308,8 +1358,8 @@
         async function archiveMessageUI(id, e) {
             e.stopPropagation();
             if(supabaseClient) {
-                await supabaseClient.from('messages').update({is_archived: true}).eq('id', id);
-                loadInbox();
+                const { error } = await supabaseClient.from('messages').update({is_archived: true}).eq('id', id);
+                if(!error) loadInbox();
             }
         }
         
@@ -1319,17 +1369,20 @@
             if(!confirm(confirmMsg)) return;
 
             if(supabaseClient) {
-                const { data, error } = await supabaseClient.from('messages').delete().eq('id', id).select();
+                // Remove .select() so RLS doesn't block the return, just execute delete.
+                const { error } = await supabaseClient.from('messages').delete().eq('id', id);
                 if(error) {
-                    alert(currentLang === 'ar' ? 'حدث خطأ في الاتصال.' : 'Connection error.');
-                    return;
+                    alert(currentLang === 'ar' ? 'فشل الحذف، يرجى تفعيل صلاحيات الحذف (RLS) في الخادم' : 'Delete failed (Check RLS policy)');
+                    return; 
                 }
-                if(!data || data.length === 0) {
-                     alert(currentLang === 'ar' ? 'فشل الحذف! يجب إضافة كود RLS في Supabase للحذف أولاً.' : 'Delete failed! RLS policy required in Supabase.');
-                     return;
-                }
-                // If success, refresh the inbox
-                loadInbox(); 
+                
+                // If success, filter locally to reflect immediately
+                inboxMessages = inboxMessages.filter(m => m.id !== id);
+                sentMessages = sentMessages.filter(m => m.id !== id);
+                archivedMessages = archivedMessages.filter(m => m.id !== id);
+                
+                renderInbox();
+                renderArchive();
             }
         }
         
@@ -1338,19 +1391,22 @@
             const confirmMsg = currentLang === 'ar' ? 'هل أنت متأكد من حذف هذه المحادثة نهائياً؟' : 'Are you sure you want to permanently delete this chat?';
             if(!confirm(confirmMsg)) return;
 
-            const { data, error } = await supabaseClient.from('messages').delete().eq('id', activeChatMsgId).select();
+            const { error } = await supabaseClient.from('messages').delete().eq('id', activeChatMsgId);
             
             if(error) {
-                alert(currentLang === 'ar' ? 'حدث خطأ في الاتصال.' : 'Connection error.');
+                alert(currentLang === 'ar' ? 'فشل الحذف، يرجى تفعيل صلاحيات الحذف (RLS) في الخادم' : 'Delete failed (Check RLS policy)');
                 return;
             }
-            if(!data || data.length === 0) {
-                 alert(currentLang === 'ar' ? 'فشل الحذف! يجب إضافة كود RLS في Supabase للحذف أولاً.' : 'Delete failed! RLS policy required in Supabase.');
-                 return;
-            }
 
+            const deletedId = activeChatMsgId;
             closeChat();
-            loadInbox(); 
+            
+            inboxMessages = inboxMessages.filter(m => m.id !== deletedId);
+            sentMessages = sentMessages.filter(m => m.id !== deletedId);
+            archivedMessages = archivedMessages.filter(m => m.id !== deletedId);
+            
+            renderInbox();
+            renderArchive();
         }
 
         function renderArchive() {
@@ -1390,7 +1446,7 @@
                     type: 'broadcast',
                     event: 'typing',
                     payload: { user: currentUser.id }
-                }).catch(e => { /* Ignore errors if channel not fully joined yet */ });
+                }).catch(e => { /* Ignore */ });
             }
         }
 
@@ -1485,23 +1541,25 @@
             const txt = input.value.trim();
             if(!txt || !activeChatMsgId) return;
 
-            const chatBox = document.getElementById('chat-messages');
+            input.value = '';
             
+            // إضافة الرسالة شكلياً للسرعة
+            const chatBox = document.getElementById('chat-messages');
             const tempId = `temp-${Date.now()}`;
             document.getElementById('typing-indicator')?.remove();
             
             chatBox.insertAdjacentHTML('beforeend', `
-                <div class="flex justify-end fade-in relative z-10 mt-2" id="${tempId}">
+                <div class="flex justify-end fade-in relative z-10 mt-2 temp-msg" id="${tempId}">
                     <div class="bg-brand-primary text-white max-w-[80%] p-3 rounded-2xl rounded-ss-none text-sm opacity-50 shadow-sm">
                         ${formatMessageText(txt)}
                     </div>
                 </div>
             `);
-            input.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
             
             if(supabaseClient) {
-                const { data: latestMsg, error: fetchErr } = await supabaseClient.from('messages').select('replies, trust_level').eq('id', activeChatMsgId).single();
+                // Fetch the latest state directly from DB to prevent overwriting
+                const { data: latestMsg, error: fetchErr } = await supabaseClient.from('messages').select('*').eq('id', activeChatMsgId).single();
                 if (fetchErr || !latestMsg) {
                     document.getElementById(tempId)?.remove();
                     return;
@@ -1512,19 +1570,22 @@
                 const updatedReplies = [...currentReplies, newReply];
                 const newTrust = (latestMsg.trust_level || 1) + 1;
                 
-                const { error } = await supabaseClient.from('messages')
+                const { data: updatedData, error } = await supabaseClient.from('messages')
                     .update({
                         trust_level: newTrust,
                         replies: updatedReplies,
                         is_read: false 
                     })
-                    .eq('id', activeChatMsgId);
+                    .eq('id', activeChatMsgId)
+                    .select('*, sender_profile:profiles!messages_sender_id_fkey(username, full_name, avatar_url), receiver_profile:profiles!messages_receiver_id_fkey(username, full_name, avatar_url)')
+                    .single();
                     
                 if (error) {
                     document.getElementById(tempId)?.remove();
-                } else {
-                    document.getElementById(tempId)?.firstElementChild?.classList.remove('opacity-50');
-                    activeChatTrust = newTrust;
+                } else if(updatedData) {
+                    // Update successful, Realtime will handle the sync for both parties, but we manually update local
+                    document.querySelectorAll('.temp-msg').forEach(el => el.remove());
+                    updateLocalMessage(updatedData);
                 }
             }
         }
