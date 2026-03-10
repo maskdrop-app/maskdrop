@@ -1907,7 +1907,7 @@
 
             try {
                 await navigator.clipboard.writeText(finalShareText);
-                alert(currentLang === 'ar' ? "تم نسخ الرابط مع الرسالة الجذابة بنجاح!" : "Link and message copied successfully!");
+                alert(currentLang === 'ar' ? "تم نسخ الرابط بنجاح!" : "Link and message copied successfully!");
             } catch (err) {
                 const tempTextArea = document.createElement("textarea");
                 tempTextArea.value = finalShareText;
