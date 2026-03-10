@@ -1450,13 +1450,25 @@
             if(!confirm(confirmMsg)) return;
 
             if(supabaseClient) {
+                const btn = e.target.closest('button');
+                const originalHtml = btn ? btn.innerHTML : '';
+                if(btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin text-sm"></i>';
+                
                 const { error } = await supabaseClient.from('messages').delete().eq('id', id);
+                
                 if(error) {
-                    alert(currentLang === 'ar' ? 'فشل الحذف، يرجى تفعيل صلاحيات الحذف (RLS) في الخادم' : 'Delete failed (Check RLS policy)');
+                    if(btn) btn.innerHTML = originalHtml;
+                    alert(currentLang === 'ar' ? 'فشل الحذف. تأكد من تفعيل صلاحيات الـ RLS في لوحة تحكم قاعدة البيانات.\n\nالسبب: ' + error.message : 'Delete failed. Please check RLS policy.\n\nReason: ' + error.message);
                     return; 
                 }
+                
                 allMessages = allMessages.filter(m => m.id !== id);
+                archivedMessages = archivedMessages.filter(m => m.id !== id);
                 renderInbox(); 
+                renderArchive();
+                
+                window.lastInboxChecksum = '';
+                loadInbox(true);
             }
         }
         
@@ -1468,14 +1480,19 @@
             const { error } = await supabaseClient.from('messages').delete().eq('id', activeChatMsgId);
             
             if(error) {
-                alert(currentLang === 'ar' ? 'فشل الحذف، يرجى تفعيل صلاحيات الحذف (RLS) في الخادم' : 'Delete failed (Check RLS policy)');
+                alert(currentLang === 'ar' ? 'فشل الحذف. تأكد من تفعيل صلاحيات الـ RLS في لوحة تحكم قاعدة البيانات.\n\nالسبب: ' + error.message : 'Delete failed. Please check RLS policy.\n\nReason: ' + error.message);
                 return;
             }
 
             const deletedId = activeChatMsgId;
             closeChat();
             allMessages = allMessages.filter(m => m.id !== deletedId);
+            archivedMessages = archivedMessages.filter(m => m.id !== deletedId);
             renderInbox(); 
+            renderArchive();
+            
+            window.lastInboxChecksum = '';
+            loadInbox(true);
         }
 
         function renderArchive() {
