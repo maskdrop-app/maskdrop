@@ -1688,7 +1688,7 @@
             const confirmMsg = currentLang === 'ar' ? 'هل أنت متأكد أنك تريد كشف هويتك (الاسم والصورة) للطرف الآخر؟ لا يمكن التراجع عن هذا.' : 'Are you sure you want to reveal your identity? This cannot be undone.';
             if(!confirm(confirmMsg)) return;
 
-            const { data: updatedMsg, error } = await supabaseClient.from('messages').update({ is_revealed: true }).eq('id', activeChatMsgId).select('*, sender_profile:profiles!messages_sender_id_fkey(username, full_name, avatar_url), receiver_profile:profiles!messages_receiver_id_fkey(username, full_name, avatar_url)').single();
+            const { data: updatedMsg, error } = await supabaseClient.from('messages').update({ is_revealed: true }).eq('id', activeChatMsgId).select().single();
             
             if(!error && updatedMsg) {
                 const amIdx = allMessages.findIndex(m => m.id === activeChatMsgId);
@@ -1700,6 +1700,7 @@
                 updateActiveChat(updatedMsg, true);
                 renderInbox();
             } else {
+                console.error("Reveal Error: ", error);
                 alert(currentLang === 'ar' ? 'حدث خطأ أثناء كشف الهوية' : 'Error revealing identity');
             }
         }
