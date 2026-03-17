@@ -677,6 +677,33 @@
     <!-- Logic and Supabase Integration -->
     <script>
         /* =========================================================
+           0. NOTIFICATIONS & SOUND (مضاف حديثاً)
+           ========================================================= */
+        // جرس تنبيه مميز ولطيف
+        const notificationSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); 
+        let notificationsEnabled = false;
+
+        async function requestNotificationPermission() {
+            if ("Notification" in window) {
+                const permission = await Notification.requestPermission();
+                notificationsEnabled = (permission === "granted");
+            }
+        }
+
+        function triggerNewMessageNotification() {
+            // تشغيل الصوت
+            notificationSound.play().catch(e => console.log("الصوت التلقائي يحتاج لتفاعل مسبق من المستخدم."));
+            
+            // إظهار الإشعار على الشاشة
+            if (notificationsEnabled && "Notification" in window) {
+                new Notification("قناع 🎭", {
+                    body: currentLang === 'ar' ? "وصلتك رسالة مجهولة جديدة! افتح التطبيق لمعرفتها." : "You got a new anonymous message! Open the app.",
+                    icon: "https://api.dicebear.com/7.x/avataaars/svg?seed=MaskUser&backgroundColor=e94560"
+                });
+            }
+        }
+
+        /* =========================================================
            0. UI HELPER FUNCTIONS
            ========================================================= */
         function togglePasswordVisibility(inputId, iconId) {
@@ -777,6 +804,7 @@
                 await fetchProfile();
                 await loadInbox();
                 setupRealtime();
+                requestNotificationPermission(); // طلب الإذن لتفعيل الإشعارات
                 
                 setInterval(() => {
                     if (currentUser && !activeChatMsgId) {
@@ -1268,7 +1296,6 @@
                 const safeId = (updatedMsg.id || '0000').toString().substring(0,4);
                 headerLabel = updatedMsg.is_revealed ? (updatedMsg.sender_profile ? updatedMsg.sender_profile.full_name : 'تم كشف الهوية') : `مجهول #${safeId}`;
                 const icon = updatedMsg.is_revealed ? 'fa-user text-green-500' : 'fa-user-secret';
-                // [تم التصحيح] تم تغيير updatedMsg إلى msg ولكن بما أن الدالة هنا تستخدم المتغير updatedMsg فهذا هو الاسم الصحيح هنا. سنبقيه كما هو.
                 document.getElementById('chat-title').innerHTML = `<i class="fas ${icon} ms-1"></i> <span class="${updatedMsg.is_revealed ? 'text-green-500' : ''}">${headerLabel}</span>`;
             }
 
@@ -1334,6 +1361,12 @@
                         if (rec && rec.id) {
                             const isOurs = activeChatMsgId === rec.id || allMessages.some(m => m.id === rec.id) || archivedMessages.some(m => m.id === rec.id);
                             const isNewForUs = payload.eventType === 'INSERT' && (rec.sender_id === currentUser.id || rec.receiver_id === currentUser.id);
+                            
+                            // ---- إشعارات النظام والصوت ----
+                            if (payload.eventType === 'INSERT' && rec.receiver_id === currentUser.id) {
+                                triggerNewMessageNotification();
+                            }
+                            // --------------------------------
                             
                             if (isOurs || isNewForUs) {
                                 if(window.rtTimeout) clearTimeout(window.rtTimeout);
@@ -1604,7 +1637,6 @@
                 const safeId = (msg.id || '0000').toString().substring(0,4);
                 headerLabel = msg.is_revealed ? (msg.sender_profile ? msg.sender_profile.full_name : 'تم كشف الهوية') : `مجهول #${safeId}`;
                 const icon = msg.is_revealed ? 'fa-user text-green-500' : 'fa-user-secret';
-                // [تم التصحيح] تم تصحيح updatedMsg إلى msg هنا لحل المشكلة (ReferenceError)
                 document.getElementById('chat-title').innerHTML = `<i class="fas ${icon} ms-1"></i> <span class="${msg.is_revealed ? 'text-green-500' : ''}">${headerLabel}</span>`;
             }
             
