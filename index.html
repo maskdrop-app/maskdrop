@@ -6,12 +6,13 @@
     <script src="https://connect.facebook.net/en_US/fbinstant.7.1.js"></script>
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>قنــاع - رسائل مجهولة مع تحدي</title>
+    <title>قناع - رسائل مجهولة مع تحدي</title>
     
     <!-- Meta Tags for Social Sharing -->
     <meta property="og:title" content="قناع - رسائل مجهولة مع تحدي">
     <meta property="og:description" content="أرسل لي رسالة مجهولة بكل سرية، ولن أعرف من أنت إلا إذا وافقنا على كشف القناع!">
-    <meta property="og:image" id="dynamic-og-image" content="https://api.dicebear.com/7.x/avataaars/svg?seed=MaskUser&backgroundColor=e94560">
+    <!-- تم تغيير الصورة الافتراضية القبيحة بوجه مبتسم لطيف -->
+    <meta property="og:image" id="dynamic-og-image" content="https://api.dicebear.com/7.x/avataaars/svg?seed=Smile&backgroundColor=e94560">
     <meta property="og:type" content="website">
 
     <!-- Tailwind CSS -->
@@ -334,9 +335,9 @@
                 <div id="tab-profile" class="hidden flex-1 overflow-y-auto p-4 md:p-6 space-y-6 fade-in w-full pb-10">
                     <!-- User Info -->
                     <div class="text-center mt-4 relative group cursor-pointer" onclick="openAvatarModal()">
-                        <!-- تم إزالة الإشعاع من الصورة الشخصية -->
+                        <!-- تم تغيير الصورة الافتراضية القبيحة بوجه مبتسم لطيف -->
                         <div class="w-28 h-28 mx-auto rounded-full border-4 border-brand-primary p-1 mb-2 relative hover:scale-105 transition-transform bg-white dark:bg-transparent">
-                            <img id="avatar-profile" src="https://api.dicebear.com/7.x/avataaars/svg?seed=MaskUser&backgroundColor=e94560" alt="Avatar" class="w-full h-full rounded-full bg-gray-200 dark:bg-brand-light object-cover">
+                            <img id="avatar-profile" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Smile&backgroundColor=e94560" alt="Avatar" class="w-full h-full rounded-full bg-gray-200 dark:bg-brand-light object-cover">
                             <div class="absolute bottom-0 end-0 bg-brand-primary text-white w-8 h-8 rounded-full flex items-center justify-center border-2 border-white dark:border-[#1a1a2e]">
                                 <i class="fas fa-camera text-sm"></i>
                             </div>
@@ -698,7 +699,8 @@
             if (notificationsEnabled && "Notification" in window) {
                 new Notification("قناع 🎭", {
                     body: currentLang === 'ar' ? "وصلتك رسالة مجهولة جديدة! افتح التطبيق لمعرفتها." : "You got a new anonymous message! Open the app.",
-                    icon: "https://api.dicebear.com/7.x/avataaars/svg?seed=MaskUser&backgroundColor=e94560"
+                    // تم تغيير الصورة الافتراضية القبيحة هنا أيضاً
+                    icon: "https://api.dicebear.com/7.x/avataaars/svg?seed=Smile&backgroundColor=e94560"
                 });
             }
         }
@@ -754,25 +756,31 @@
         let publicTargetProfile = null; 
 
         /* =========================================================
-           3. UI SYSTEM & CONSTANTS
+           3. UI SYSTEM & CONSTANTS (تم تحديث الشخصيات بالكامل وإضافة 5 جديدة)
            ========================================================= */
         const allAvatars = [
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&backgroundColor=e94560", 
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=Leila&backgroundColor=43a047", 
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=Nora&backgroundColor=8e24aa",
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=Mia&backgroundColor=00acc1",
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=Zoe&backgroundColor=d81b60",
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=Mona&backgroundColor=1e88e5",
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=Emma&backgroundColor=e53935",
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=Lily&backgroundColor=8d6e63",
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=1e88e5", 
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=Omar&backgroundColor=fb8c00",  
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=Jasper&backgroundColor=5e35b1",
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=Jack&backgroundColor=3949ab",
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=Leo&backgroundColor=e53935",
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=Adam&backgroundColor=43a047",
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=Ryan&backgroundColor=8e24aa",
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=Ali&backgroundColor=d81b60"
+            // --- إناث (Females) ---
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Aisha&backgroundColor=ffb6b9",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Fatima&backgroundColor=f3c623",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Nour&backgroundColor=a3de83",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Jana&backgroundColor=38ada9",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Maya&backgroundColor=e58e26",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Layan&backgroundColor=ff9ff3",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Sara&backgroundColor=e94560",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Lina&backgroundColor=9b59b6",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Hala&backgroundColor=1abc9c",
+
+            // --- ذكور (Males) ---
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Ahmad&backgroundColor=4a69bd",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Omar&backgroundColor=f6b93b",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Zaid&backgroundColor=1e3799",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Khalid&backgroundColor=079992",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Fahad&backgroundColor=b71540",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Sami&backgroundColor=82ccdd",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Tariq&backgroundColor=60a3bc",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Yousef&backgroundColor=34495e",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Ali&backgroundColor=2ecc71",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=Saad&backgroundColor=e74c3c"
         ];
         
         const animatedEmojis = {
@@ -1942,8 +1950,11 @@
                 return;
             }
             
-            const shareTextAr = `هل تجرؤ على مصارحتي؟ 🎭\nأرسل لي رسالة مجهولة بكل سرية، ولن أعرف من أنت إلا إذا وافقنا على كشف القناع!\n\nادخل هنا: ${linkInput}`;
-            const shareTextEn = `Dare to be honest with me? 🎭\nSend me an anonymous message secretly. I won't know it's you unless we agree to drop the mask!\n\nClick here: ${linkInput}`;
+            // إضافة ?v=2 للرابط لكسر كاش الواتساب وإظهار الصورة المبتسمة الجديدة
+            const linkWithCacheBuster = linkInput + "&v=" + Math.floor(Math.random() * 10000);
+            
+            const shareTextAr = `هل تجرؤ على مصارحتي؟ 🎭\nأرسل لي رسالة مجهولة بكل سرية، ولن أعرف من أنت إلا إذا وافقنا على كشف القناع!\n\nادخل هنا: ${linkWithCacheBuster}`;
+            const shareTextEn = `Dare to be honest with me? 🎭\nSend me an anonymous message secretly. I won't know it's you unless we agree to drop the mask!\n\nClick here: ${linkWithCacheBuster}`;
             const finalShareText = currentLang === 'ar' ? shareTextAr : shareTextEn;
 
             try {
