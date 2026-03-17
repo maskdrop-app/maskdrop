@@ -11,7 +11,6 @@
     <!-- Meta Tags for Social Sharing -->
     <meta property="og:title" content="قناع - رسائل مجهولة مع تحدي">
     <meta property="og:description" content="أرسل لي رسالة مجهولة بكل سرية، ولن أعرف من أنت إلا إذا وافقنا على كشف القناع!">
-    <!-- تم تغيير الصورة الافتراضية القبيحة بوجه مبتسم لطيف -->
     <meta property="og:image" id="dynamic-og-image" content="https://api.dicebear.com/7.x/avataaars/svg?seed=Smile&backgroundColor=e94560">
     <meta property="og:type" content="website">
 
@@ -164,7 +163,6 @@
                             <div class="relative">
                                 <i class="fas fa-lock absolute start-4 top-3.5 text-gray-400 z-10"></i>
                                 <input type="password" id="login-pass" data-ar-ph="••••••••" data-en-ph="••••••••" placeholder="••••••••" class="w-full bg-white dark:bg-[#1f2940] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl ps-10 pe-12 py-3 outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition text-start" dir="ltr">
-                                <!-- [تم التعديل] زر العين، تم تكبير مساحة الضغط وتعديل موضعه -->
                                 <button type="button" onclick="togglePasswordVisibility('login-pass', 'login-eye-icon')" class="absolute end-2 top-1.5 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 z-20 cursor-pointer transition-colors">
                                     <i id="login-eye-icon" class="fas fa-eye text-lg"></i>
                                 </button>
@@ -228,7 +226,6 @@
                             <div class="relative">
                                 <i class="fas fa-lock absolute start-4 top-3.5 text-gray-400 z-10"></i>
                                 <input type="password" id="reg-pass" data-ar-ph="••••••••" data-en-ph="••••••••" placeholder="••••••••" class="w-full bg-white dark:bg-[#1f2940] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl ps-10 pe-12 py-3 outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition text-start" dir="ltr">
-                                <!-- [تم التعديل] زر العين، تم تكبير مساحة الضغط وتعديل موضعه -->
                                 <button type="button" onclick="togglePasswordVisibility('reg-pass', 'reg-eye-icon')" class="absolute end-2 top-1.5 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 z-20 cursor-pointer transition-colors">
                                     <i id="reg-eye-icon" class="fas fa-eye text-lg"></i>
                                 </button>
@@ -295,6 +292,9 @@
                             <span id="inbox-title" data-ar="المحادثات النشطة" data-en="Active Chats">المحادثات النشطة</span>
                             <span id="inbox-count-badge" class="bg-gradient-to-r from-brand-primary to-pink-500 text-white text-[10px] px-2.5 py-0.5 rounded-full hidden animate-pulse">جديد</span>
                         </h2>
+                        <button onclick="loadInbox(false)" id="btn-refresh-inbox" class="cursor-pointer w-10 h-10 rounded-full bg-white dark:bg-gray-800 text-gray-500 hover:text-brand-primary hover:bg-brand-primary/10 transition-all flex items-center justify-center border border-gray-200 dark:border-gray-700 active:scale-90 shadow-sm shrink-0 ms-auto" title="تحديث المحادثات">
+                            <i class="fas fa-sync-alt text-sm" id="refresh-icon"></i>
+                        </button>
                     </div>
                     
                     <div id="inbox-list" class="flex flex-col gap-3 w-full pb-20">
@@ -307,7 +307,7 @@
                         </div>
                     </div>
 
-                    <!-- Floating Action Button: تم إزالة الإشعاع -->
+                    <!-- Floating Action Button -->
                     <button id="fab-new-msg" onclick="openSearchModal()" class="cursor-pointer absolute bottom-6 end-6 w-14 h-14 bg-gradient-to-r from-brand-primary to-pink-600 text-white rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-20 shadow-md">
                         <i class="fas fa-pen text-xl"></i>
                     </button>
@@ -335,7 +335,6 @@
                 <div id="tab-profile" class="hidden flex-1 overflow-y-auto p-4 md:p-6 space-y-6 fade-in w-full pb-10">
                     <!-- User Info -->
                     <div class="text-center mt-4 relative group cursor-pointer" onclick="openAvatarModal()">
-                        <!-- تم تغيير الصورة الافتراضية القبيحة بوجه مبتسم لطيف -->
                         <div class="w-28 h-28 mx-auto rounded-full border-4 border-brand-primary p-1 mb-2 relative hover:scale-105 transition-transform bg-white dark:bg-transparent">
                             <img id="avatar-profile" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Smile&backgroundColor=e94560" alt="Avatar" class="w-full h-full rounded-full bg-gray-200 dark:bg-brand-light object-cover">
                             <div class="absolute bottom-0 end-0 bg-brand-primary text-white w-8 h-8 rounded-full flex items-center justify-center border-2 border-white dark:border-[#1a1a2e]">
@@ -353,7 +352,6 @@
                         <h3 class="font-black text-xl text-white mb-2 relative z-10" data-ar="احصل على رسائل مجهولة!" data-en="Get anonymous messages!">احصل على رسائل مجهولة!</h3>
                         <p class="text-sm text-white/90 mb-5 relative z-10" data-ar="انسخ الرابط وشاركه مع أصدقائك أو في البايو الخاص بك." data-en="Copy your link and share it with friends or in your bio.">انسخ الرابط وشاركه مع أصدقائك أو في البايو الخاص بك.</p>
                         
-                        <!-- [تم التعديل] إصلاح زر النسخ ليظهر بشكل صحيح على الجوال بدون خروج عن الإطار -->
                         <div class="flex items-center gap-2 bg-black/30 p-2.5 rounded-2xl relative z-10 backdrop-blur-sm border border-white/20 w-full overflow-hidden">
                             <input type="text" id="share-link-input" readonly value="" class="bg-transparent text-sm text-white flex-1 outline-none text-start px-1 sm:px-2 font-mono min-w-0" dir="ltr">
                             <button onclick="copyLink()" class="cursor-pointer bg-white text-brand-primary hover:bg-gray-100 active:scale-95 px-3 sm:px-5 py-2 rounded-xl text-sm font-black transition-all duration-150 shrink-0 whitespace-nowrap">
@@ -382,6 +380,28 @@
                                 <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1.5 font-bold" data-ar="اسم المستخدم (يمكن تغييره مرة كل 30 يوم)" data-en="Username (Changeable every 30 days)">اسم المستخدم (يمكن تغييره مرة كل 30 يوم)</label>
                                 <input type="text" id="edit-username" dir="ltr" class="w-full bg-gray-50 dark:bg-brand-dark text-gray-900 dark:text-white rounded-xl px-4 py-3 text-sm outline-none text-start border border-gray-200 dark:border-gray-700 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all">
                             </div>
+                            
+                            <!-- Social Media Inputs -->
+                            <div class="mt-5 pt-5 border-t border-gray-100 dark:border-gray-800">
+                                <label class="text-xs text-brand-primary block mb-3 font-black uppercase tracking-wider" data-ar="حسابات التواصل (اختياري)" data-en="Social Accounts (Optional)">حسابات التواصل (اختياري)</label>
+                                
+                                <div class="flex items-center gap-3 mb-3 bg-gray-50 dark:bg-brand-dark p-2 rounded-xl border border-gray-200 dark:border-gray-700 focus-within:border-blue-500 transition-all">
+                                    <div class="w-8 h-8 rounded-lg bg-[#1877F2] text-white flex items-center justify-center shrink-0 shadow-sm"><i class="fab fa-facebook-f"></i></div>
+                                    <input type="text" id="edit-social-fb" placeholder="يوزر أو رابط الفيسبوك" class="w-full bg-transparent text-sm outline-none text-gray-900 dark:text-white" dir="ltr">
+                                </div>
+
+                                <div class="flex items-center gap-3 mb-3 bg-gray-50 dark:bg-brand-dark p-2 rounded-xl border border-gray-200 dark:border-gray-700 focus-within:border-pink-500 transition-all">
+                                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white flex items-center justify-center shrink-0 shadow-sm"><i class="fab fa-instagram"></i></div>
+                                    <input type="text" id="edit-social-ig" placeholder="يوزر الانستقرام" class="w-full bg-transparent text-sm outline-none text-gray-900 dark:text-white" dir="ltr">
+                                </div>
+                                
+                                <div class="flex items-center gap-3 mb-3 bg-gray-50 dark:bg-brand-dark p-2 rounded-xl border border-gray-200 dark:border-gray-700 focus-within:border-yellow-400 transition-all">
+                                    <div class="w-8 h-8 rounded-lg bg-[#FFFC00] text-black flex items-center justify-center shrink-0 shadow-sm"><i class="fab fa-snapchat-ghost"></i></div>
+                                    <input type="text" id="edit-social-snap" placeholder="يوزر السناب شات" class="w-full bg-transparent text-sm outline-none text-gray-900 dark:text-white" dir="ltr">
+                                </div>
+                            </div>
+                            <!-- End Social Media Inputs -->
+
                             <button onclick="saveProfileEdit()" id="btn-save-profile" class="cursor-pointer w-full bg-gray-900 dark:bg-brand-primary text-white text-sm font-bold py-3.5 rounded-xl hover:opacity-90 active:scale-95 transition-all flex justify-center items-center gap-2 mt-2">
                                 <span data-ar="حفظ التعديلات" data-en="Save Changes">حفظ التعديلات</span>
                             </button>
@@ -444,7 +464,7 @@
                     </div>
                 </div>
 
-                <!-- Bottom Navigation: إلغاء الحواف الدائرية لجعلها مستوية مع أسفل الشاشة -->
+                <!-- Bottom Navigation -->
                 <div class="bg-white dark:bg-[#16213e] border-t border-gray-200 dark:border-gray-800 flex justify-around items-center px-2 pt-2 pb-safe z-10 transition-colors duration-300 shrink-0">
                     <button onclick="switchTab('inbox')" id="nav-inbox" class="cursor-pointer flex flex-col items-center p-2.5 text-brand-primary active:scale-90 transition-transform relative w-20">
                         <i class="fas fa-message text-xl mb-1.5 relative"></i>
@@ -538,16 +558,17 @@
                     <h2 id="public-target-name" class="text-3xl font-black mb-1.5 text-gray-900 dark:text-white z-10 relative text-center">...</h2>
                     <p id="public-target-username" class="text-sm text-gray-500 dark:text-gray-400 mb-8 font-mono z-10 relative bg-white dark:bg-gray-800 px-4 py-1.5 rounded-full border border-gray-200 dark:border-gray-700">@...</p>
 
-                    <!-- Send Message Form: تم تعديل موقع كلمة "هوية مخفية ومحمية" لتكون تحت الزر مباشرة لعدم التداخل -->
+                    <!-- Public Social Links Area -->
+                    <div id="public-social-links" class="flex gap-4 mb-6 relative z-10 justify-center scale-in hidden w-full"></div>
+
+                    <!-- Send Message Form -->
                     <div id="public-msg-form" class="w-full bg-white dark:bg-[#1f2940] rounded-[2rem] p-6 sm:p-8 border border-gray-200 dark:border-gray-800 relative z-10">
                         <textarea id="public-msg-input" rows="5" class="w-full bg-gray-50 dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary p-5 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 outline-none resize-none text-base transition-all" data-ar-ph="اكتب رسالتك الصريحة هنا بكل سرية..." data-en-ph="Write your honest message secretly..." placeholder="اكتب رسالتك الصريحة هنا بكل سرية..."></textarea>
                         
                         <div class="flex flex-col items-center mt-6 gap-3">
-                            <!-- تم إزالة الإشعاع وجعل الزر يأخذ العرض كاملاً -->
                             <button onclick="sendPublicMessage()" id="btn-send-public" class="cursor-pointer w-full bg-gradient-to-r from-brand-primary to-pink-600 active:scale-95 text-white font-black py-4 rounded-xl transition-all duration-150 flex items-center justify-center gap-2 hover:brightness-110">
                                 <span data-ar="إرسال رسالة" data-en="Send Message">إرسال رسالة</span> <i class="fas fa-paper-plane text-lg fa-flip-horizontal rtl-arrow-reverse"></i>
                             </button>
-                            <!-- النص "هوية مخفية ومحمية" تم وضعه بالأسفل ليتناسب مع شاشة الجوال بشكل ممتاز -->
                             <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5 font-bold mt-1">
                                 <i class="fas fa-shield-alt text-brand-primary"></i> <span data-ar="هوية مخفية ومحمية" data-en="Protected & Anonymous Identity">هوية مخفية ومحمية</span>
                             </div>
@@ -665,7 +686,6 @@
                         <div class="text-gray-400 font-mono px-3 text-lg font-black bg-white dark:bg-gray-800 rounded-xl py-1 border border-gray-100 dark:border-transparent">@</div>
                         <input type="text" id="direct-send-username" data-ar-ph="username" data-en-ph="username" placeholder="username" class="flex-1 bg-transparent text-base text-gray-900 dark:text-white outline-none w-full font-mono font-bold" dir="ltr">
                     </div>
-                    <!-- تم إزالة الإشعاع (Glow) -->
                     <button onclick="sendToSpecificUser()" class="cursor-pointer w-full mt-6 bg-brand-primary text-white py-4 rounded-xl text-base font-black hover:opacity-90 active:scale-95 transition-all flex justify-center items-center gap-2">
                         <span data-ar="بحث وإرسال" data-en="Search & Send">بحث وإرسال</span> <i class="fas fa-search"></i>
                     </button>
@@ -678,9 +698,8 @@
     <!-- Logic and Supabase Integration -->
     <script>
         /* =========================================================
-           0. NOTIFICATIONS & SOUND (مضاف حديثاً)
+           0. NOTIFICATIONS & SOUND
            ========================================================= */
-        // جرس تنبيه مميز ولطيف
         const notificationSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); 
         let notificationsEnabled = false;
 
@@ -692,14 +711,10 @@
         }
 
         function triggerNewMessageNotification() {
-            // تشغيل الصوت
             notificationSound.play().catch(e => console.log("الصوت التلقائي يحتاج لتفاعل مسبق من المستخدم."));
-            
-            // إظهار الإشعار على الشاشة
             if (notificationsEnabled && "Notification" in window) {
                 new Notification("قناع 🎭", {
                     body: currentLang === 'ar' ? "وصلتك رسالة مجهولة جديدة! افتح التطبيق لمعرفتها." : "You got a new anonymous message! Open the app.",
-                    // تم تغيير الصورة الافتراضية القبيحة هنا أيضاً
                     icon: "https://api.dicebear.com/7.x/avataaars/svg?seed=Smile&backgroundColor=e94560"
                 });
             }
@@ -756,7 +771,7 @@
         let publicTargetProfile = null; 
 
         /* =========================================================
-           3. UI SYSTEM & CONSTANTS (تم تحديث الشخصيات بالكامل وإضافة 5 جديدة)
+           3. UI SYSTEM & CONSTANTS
            ========================================================= */
         const allAvatars = [
             "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&backgroundColor=e94560", 
@@ -960,6 +975,7 @@
 
         async function fetchProfile() {
             try {
+                // جلب الروابط كجزء من الحساب
                 const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', currentUser.id).single();
                 if(data) {
                     userProfile = data;
@@ -996,6 +1012,24 @@
 
             document.getElementById('edit-fullname').value = userProfile.full_name || '';
             document.getElementById('edit-username').value = userProfile.username || '';
+            
+            // تحديث الصورة عند مشاركة الرابط عبر الميتا تاج (og:image)
+            if (userProfile && userProfile.avatar_url) {
+                let ogImage = document.querySelector('meta[property="og:image"]');
+                if (!ogImage) {
+                    ogImage = document.createElement('meta');
+                    ogImage.setAttribute('property', 'og:image');
+                    document.head.appendChild(ogImage);
+                }
+                ogImage.setAttribute('content', userProfile.avatar_url);
+            }
+
+            // تعبئة حقول السوشيال ميديا
+            if (userProfile && userProfile.social_links) {
+                if(document.getElementById('edit-social-fb')) document.getElementById('edit-social-fb').value = userProfile.social_links.fb || '';
+                if(document.getElementById('edit-social-ig')) document.getElementById('edit-social-ig').value = userProfile.social_links.ig || '';
+                if(document.getElementById('edit-social-snap')) document.getElementById('edit-social-snap').value = userProfile.social_links.snap || '';
+            }
         }
 
         function toggleProfileEdit() {
@@ -1016,13 +1050,19 @@
                 const newName = document.getElementById('edit-fullname').value.trim();
                 const newUsername = document.getElementById('edit-username').value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
                 const btn = document.getElementById('btn-save-profile');
+                
+                // تجميع بيانات السوشيال ميديا
+                const fb = document.getElementById('edit-social-fb')?.value.trim() || null;
+                const ig = document.getElementById('edit-social-ig')?.value.trim().replace('@', '') || null;
+                const snap = document.getElementById('edit-social-snap')?.value.trim().replace('@', '') || null;
+                const social_links = { fb, ig, snap };
 
                 if(!newName || !newUsername) {
                     alert(currentLang === 'ar' ? 'أكمل جميع الحقول' : 'Fill all fields');
                     return;
                 }
 
-                let updates = { full_name: newName };
+                let updates = { full_name: newName, social_links: social_links };
 
                 if(newUsername !== userProfile.username) {
                     const lastUpdate = userProfile.last_username_update ? new Date(userProfile.last_username_update) : null;
@@ -1112,7 +1152,8 @@
             if(!supabaseClient) { hideLoader(); return; } 
             
             try {
-                const { data, error } = await supabaseClient.from('profiles').select('id, full_name, username, avatar_url').ilike('username', username).single();
+                // جلب حسابات التواصل مع باقي البيانات
+                const { data, error } = await supabaseClient.from('profiles').select('id, full_name, username, avatar_url, social_links').ilike('username', username).single();
                 
                 hideLoader();
                 hideAllAuthViews();
@@ -1130,6 +1171,30 @@
                     document.getElementById('public-target-username').innerText = '@' + data.username;
                     if(data.avatar_url) document.getElementById('public-target-avatar').src = data.avatar_url;
                     
+                    // إظهار حسابات التواصل الاجتماعي في الملف العام إن وجدت
+                    const container = document.getElementById('public-social-links');
+                    if (data.social_links && (data.social_links.fb || data.social_links.ig || data.social_links.snap)) {
+                        let linksHTML = '';
+                        if (data.social_links.fb) {
+                            linksHTML += `<a href="https://facebook.com/${data.social_links.fb}" target="_blank" class="w-12 h-12 rounded-full bg-[#1877F2] text-white flex items-center justify-center text-2xl hover:scale-110 active:scale-95 transition-all shadow-lg border-2 border-white dark:border-gray-800"><i class="fab fa-facebook-f"></i></a>`;
+                        }
+                        if (data.social_links.ig) {
+                            linksHTML += `<a href="https://instagram.com/${data.social_links.ig}" target="_blank" class="w-12 h-12 rounded-full bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white flex items-center justify-center text-2xl hover:scale-110 active:scale-95 transition-all shadow-lg border-2 border-white dark:border-gray-800"><i class="fab fa-instagram"></i></a>`;
+                        }
+                        if (data.social_links.snap) {
+                            linksHTML += `<a href="https://snapchat.com/add/${data.social_links.snap}" target="_blank" class="w-12 h-12 rounded-full bg-[#FFFC00] text-black flex items-center justify-center text-2xl hover:scale-110 active:scale-95 transition-all shadow-lg border-2 border-white dark:border-gray-800"><i class="fab fa-snapchat-ghost"></i></a>`;
+                        }
+                        container.innerHTML = linksHTML;
+                        container.classList.remove('hidden');
+                        document.getElementById('public-target-username').classList.remove('mb-8');
+                        document.getElementById('public-target-username').classList.add('mb-4');
+                    } else {
+                        container.innerHTML = '';
+                        container.classList.add('hidden');
+                        document.getElementById('public-target-username').classList.remove('mb-4');
+                        document.getElementById('public-target-username').classList.add('mb-8');
+                    }
+
                     resetPublicView();
                     document.getElementById('view-public').classList.remove('hidden');
                     document.getElementById('view-public').classList.add('flex');
@@ -1229,6 +1294,16 @@
             }
         }
 
+        // تم إضافة دالة triggerInboxRefresh مباشرة لزر التحديث للعمل بمرونة تامة
+        async function triggerInboxRefresh() {
+            const icon = document.getElementById('refresh-icon');
+            if (icon) icon.classList.add('fa-spin');
+            await loadInbox(true);
+            setTimeout(() => {
+                if (icon) icon.classList.remove('fa-spin');
+            }, 500);
+        }
+
         async function loadInbox(silent = false) {
             if(!supabaseClient || !currentUser) {
                 if(!silent) hideLoader();
@@ -1296,16 +1371,41 @@
             let isSenderView = updatedMsg.sender_id === currentUser.id;
             
             let headerLabel = '';
+            let headerIconHtml = '';
+            let titleClickAction = '';
+            let titleCursorClass = '';
+
+            // -------------------------------------------------------------
+            // تحديث رأس المحادثة مع دعم كشف الهوية للطرف الآخر
+            // -------------------------------------------------------------
             if (isSenderView) {
+                // أنا المرسل: أعرف لمن أرسلت
                 const recName = updatedMsg.receiver_profile ? updatedMsg.receiver_profile.full_name : 'مستخدم';
                 headerLabel = `محادثة مع ${recName}`;
-                document.getElementById('chat-title').innerHTML = `<i class="fas fa-user ms-1"></i> <span>${headerLabel}</span>`;
+                headerIconHtml = `<i class="fas fa-user ms-1"></i>`;
             } else {
+                // أنا المستقبل: المرسل مجهول إلا إذا كشف هويته
                 const safeId = (updatedMsg.id || '0000').toString().substring(0,4);
-                headerLabel = updatedMsg.is_revealed ? (updatedMsg.sender_profile ? updatedMsg.sender_profile.full_name : 'تم كشف الهوية') : `مجهول #${safeId}`;
-                const icon = updatedMsg.is_revealed ? 'fa-user text-green-500' : 'fa-user-secret';
-                document.getElementById('chat-title').innerHTML = `<i class="fas ${icon} ms-1"></i> <span class="${updatedMsg.is_revealed ? 'text-green-500' : ''}">${headerLabel}</span>`;
+                if (updatedMsg.is_revealed && updatedMsg.sender_profile) {
+                    headerLabel = updatedMsg.sender_profile.full_name;
+                    const avatarUrl = updatedMsg.sender_profile.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Smile&backgroundColor=e94560';
+                    
+                    // ظهور الصورة وإمكانية الضغط على الاسم للتوجه للبروفايل
+                    headerIconHtml = `<img src="${avatarUrl}" class="w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 border-green-500 object-cover ms-1" alt="avatar">`;
+                    titleClickAction = `onclick="closeChat(); showLoader(); setTimeout(() => loadPublicProfile('${updatedMsg.sender_profile.username}'), 300);"`;
+                    titleCursorClass = 'cursor-pointer hover:underline underline-offset-4 decoration-2 hover:text-brand-primary transition-colors';
+                } else {
+                    headerLabel = `مجهول #${safeId}`;
+                    headerIconHtml = `<i class="fas fa-user-secret ms-1 text-gray-500 dark:text-gray-400"></i>`;
+                }
             }
+
+            document.getElementById('chat-title').innerHTML = `
+                <div ${titleClickAction} class="flex items-center gap-2 ${titleCursorClass}" title="${titleClickAction ? 'اضغط لزيارة الملف الشخصي' : ''}">
+                    ${headerIconHtml} <span class="${updatedMsg.is_revealed && !isSenderView ? 'text-green-500' : ''}">${headerLabel}</span>
+                </div>
+            `;
+            // -------------------------------------------------------------
 
             let chatHtml = '';
             if (isSenderView) {
@@ -1370,11 +1470,9 @@
                             const isOurs = activeChatMsgId === rec.id || allMessages.some(m => m.id === rec.id) || archivedMessages.some(m => m.id === rec.id);
                             const isNewForUs = payload.eventType === 'INSERT' && (rec.sender_id === currentUser.id || rec.receiver_id === currentUser.id);
                             
-                            // ---- إشعارات النظام والصوت ----
                             if (payload.eventType === 'INSERT' && rec.receiver_id === currentUser.id) {
                                 triggerNewMessageNotification();
                             }
-                            // --------------------------------
                             
                             if (isOurs || isNewForUs) {
                                 if(window.rtTimeout) clearTimeout(window.rtTimeout);
@@ -1634,18 +1732,6 @@
                 }
                 if(supabaseClient) supabaseClient.from('messages').update({is_read: true}).eq('id', msgId);
                 updateTabBadges();
-            }
-            
-            let headerLabel = '';
-            if (isSenderView) {
-                const recName = msg.receiver_profile ? msg.receiver_profile.full_name : 'مستخدم';
-                headerLabel = `محادثة مع ${recName}`;
-                document.getElementById('chat-title').innerHTML = `<i class="fas fa-user ms-1"></i> <span>${headerLabel}</span>`;
-            } else {
-                const safeId = (msg.id || '0000').toString().substring(0,4);
-                headerLabel = msg.is_revealed ? (msg.sender_profile ? msg.sender_profile.full_name : 'تم كشف الهوية') : `مجهول #${safeId}`;
-                const icon = msg.is_revealed ? 'fa-user text-green-500' : 'fa-user-secret';
-                document.getElementById('chat-title').innerHTML = `<i class="fas ${icon} ms-1"></i> <span class="${msg.is_revealed ? 'text-green-500' : ''}">${headerLabel}</span>`;
             }
             
             updateActiveChat(msg);
@@ -1978,193 +2064,6 @@
                 document.body.removeChild(tempTextArea);
             }
         }
-    </script>
-
-    <!-- =========================================================
-         إضافات الميزات الجديدة (السوشيال ميديا + فتح البروفايل + زر التحديث)
-         يتم حقنها ديناميكياً بدون المساس بالكود الأصلي نهائياً
-         ========================================================= -->
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            
-            // ==========================================
-            // 1. إضافة العناصر الجديدة لواجهة المستخدم (DOM)
-            // ==========================================
-
-            // أ. إضافة زر التحديث في قسم "المحادثات النشطة"
-            const inboxHeader = document.getElementById('inbox-header');
-            if (inboxHeader) {
-                const refreshBtnHTML = `
-                    <button onclick="triggerInboxRefresh()" id="btn-refresh-inbox" class="cursor-pointer w-10 h-10 rounded-full bg-white dark:bg-gray-800 text-gray-500 hover:text-brand-primary hover:bg-brand-primary/10 transition-all flex items-center justify-center border border-gray-200 dark:border-gray-700 active:scale-90 shadow-sm shrink-0 ms-auto" title="تحديث المحادثات">
-                        <i class="fas fa-sync-alt text-sm" id="refresh-icon"></i>
-                    </button>
-                `;
-                inboxHeader.insertAdjacentHTML('beforeend', refreshBtnHTML);
-            }
-
-            // ب. إضافة حقول السوشيال ميديا في صفحة تعديل الملف الشخصي
-            const saveBtn = document.getElementById('btn-save-profile');
-            if (saveBtn) {
-                const socialHTML = `
-                    <div class="mt-5 pt-5 border-t border-gray-100 dark:border-gray-800">
-                        <label class="text-xs text-brand-primary block mb-3 font-black uppercase tracking-wider" data-ar="حسابات التواصل (اختياري)" data-en="Social Accounts (Optional)">حسابات التواصل (اختياري)</label>
-                        
-                        <div class="flex items-center gap-3 mb-3 bg-gray-50 dark:bg-brand-dark p-2 rounded-xl border border-gray-200 dark:border-gray-700 focus-within:border-blue-500 transition-all">
-                            <div class="w-8 h-8 rounded-lg bg-[#1877F2] text-white flex items-center justify-center shrink-0 shadow-sm"><i class="fab fa-facebook-f"></i></div>
-                            <input type="text" id="edit-social-fb" placeholder="يوزر أو رابط الفيسبوك" class="w-full bg-transparent text-sm outline-none text-gray-900 dark:text-white" dir="ltr">
-                        </div>
-
-                        <div class="flex items-center gap-3 mb-3 bg-gray-50 dark:bg-brand-dark p-2 rounded-xl border border-gray-200 dark:border-gray-700 focus-within:border-pink-500 transition-all">
-                            <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white flex items-center justify-center shrink-0 shadow-sm"><i class="fab fa-instagram"></i></div>
-                            <input type="text" id="edit-social-ig" placeholder="يوزر الانستقرام" class="w-full bg-transparent text-sm outline-none text-gray-900 dark:text-white" dir="ltr">
-                        </div>
-                        
-                        <div class="flex items-center gap-3 mb-3 bg-gray-50 dark:bg-brand-dark p-2 rounded-xl border border-gray-200 dark:border-gray-700 focus-within:border-yellow-400 transition-all">
-                            <div class="w-8 h-8 rounded-lg bg-[#FFFC00] text-black flex items-center justify-center shrink-0 shadow-sm"><i class="fab fa-snapchat-ghost"></i></div>
-                            <input type="text" id="edit-social-snap" placeholder="يوزر السناب شات" class="w-full bg-transparent text-sm outline-none text-gray-900 dark:text-white" dir="ltr">
-                        </div>
-                    </div>
-                `;
-                saveBtn.insertAdjacentHTML('beforebegin', socialHTML);
-            }
-
-            // ج. إضافة حاوية عرض السوشيال ميديا في البروفايل العام
-            const targetUsernameEl = document.getElementById('public-target-username');
-            if (targetUsernameEl) {
-                const publicSocialContainer = document.createElement('div');
-                publicSocialContainer.id = 'public-social-links';
-                publicSocialContainer.className = 'flex gap-4 mb-6 relative z-10 justify-center scale-in hidden w-full';
-                targetUsernameEl.insertAdjacentElement('afterend', publicSocialContainer);
-            }
-
-            // ==========================================
-            // 2. دمج الدوال الجديدة وتغليف الدوال الأصلية (Monkey Patching)
-            // ==========================================
-
-            // دالة زر التحديث الجديد
-            window.triggerInboxRefresh = async function() {
-                const icon = document.getElementById('refresh-icon');
-                if (icon) icon.classList.add('fa-spin');
-                if (typeof window.loadInbox === 'function') {
-                    await window.loadInbox();
-                }
-                setTimeout(() => {
-                    if (icon) icon.classList.remove('fa-spin');
-                }, 500);
-            };
-
-            // دمج حفظ السوشيال ميديا عند حفظ الملف الشخصي
-            if (typeof window.saveProfileEdit === "function") {
-                const originalSaveProfileEdit = window.saveProfileEdit;
-                window.saveProfileEdit = async function() {
-                    const fb = document.getElementById('edit-social-fb')?.value.trim() || null;
-                    const ig = document.getElementById('edit-social-ig')?.value.trim().replace('@', '') || null;
-                    const snap = document.getElementById('edit-social-snap')?.value.trim().replace('@', '') || null;
-                    const social_links = { fb, ig, snap };
-
-                    // تشغيل دالة الحفظ الأصلية
-                    await originalSaveProfileEdit();
-
-                    // حفظ السوشيال ميديا
-                    if (window.supabaseClient && window.currentUser) {
-                        await window.supabaseClient.from('profiles').update({ social_links }).eq('id', window.currentUser.id);
-                        if (window.userProfile) window.userProfile.social_links = social_links;
-                    }
-                };
-            }
-
-            // تعبئة حقول السوشيال ميديا عند فتح الإعدادات (وتحديث صورة المشاركة og:image)
-            if (typeof window.updateProfileUI === "function") {
-                const originalUpdateProfileUI = window.updateProfileUI;
-                window.updateProfileUI = function() {
-                    originalUpdateProfileUI();
-
-                    // تحديث الصورة عند مشاركة الرابط عبر الميتا تاج (og:image)
-                    if (window.userProfile && window.userProfile.avatar_url) {
-                        let ogImage = document.querySelector('meta[property="og:image"]');
-                        if (!ogImage) {
-                            ogImage = document.createElement('meta');
-                            ogImage.setAttribute('property', 'og:image');
-                            document.head.appendChild(ogImage);
-                        }
-                        ogImage.setAttribute('content', window.userProfile.avatar_url);
-                    }
-
-                    if (window.userProfile && window.userProfile.social_links) {
-                        if(document.getElementById('edit-social-fb')) document.getElementById('edit-social-fb').value = window.userProfile.social_links.fb || '';
-                        if(document.getElementById('edit-social-ig')) document.getElementById('edit-social-ig').value = window.userProfile.social_links.ig || '';
-                        if(document.getElementById('edit-social-snap')) document.getElementById('edit-social-snap').value = window.userProfile.social_links.snap || '';
-                    }
-                };
-            }
-
-            // عرض السوشيال ميديا في بروفايل الشخص
-            if (typeof window.loadPublicProfile === "function") {
-                const originalLoadPublicProfile = window.loadPublicProfile;
-                window.loadPublicProfile = async function(username) {
-                    await originalLoadPublicProfile(username);
-                    
-                    const container = document.getElementById('public-social-links');
-                    if (window.publicTargetProfile && container && window.supabaseClient) {
-                        container.innerHTML = '';
-                        container.classList.add('hidden');
-                        
-                        // جلب بيانات السوشيال ميديا للمستخدم الهدف
-                        const { data } = await window.supabaseClient.from('profiles').select('social_links').eq('id', window.publicTargetProfile.id).single();
-                        
-                        if (data && data.social_links) {
-                            let linksHTML = '';
-                            if (data.social_links.fb) {
-                                linksHTML += `<a href="https://facebook.com/${data.social_links.fb}" target="_blank" class="w-12 h-12 rounded-full bg-[#1877F2] text-white flex items-center justify-center text-2xl hover:scale-110 active:scale-95 transition-all shadow-lg border-2 border-white dark:border-gray-800"><i class="fab fa-facebook-f"></i></a>`;
-                            }
-                            if (data.social_links.ig) {
-                                linksHTML += `<a href="https://instagram.com/${data.social_links.ig}" target="_blank" class="w-12 h-12 rounded-full bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white flex items-center justify-center text-2xl hover:scale-110 active:scale-95 transition-all shadow-lg border-2 border-white dark:border-gray-800"><i class="fab fa-instagram"></i></a>`;
-                            }
-                            if (data.social_links.snap) {
-                                linksHTML += `<a href="https://snapchat.com/add/${data.social_links.snap}" target="_blank" class="w-12 h-12 rounded-full bg-[#FFFC00] text-black flex items-center justify-center text-2xl hover:scale-110 active:scale-95 transition-all shadow-lg border-2 border-white dark:border-gray-800"><i class="fab fa-snapchat-ghost"></i></a>`;
-                            }
-                            
-                            if (linksHTML !== '') {
-                                container.innerHTML = linksHTML;
-                                container.classList.remove('hidden');
-                                document.getElementById('public-target-username').classList.remove('mb-8');
-                                document.getElementById('public-target-username').classList.add('mb-4');
-                            }
-                        }
-                    }
-                };
-            }
-
-            // جعل الاسم قابلاً للضغط في المحادثة لفتح البروفايل (عند كشف القناع)
-            if (typeof window.updateActiveChat === "function") {
-                const originalUpdateActiveChat = window.updateActiveChat;
-                window.updateActiveChat = function(updatedMsg, silent = false) {
-                    originalUpdateActiveChat(updatedMsg, silent);
-
-                    // إذا كنت أنا المستقبل، وتم كشف الهوية، وملف المرسل موجود
-                    if (window.currentUser && updatedMsg.receiver_id === window.currentUser.id && updatedMsg.is_revealed && updatedMsg.sender_profile) {
-                        const titleSpan = document.querySelector('#chat-title span');
-                        if (titleSpan) {
-                            // إضافة تنسيقات الزر التفاعلي
-                            titleSpan.classList.add('cursor-pointer', 'hover:underline', 'underline-offset-4', 'decoration-2', 'hover:text-brand-primary', 'transition-colors');
-                            titleSpan.title = "اضغط لزيارة الملف الشخصي";
-                            
-                            // وظيفة فتح البروفايل
-                            titleSpan.onclick = function() {
-                                if(typeof window.closeChat === 'function') window.closeChat();
-                                if(typeof window.showLoader === 'function') window.showLoader();
-                                setTimeout(() => {
-                                    if(typeof window.loadPublicProfile === 'function') {
-                                        window.loadPublicProfile(updatedMsg.sender_profile.username);
-                                    }
-                                }, 300);
-                            };
-                        }
-                    }
-                };
-            }
-            
-        });
     </script>
 </body>
 </html>
