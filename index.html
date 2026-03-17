@@ -11,6 +11,7 @@
     <!-- Meta Tags for Social Sharing -->
     <meta property="og:title" content="قناع - رسائل مجهولة مع تحدي">
     <meta property="og:description" content="أرسل لي رسالة مجهولة بكل سرية، ولن أعرف من أنت إلا إذا وافقنا على كشف القناع!">
+    <!-- تم تغيير الصورة الافتراضية القبيحة بوجه مبتسم لطيف -->
     <meta property="og:image" id="dynamic-og-image" content="https://api.dicebear.com/7.x/avataaars/svg?seed=Smile&backgroundColor=e94560">
     <meta property="og:type" content="website">
 
@@ -400,6 +401,7 @@
                                     <input type="text" id="edit-social-snap" placeholder="يوزر السناب شات" class="w-full bg-transparent text-sm outline-none text-gray-900 dark:text-white" dir="ltr">
                                 </div>
                             </div>
+                            <!-- End Social Media Inputs -->
 
                             <button onclick="saveProfileEdit()" id="btn-save-profile" class="cursor-pointer w-full bg-gray-900 dark:bg-brand-primary text-white text-sm font-bold py-3.5 rounded-xl hover:opacity-90 active:scale-95 transition-all flex justify-center items-center gap-2 mt-2">
                                 <span data-ar="حفظ التعديلات" data-en="Save Changes">حفظ التعديلات</span>
@@ -699,10 +701,28 @@
         /* =========================================================
            0. NOTIFICATIONS & SOUND
            ========================================================= */
-        const notificationSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); 
+        const notificationSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-back-2575.mp3'); 
         let notificationsEnabled = false;
+        let audioUnlocked = false;
+
+        function unlockAudio() {
+            if (!audioUnlocked) {
+                notificationSound.play().then(() => {
+                    notificationSound.pause();
+                    notificationSound.currentTime = 0;
+                    audioUnlocked = true;
+                }).catch(e => console.log("جاري انتظار تفاعل المستخدم لفك قفل الصوت..."));
+                
+                document.removeEventListener('click', unlockAudio);
+                document.removeEventListener('touchstart', unlockAudio);
+            }
+        }
+
+        document.addEventListener('click', unlockAudio);
+        document.addEventListener('touchstart', unlockAudio);
 
         async function requestNotificationPermission() {
+            unlockAudio(); // المحاولة عند طلب الإذن أيضاً
             if ("Notification" in window) {
                 const permission = await Notification.requestPermission();
                 notificationsEnabled = (permission === "granted");
@@ -710,8 +730,14 @@
         }
 
         function triggerNewMessageNotification() {
-            notificationSound.play().catch(e => console.log("الصوت التلقائي يحتاج لتفاعل مسبق من المستخدم."));
-            if (notificationsEnabled && "Notification" in window) {
+            // تشغيل الصوت
+            if(audioUnlocked) {
+                notificationSound.currentTime = 0;
+                notificationSound.play().catch(e => console.log("خطأ في تشغيل الصوت:", e));
+            }
+            
+            // إظهار الإشعار على الشاشة
+            if (notificationsEnabled && "Notification" in window && Notification.permission === "granted") {
                 new Notification("قناع 🎭", {
                     body: currentLang === 'ar' ? "وصلتك رسالة مجهولة جديدة! افتح التطبيق لمعرفتها." : "You got a new anonymous message! Open the app.",
                     icon: "https://api.dicebear.com/7.x/avataaars/svg?seed=Smile&backgroundColor=e94560"
