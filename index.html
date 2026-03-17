@@ -1927,5 +1927,180 @@
             }
         }
     </script>
+
+    <!-- =========================================================
+         إضافات الميزات الجديدة (السوشيال ميديا + فتح البروفايل + زر التحديث)
+         يتم حقنها ديناميكياً بدون المساس بالكود الأصلي نهائياً
+         ========================================================= -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            
+            // ==========================================
+            // 1. إضافة العناصر الجديدة لواجهة المستخدم (DOM)
+            // ==========================================
+
+            // أ. إضافة زر التحديث في قسم "المحادثات النشطة"
+            const inboxHeader = document.getElementById('inbox-header');
+            if (inboxHeader) {
+                const refreshBtnHTML = `
+                    <button onclick="triggerInboxRefresh()" id="btn-refresh-inbox" class="cursor-pointer w-10 h-10 rounded-full bg-white dark:bg-gray-800 text-gray-500 hover:text-brand-primary hover:bg-brand-primary/10 transition-all flex items-center justify-center border border-gray-200 dark:border-gray-700 active:scale-90 shadow-sm shrink-0 ms-auto" title="تحديث المحادثات">
+                        <i class="fas fa-sync-alt text-sm" id="refresh-icon"></i>
+                    </button>
+                `;
+                inboxHeader.insertAdjacentHTML('beforeend', refreshBtnHTML);
+            }
+
+            // ب. إضافة حقول السوشيال ميديا في صفحة تعديل الملف الشخصي
+            const saveBtn = document.getElementById('btn-save-profile');
+            if (saveBtn) {
+                const socialHTML = `
+                    <div class="mt-5 pt-5 border-t border-gray-100 dark:border-gray-800">
+                        <label class="text-xs text-brand-primary block mb-3 font-black uppercase tracking-wider" data-ar="حسابات التواصل (اختياري)" data-en="Social Accounts (Optional)">حسابات التواصل (اختياري)</label>
+                        
+                        <div class="flex items-center gap-3 mb-3 bg-gray-50 dark:bg-brand-dark p-2 rounded-xl border border-gray-200 dark:border-gray-700 focus-within:border-pink-500 transition-all">
+                            <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white flex items-center justify-center shrink-0 shadow-sm"><i class="fab fa-instagram"></i></div>
+                            <input type="text" id="edit-social-ig" placeholder="يوزر الانستقرام" class="w-full bg-transparent text-sm outline-none text-gray-900 dark:text-white" dir="ltr">
+                        </div>
+                        
+                        <div class="flex items-center gap-3 mb-3 bg-gray-50 dark:bg-brand-dark p-2 rounded-xl border border-gray-200 dark:border-gray-700 focus-within:border-yellow-400 transition-all">
+                            <div class="w-8 h-8 rounded-lg bg-[#FFFC00] text-black flex items-center justify-center shrink-0 shadow-sm"><i class="fab fa-snapchat-ghost"></i></div>
+                            <input type="text" id="edit-social-snap" placeholder="يوزر السناب شات" class="w-full bg-transparent text-sm outline-none text-gray-900 dark:text-white" dir="ltr">
+                        </div>
+                        
+                        <div class="flex items-center gap-3 mb-3 bg-gray-50 dark:bg-brand-dark p-2 rounded-xl border border-gray-200 dark:border-gray-700 focus-within:border-gray-500 transition-all">
+                            <div class="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center shrink-0 shadow-sm"><i class="fab fa-x-twitter"></i></div>
+                            <input type="text" id="edit-social-x" placeholder="يوزر X (تويتر)" class="w-full bg-transparent text-sm outline-none text-gray-900 dark:text-white" dir="ltr">
+                        </div>
+                    </div>
+                `;
+                saveBtn.insertAdjacentHTML('beforebegin', socialHTML);
+            }
+
+            // ج. إضافة حاوية عرض السوشيال ميديا في البروفايل العام
+            const targetUsernameEl = document.getElementById('public-target-username');
+            if (targetUsernameEl) {
+                const publicSocialContainer = document.createElement('div');
+                publicSocialContainer.id = 'public-social-links';
+                publicSocialContainer.className = 'flex gap-4 mb-6 relative z-10 justify-center scale-in hidden w-full';
+                targetUsernameEl.insertAdjacentElement('afterend', publicSocialContainer);
+            }
+
+            // ==========================================
+            // 2. دمج الدوال الجديدة وتغليف الدوال الأصلية (Monkey Patching)
+            // ==========================================
+
+            // دالة زر التحديث الجديد
+            window.triggerInboxRefresh = async function() {
+                const icon = document.getElementById('refresh-icon');
+                if (icon) icon.classList.add('fa-spin');
+                if (typeof window.loadInbox === 'function') {
+                    await window.loadInbox();
+                }
+                setTimeout(() => {
+                    if (icon) icon.classList.remove('fa-spin');
+                }, 500);
+            };
+
+            // دمج حفظ السوشيال ميديا عند حفظ الملف الشخصي
+            if (typeof window.saveProfileEdit === "function") {
+                const originalSaveProfileEdit = window.saveProfileEdit;
+                window.saveProfileEdit = async function() {
+                    const ig = document.getElementById('edit-social-ig')?.value.trim().replace('@', '') || null;
+                    const snap = document.getElementById('edit-social-snap')?.value.trim().replace('@', '') || null;
+                    const x = document.getElementById('edit-social-x')?.value.trim().replace('@', '') || null;
+                    const social_links = { ig, snap, x };
+
+                    // تشغيل دالة الحفظ الأصلية
+                    await originalSaveProfileEdit();
+
+                    // حفظ السوشيال ميديا
+                    if (window.supabaseClient && window.currentUser) {
+                        await window.supabaseClient.from('profiles').update({ social_links }).eq('id', window.currentUser.id);
+                        if (window.userProfile) window.userProfile.social_links = social_links;
+                    }
+                };
+            }
+
+            // تعبئة حقول السوشيال ميديا عند فتح الإعدادات
+            if (typeof window.updateProfileUI === "function") {
+                const originalUpdateProfileUI = window.updateProfileUI;
+                window.updateProfileUI = function() {
+                    originalUpdateProfileUI();
+                    if (window.userProfile && window.userProfile.social_links) {
+                        if(document.getElementById('edit-social-ig')) document.getElementById('edit-social-ig').value = window.userProfile.social_links.ig || '';
+                        if(document.getElementById('edit-social-snap')) document.getElementById('edit-social-snap').value = window.userProfile.social_links.snap || '';
+                        if(document.getElementById('edit-social-x')) document.getElementById('edit-social-x').value = window.userProfile.social_links.x || '';
+                    }
+                };
+            }
+
+            // عرض السوشيال ميديا في بروفايل الشخص
+            if (typeof window.loadPublicProfile === "function") {
+                const originalLoadPublicProfile = window.loadPublicProfile;
+                window.loadPublicProfile = async function(username) {
+                    await originalLoadPublicProfile(username);
+                    
+                    const container = document.getElementById('public-social-links');
+                    if (window.publicTargetProfile && container && window.supabaseClient) {
+                        container.innerHTML = '';
+                        container.classList.add('hidden');
+                        
+                        // جلب بيانات السوشيال ميديا للمستخدم الهدف
+                        const { data } = await window.supabaseClient.from('profiles').select('social_links').eq('id', window.publicTargetProfile.id).single();
+                        
+                        if (data && data.social_links) {
+                            let linksHTML = '';
+                            if (data.social_links.ig) {
+                                linksHTML += `<a href="https://instagram.com/${data.social_links.ig}" target="_blank" class="w-12 h-12 rounded-full bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white flex items-center justify-center text-2xl hover:scale-110 active:scale-95 transition-all shadow-lg border-2 border-white dark:border-gray-800"><i class="fab fa-instagram"></i></a>`;
+                            }
+                            if (data.social_links.snap) {
+                                linksHTML += `<a href="https://snapchat.com/add/${data.social_links.snap}" target="_blank" class="w-12 h-12 rounded-full bg-[#FFFC00] text-black flex items-center justify-center text-2xl hover:scale-110 active:scale-95 transition-all shadow-lg border-2 border-white dark:border-gray-800"><i class="fab fa-snapchat-ghost"></i></a>`;
+                            }
+                            if (data.social_links.x) {
+                                linksHTML += `<a href="https://x.com/${data.social_links.x}" target="_blank" class="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center text-2xl hover:scale-110 active:scale-95 transition-all shadow-lg border-2 border-white dark:border-gray-800"><i class="fab fa-x-twitter"></i></a>`;
+                            }
+                            
+                            if (linksHTML !== '') {
+                                container.innerHTML = linksHTML;
+                                container.classList.remove('hidden');
+                                document.getElementById('public-target-username').classList.remove('mb-8');
+                                document.getElementById('public-target-username').classList.add('mb-4');
+                            }
+                        }
+                    }
+                };
+            }
+
+            // جعل الاسم قابلاً للضغط في المحادثة لفتح البروفايل (عند كشف القناع)
+            if (typeof window.updateActiveChat === "function") {
+                const originalUpdateActiveChat = window.updateActiveChat;
+                window.updateActiveChat = function(updatedMsg, silent = false) {
+                    originalUpdateActiveChat(updatedMsg, silent);
+
+                    // إذا كنت أنا المستقبل، وتم كشف الهوية، وملف المرسل موجود
+                    if (window.currentUser && updatedMsg.receiver_id === window.currentUser.id && updatedMsg.is_revealed && updatedMsg.sender_profile) {
+                        const titleSpan = document.querySelector('#chat-title span');
+                        if (titleSpan) {
+                            // إضافة تنسيقات الزر التفاعلي
+                            titleSpan.classList.add('cursor-pointer', 'hover:underline', 'underline-offset-4', 'decoration-2', 'hover:text-brand-primary', 'transition-colors');
+                            titleSpan.title = "اضغط لزيارة الملف الشخصي";
+                            
+                            // وظيفة فتح البروفايل
+                            titleSpan.onclick = function() {
+                                if(typeof window.closeChat === 'function') window.closeChat();
+                                if(typeof window.showLoader === 'function') window.showLoader();
+                                setTimeout(() => {
+                                    if(typeof window.loadPublicProfile === 'function') {
+                                        window.loadPublicProfile(updatedMsg.sender_profile.username);
+                                    }
+                                }, 300);
+                            };
+                        }
+                    }
+                };
+            }
+            
+        });
+    </script>
 </body>
 </html>
