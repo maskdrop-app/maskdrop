@@ -6,7 +6,7 @@
     <script src="https://connect.facebook.net/en_US/fbinstant.7.1.js"></script>
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>قناع - رسائل مجهولة مع تحدي</title>
+    <title>قنــاع - رسائل مجهولة مع تحدي</title>
     
     <!-- Meta Tags for Social Sharing -->
     <meta property="og:title" content="قناع - رسائل مجهولة مع تحدي">
@@ -1268,6 +1268,7 @@
                 const safeId = (updatedMsg.id || '0000').toString().substring(0,4);
                 headerLabel = updatedMsg.is_revealed ? (updatedMsg.sender_profile ? updatedMsg.sender_profile.full_name : 'تم كشف الهوية') : `مجهول #${safeId}`;
                 const icon = updatedMsg.is_revealed ? 'fa-user text-green-500' : 'fa-user-secret';
+                // [تم التصحيح] تم تغيير updatedMsg إلى msg ولكن بما أن الدالة هنا تستخدم المتغير updatedMsg فهذا هو الاسم الصحيح هنا. سنبقيه كما هو.
                 document.getElementById('chat-title').innerHTML = `<i class="fas ${icon} ms-1"></i> <span class="${updatedMsg.is_revealed ? 'text-green-500' : ''}">${headerLabel}</span>`;
             }
 
@@ -1603,7 +1604,8 @@
                 const safeId = (msg.id || '0000').toString().substring(0,4);
                 headerLabel = msg.is_revealed ? (msg.sender_profile ? msg.sender_profile.full_name : 'تم كشف الهوية') : `مجهول #${safeId}`;
                 const icon = msg.is_revealed ? 'fa-user text-green-500' : 'fa-user-secret';
-                document.getElementById('chat-title').innerHTML = `<i class="fas ${icon} ms-1"></i> <span class="${updatedMsg.is_revealed ? 'text-green-500' : ''}">${headerLabel}</span>`;
+                // [تم التصحيح] تم تصحيح updatedMsg إلى msg هنا لحل المشكلة (ReferenceError)
+                document.getElementById('chat-title').innerHTML = `<i class="fas ${icon} ms-1"></i> <span class="${msg.is_revealed ? 'text-green-500' : ''}">${headerLabel}</span>`;
             }
             
             updateActiveChat(msg);
