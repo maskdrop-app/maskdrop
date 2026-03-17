@@ -8,6 +8,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>قناع - رسائل مجهولة مع تحدي</title>
     
+    <!-- Meta Tags for Social Sharing -->
+    <meta property="og:title" content="قناع - رسائل مجهولة مع تحدي">
+    <meta property="og:description" content="أرسل لي رسالة مجهولة بكل سرية، ولن أعرف من أنت إلا إذا وافقنا على كشف القناع!">
+    <meta property="og:image" id="dynamic-og-image" content="https://api.dicebear.com/7.x/avataaars/svg?seed=MaskUser&backgroundColor=e94560">
+    <meta property="og:type" content="website">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -346,9 +352,10 @@
                         <h3 class="font-black text-xl text-white mb-2 relative z-10" data-ar="احصل على رسائل مجهولة!" data-en="Get anonymous messages!">احصل على رسائل مجهولة!</h3>
                         <p class="text-sm text-white/90 mb-5 relative z-10" data-ar="انسخ الرابط وشاركه مع أصدقائك أو في البايو الخاص بك." data-en="Copy your link and share it with friends or in your bio.">انسخ الرابط وشاركه مع أصدقائك أو في البايو الخاص بك.</p>
                         
-                        <div class="flex items-center gap-2 bg-black/30 p-2.5 rounded-2xl relative z-10 backdrop-blur-sm border border-white/20">
-                            <input type="text" id="share-link-input" readonly value="" class="bg-transparent text-sm text-white flex-1 outline-none text-start px-2 font-mono" dir="ltr">
-                            <button onclick="copyLink()" class="cursor-pointer bg-white text-brand-primary hover:bg-gray-100 active:scale-95 px-5 py-2 rounded-xl text-sm font-black transition-all duration-150">
+                        <!-- [تم التعديل] إصلاح زر النسخ ليظهر بشكل صحيح على الجوال بدون خروج عن الإطار -->
+                        <div class="flex items-center gap-2 bg-black/30 p-2.5 rounded-2xl relative z-10 backdrop-blur-sm border border-white/20 w-full overflow-hidden">
+                            <input type="text" id="share-link-input" readonly value="" class="bg-transparent text-sm text-white flex-1 outline-none text-start px-1 sm:px-2 font-mono min-w-0" dir="ltr">
+                            <button onclick="copyLink()" class="cursor-pointer bg-white text-brand-primary hover:bg-gray-100 active:scale-95 px-3 sm:px-5 py-2 rounded-xl text-sm font-black transition-all duration-150 shrink-0 whitespace-nowrap">
                                 <i class="fas fa-copy me-1"></i> <span data-ar="نسخ" data-en="Copy">نسخ</span>
                             </button>
                         </div>
@@ -1596,7 +1603,7 @@
                 const safeId = (msg.id || '0000').toString().substring(0,4);
                 headerLabel = msg.is_revealed ? (msg.sender_profile ? msg.sender_profile.full_name : 'تم كشف الهوية') : `مجهول #${safeId}`;
                 const icon = msg.is_revealed ? 'fa-user text-green-500' : 'fa-user-secret';
-                document.getElementById('chat-title').innerHTML = `<i class="fas ${icon} ms-1"></i> <span class="${msg.is_revealed ? 'text-green-500' : ''}">${headerLabel}</span>`;
+                document.getElementById('chat-title').innerHTML = `<i class="fas ${icon} ms-1"></i> <span class="${updatedMsg.is_revealed ? 'text-green-500' : ''}">${headerLabel}</span>`;
             }
             
             updateActiveChat(msg);
@@ -1957,6 +1964,11 @@
                     <div class="mt-5 pt-5 border-t border-gray-100 dark:border-gray-800">
                         <label class="text-xs text-brand-primary block mb-3 font-black uppercase tracking-wider" data-ar="حسابات التواصل (اختياري)" data-en="Social Accounts (Optional)">حسابات التواصل (اختياري)</label>
                         
+                        <div class="flex items-center gap-3 mb-3 bg-gray-50 dark:bg-brand-dark p-2 rounded-xl border border-gray-200 dark:border-gray-700 focus-within:border-blue-500 transition-all">
+                            <div class="w-8 h-8 rounded-lg bg-[#1877F2] text-white flex items-center justify-center shrink-0 shadow-sm"><i class="fab fa-facebook-f"></i></div>
+                            <input type="text" id="edit-social-fb" placeholder="يوزر أو رابط الفيسبوك" class="w-full bg-transparent text-sm outline-none text-gray-900 dark:text-white" dir="ltr">
+                        </div>
+
                         <div class="flex items-center gap-3 mb-3 bg-gray-50 dark:bg-brand-dark p-2 rounded-xl border border-gray-200 dark:border-gray-700 focus-within:border-pink-500 transition-all">
                             <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white flex items-center justify-center shrink-0 shadow-sm"><i class="fab fa-instagram"></i></div>
                             <input type="text" id="edit-social-ig" placeholder="يوزر الانستقرام" class="w-full bg-transparent text-sm outline-none text-gray-900 dark:text-white" dir="ltr">
@@ -1965,11 +1977,6 @@
                         <div class="flex items-center gap-3 mb-3 bg-gray-50 dark:bg-brand-dark p-2 rounded-xl border border-gray-200 dark:border-gray-700 focus-within:border-yellow-400 transition-all">
                             <div class="w-8 h-8 rounded-lg bg-[#FFFC00] text-black flex items-center justify-center shrink-0 shadow-sm"><i class="fab fa-snapchat-ghost"></i></div>
                             <input type="text" id="edit-social-snap" placeholder="يوزر السناب شات" class="w-full bg-transparent text-sm outline-none text-gray-900 dark:text-white" dir="ltr">
-                        </div>
-                        
-                        <div class="flex items-center gap-3 mb-3 bg-gray-50 dark:bg-brand-dark p-2 rounded-xl border border-gray-200 dark:border-gray-700 focus-within:border-gray-500 transition-all">
-                            <div class="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center shrink-0 shadow-sm"><i class="fab fa-x-twitter"></i></div>
-                            <input type="text" id="edit-social-x" placeholder="يوزر X (تويتر)" class="w-full bg-transparent text-sm outline-none text-gray-900 dark:text-white" dir="ltr">
                         </div>
                     </div>
                 `;
@@ -2005,10 +2012,10 @@
             if (typeof window.saveProfileEdit === "function") {
                 const originalSaveProfileEdit = window.saveProfileEdit;
                 window.saveProfileEdit = async function() {
+                    const fb = document.getElementById('edit-social-fb')?.value.trim() || null;
                     const ig = document.getElementById('edit-social-ig')?.value.trim().replace('@', '') || null;
                     const snap = document.getElementById('edit-social-snap')?.value.trim().replace('@', '') || null;
-                    const x = document.getElementById('edit-social-x')?.value.trim().replace('@', '') || null;
-                    const social_links = { ig, snap, x };
+                    const social_links = { fb, ig, snap };
 
                     // تشغيل دالة الحفظ الأصلية
                     await originalSaveProfileEdit();
@@ -2021,15 +2028,27 @@
                 };
             }
 
-            // تعبئة حقول السوشيال ميديا عند فتح الإعدادات
+            // تعبئة حقول السوشيال ميديا عند فتح الإعدادات (وتحديث صورة المشاركة og:image)
             if (typeof window.updateProfileUI === "function") {
                 const originalUpdateProfileUI = window.updateProfileUI;
                 window.updateProfileUI = function() {
                     originalUpdateProfileUI();
+
+                    // تحديث الصورة عند مشاركة الرابط عبر الميتا تاج (og:image)
+                    if (window.userProfile && window.userProfile.avatar_url) {
+                        let ogImage = document.querySelector('meta[property="og:image"]');
+                        if (!ogImage) {
+                            ogImage = document.createElement('meta');
+                            ogImage.setAttribute('property', 'og:image');
+                            document.head.appendChild(ogImage);
+                        }
+                        ogImage.setAttribute('content', window.userProfile.avatar_url);
+                    }
+
                     if (window.userProfile && window.userProfile.social_links) {
+                        if(document.getElementById('edit-social-fb')) document.getElementById('edit-social-fb').value = window.userProfile.social_links.fb || '';
                         if(document.getElementById('edit-social-ig')) document.getElementById('edit-social-ig').value = window.userProfile.social_links.ig || '';
                         if(document.getElementById('edit-social-snap')) document.getElementById('edit-social-snap').value = window.userProfile.social_links.snap || '';
-                        if(document.getElementById('edit-social-x')) document.getElementById('edit-social-x').value = window.userProfile.social_links.x || '';
                     }
                 };
             }
@@ -2050,14 +2069,14 @@
                         
                         if (data && data.social_links) {
                             let linksHTML = '';
+                            if (data.social_links.fb) {
+                                linksHTML += `<a href="https://facebook.com/${data.social_links.fb}" target="_blank" class="w-12 h-12 rounded-full bg-[#1877F2] text-white flex items-center justify-center text-2xl hover:scale-110 active:scale-95 transition-all shadow-lg border-2 border-white dark:border-gray-800"><i class="fab fa-facebook-f"></i></a>`;
+                            }
                             if (data.social_links.ig) {
                                 linksHTML += `<a href="https://instagram.com/${data.social_links.ig}" target="_blank" class="w-12 h-12 rounded-full bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white flex items-center justify-center text-2xl hover:scale-110 active:scale-95 transition-all shadow-lg border-2 border-white dark:border-gray-800"><i class="fab fa-instagram"></i></a>`;
                             }
                             if (data.social_links.snap) {
                                 linksHTML += `<a href="https://snapchat.com/add/${data.social_links.snap}" target="_blank" class="w-12 h-12 rounded-full bg-[#FFFC00] text-black flex items-center justify-center text-2xl hover:scale-110 active:scale-95 transition-all shadow-lg border-2 border-white dark:border-gray-800"><i class="fab fa-snapchat-ghost"></i></a>`;
-                            }
-                            if (data.social_links.x) {
-                                linksHTML += `<a href="https://x.com/${data.social_links.x}" target="_blank" class="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center text-2xl hover:scale-110 active:scale-95 transition-all shadow-lg border-2 border-white dark:border-gray-800"><i class="fab fa-x-twitter"></i></a>`;
                             }
                             
                             if (linksHTML !== '') {
